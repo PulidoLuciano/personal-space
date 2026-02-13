@@ -9,8 +9,10 @@ import * as SplashScreen from "expo-splash-screen";
 import "react-native-reanimated";
 import { useState, useEffect } from "react";
 import { initializeDatabase } from "@/database/initializeDatabase";
+import { SQLiteDatabase } from "expo-sqlite";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { DependenciesProvider } from "@/components/providers/DatabaseContext";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -21,14 +23,14 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
-  const [dbReady, setDbReady] = useState(false);
+  const [db, setDb] = useState<SQLiteDatabase | null>(null);
 
   useEffect(() => {
     async function setup() {
       try {
         // Ejecuta el script de creación de tablas
-        await initializeDatabase();
-        setDbReady(true);
+        const database = await initializeDatabase();
+        setDb(database);
       } catch (e) {
         console.warn("Error inicializando la DB:", e);
       } finally {
@@ -40,21 +42,22 @@ export default function RootLayout() {
     setup();
   }, []);
 
-  if (!dbReady) {
-    // Puedes retornar un componente de carga personalizado aquí
+  if (!db) {
     return null;
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="modal"
-          options={{ presentation: "modal", title: "Modal" }}
-        />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <DependenciesProvider db={db}>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="modal"
+            options={{ presentation: "modal", title: "Modal" }}
+          />
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </DependenciesProvider>
   );
 }
