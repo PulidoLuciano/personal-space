@@ -99,7 +99,7 @@ export const ICONS = [
   "pie-chart",
   "trending-up",
   "calculator",
-  "gold",
+  "balloon",
 
   // Hogar, Comida y Tierra (Marrones/Ocres)
   "home",
@@ -157,7 +157,12 @@ export default function CreateProjectModal() {
   const { createProject, projects, updateProject } = useProjects();
   const projectToEdit = projects.find((p) => p.id === Number(id));
 
-  const { control, handleSubmit, reset, formState: { errors } } = useForm({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
       name: "",
     },
