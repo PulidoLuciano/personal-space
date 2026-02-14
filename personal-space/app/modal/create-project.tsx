@@ -16,27 +16,143 @@ import { useLocale } from "@/hooks/useLocale";
 import { useProjects } from "@/hooks/useProjects";
 import { Ionicons } from "@expo/vector-icons";
 
-// Colores sugeridos basados en una paleta moderna
-const PROJECT_COLORS = [
-  "#6366f1",
-  "#ec4899",
-  "#f59e0b",
-  "#10b981",
-  "#3b82f6",
-  "#8b5cf6",
-  "#ef4444",
-  "#06b6d4",
+export const PROJECT_COLORS = [
+  // --- LOS NUEVOS: TIERRAS, MARRONES Y OCRES ---
+  "#78350F", // Ámbar Extra Oscuro (Marrón café)
+  "#92400E", // Marrón Madera
+  "#B45309", // Ocre Quemado
+  "#713F12", // Tierra de Sombra
+  "#451A03", // Chocolate Profundo
+  "#7C2D12", // Ladrillo Oscuro
+  "#A16207", // Oro Viejo
+  "#854D0E", // Oliva Café
+  "#543618", // Tabaco
+  "#271709", // Ébano
+
+  // --- NEUTROS Y GRISES PROFESIONALES ---
+  "#1F2937", // Gris Azulado (Slate)
+  "#374151", // Carbón
+  "#4B5563", // Gris Acero
+  "#1E293B", // Oceánico Oscuro
+  "#334155", // Pizarra
+  "#0F172A", // Noche Rusa
+  "#525252", // Gris Neutro
+  "#262626", // Negro Humo
+  "#404040", // Grafito
+  "#171717", // Asfalto
+
+  // --- VERDES BOSQUE Y OLIVA ---
+  "#064E3B",
+  "#065F46",
+  "#022C22",
+  "#365314",
+  "#14532D",
+
+  // --- AZULES REALES Y MARINOS ---
+  "#1E3A8A",
+  "#1E40AF",
+  "#172554",
+  "#0C4A6E",
+  "#075985",
+
+  // --- ROJOS VINO Y VIOLETAS ---
+  "#7F1D1D",
+  "#991B1B",
+  "#4C1D95",
+  "#581C87",
+  "#701A75",
+  "#4A044E",
+
+  // --- LOS VIBRANTES (Para contraste) ---
+  "#2563EB",
+  "#3B82F6",
+  "#06B6D4",
+  "#059669",
+  "#10B981",
+  "#84CC16",
+  "#EAB308",
+  "#F59E0B",
+  "#F97316",
+  "#EA580C",
+  "#EF4444",
+  "#DC2626",
+  "#EC4899",
+  "#DB2777",
+  "#8B5CF6",
+  "#7C3AED",
+  "#D946EF",
+  "#A855F7",
 ];
 
-const ICONS = [
-  "folder",
-  "code",
-  "book",
-  "cart",
-  "fitness",
+export const ICONS = [
+  // Gestión y Trabajo (Serios)
   "briefcase",
+  "clipboard",
+  "construct",
+  "layers",
+  "file-tray-full",
+  "hammer",
+  "build",
+  "business",
+  "receipt",
+  "shield-checkmark",
+
+  // Finanzas (Marrones/Verdes)
+  "card",
+  "cart",
+  "cash",
+  "stats-chart",
+  "wallet",
+  "pricetag",
+  "pie-chart",
+  "trending-up",
+  "calculator",
+  "gold",
+
+  // Hogar, Comida y Tierra (Marrones/Ocres)
+  "home",
+  "fast-food",
+  "bulb",
+  "bed",
+  "umbrella",
+  "restaurant",
+  "cafe",
+  "wine",
+  "pizza",
+  "beer",
+  "leaf",
+  "flower",
+  "water",
+
+  // Salud, Ocio y Deporte
+  "fitness",
+  "heart",
+  "medical",
+  "bicycle",
+  "barbell",
+  "bandage",
   "game-controller",
-  "color-palette",
+  "musical-notes",
+  "camera",
+  "airplane",
+  "boat",
+  "football",
+  "trophy",
+  "rocket",
+  "flask",
+
+  // Educación y Otros
+  "calendar",
+  "book",
+  "code-slash",
+  "notifications",
+  "school",
+  "library",
+  "pencil",
+  "attach",
+  "infinite",
+  "planet",
+  "earth",
 ];
 
 export default function CreateProjectModal() {
@@ -198,12 +314,14 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginBottom: 10,
+    justifyContent: "center",
   },
   iconGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
     marginBottom: 30,
+    justifyContent: "center",
   },
   iconItem: {
     width: 50,
