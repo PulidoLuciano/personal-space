@@ -1,10 +1,10 @@
 import { NodusLayout } from "@/components/ui/NodusLayout";
 import { Text } from "react-native";
 
-export default function HomeScreen() {
+export default function DataScreen() {
   return (
     <NodusLayout>
-      <Text>Home</Text>
+      <Text>Data</Text>
     </NodusLayout>
   );
 }

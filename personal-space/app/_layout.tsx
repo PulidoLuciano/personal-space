@@ -45,8 +45,12 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen
-            name="modal"
-            options={{ presentation: "modal", title: "Modal" }}
+            name="modal/create"
+            options={{
+              presentation: "modal",
+              headerShown: false,
+              contentStyle: { backgroundColor: "transparent" },
+            }}
           />
         </Stack>
       </ThemeProvider>
