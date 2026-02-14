@@ -1,8 +1,3 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
@@ -11,8 +6,8 @@ import { useState, useEffect } from "react";
 import { initializeDatabase } from "@/database/initializeDatabase";
 import { SQLiteDatabase } from "expo-sqlite";
 
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { DependenciesProvider } from "@/components/providers/DatabaseContext";
+import { ThemeProvider } from "@/components/providers/ThemeContext";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -21,8 +16,6 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   const [db, setDb] = useState<SQLiteDatabase | null>(null);
 
   useEffect(() => {
@@ -48,7 +41,7 @@ export default function RootLayout() {
 
   return (
     <DependenciesProvider db={db}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <ThemeProvider>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen
@@ -56,7 +49,6 @@ export default function RootLayout() {
             options={{ presentation: "modal", title: "Modal" }}
           />
         </Stack>
-        <StatusBar style="auto" />
       </ThemeProvider>
     </DependenciesProvider>
   );
