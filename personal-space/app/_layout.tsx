@@ -1,5 +1,4 @@
 import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import "react-native-reanimated";
 import { useState, useEffect } from "react";
@@ -8,6 +7,7 @@ import { SQLiteDatabase } from "expo-sqlite";
 
 import { DependenciesProvider } from "@/components/providers/DatabaseContext";
 import { ThemeProvider } from "@/components/providers/ThemeContext";
+import { LocalizationProvider } from "@/components/providers/LocalizationContext";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -41,19 +41,29 @@ export default function RootLayout() {
 
   return (
     <DependenciesProvider db={db}>
-      <ThemeProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="modal/create"
-            options={{
-              presentation: "modal",
-              headerShown: false,
-              contentStyle: { backgroundColor: "transparent" },
-            }}
-          />
-        </Stack>
-      </ThemeProvider>
+      <LocalizationProvider>
+        <ThemeProvider>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="modal/create"
+              options={{
+                presentation: "modal",
+                headerShown: false,
+                contentStyle: { backgroundColor: "transparent" },
+              }}
+            />
+            <Stack.Screen
+              name="modal/create-project"
+              options={{
+                presentation: "modal",
+                headerShown: false,
+                contentStyle: { backgroundColor: "transparent" },
+              }}
+            />
+          </Stack>
+        </ThemeProvider>
+      </LocalizationProvider>
     </DependenciesProvider>
   );
 }
