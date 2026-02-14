@@ -17,71 +17,62 @@ import { useProjects } from "@/hooks/useProjects";
 import { Ionicons } from "@expo/vector-icons";
 
 export const PROJECT_COLORS = [
-  // --- LOS NUEVOS: TIERRAS, MARRONES Y OCRES ---
-  "#78350F", // Ámbar Extra Oscuro (Marrón café)
-  "#92400E", // Marrón Madera
-  "#B45309", // Ocre Quemado
-  "#713F12", // Tierra de Sombra
-  "#451A03", // Chocolate Profundo
-  "#7C2D12", // Ladrillo Oscuro
-  "#A16207", // Oro Viejo
-  "#854D0E", // Oliva Café
-  "#543618", // Tabaco
-  "#271709", // Ébano
-
-  // --- NEUTROS Y GRISES PROFESIONALES ---
-  "#1F2937", // Gris Azulado (Slate)
-  "#374151", // Carbón
-  "#4B5563", // Gris Acero
-  "#1E293B", // Oceánico Oscuro
-  "#334155", // Pizarra
-  "#0F172A", // Noche Rusa
-  "#525252", // Gris Neutro
-  "#262626", // Negro Humo
-  "#404040", // Grafito
-  "#171717", // Asfalto
-
-  // --- VERDES BOSQUE Y OLIVA ---
-  "#064E3B",
-  "#065F46",
-  "#022C22",
-  "#365314",
-  "#14532D",
-
-  // --- AZULES REALES Y MARINOS ---
-  "#1E3A8A",
-  "#1E40AF",
-  "#172554",
-  "#0C4A6E",
-  "#075985",
-
-  // --- ROJOS VINO Y VIOLETAS ---
-  "#7F1D1D",
-  "#991B1B",
-  "#4C1D95",
-  "#581C87",
-  "#701A75",
-  "#4A044E",
-
-  // --- LOS VIBRANTES (Para contraste) ---
+  // AZUL
   "#2563EB",
+  "#DBEAFE",
+  "#93C5FD",
   "#3B82F6",
-  "#06B6D4",
-  "#059669",
+  "#1E40AF",
+  "#1E3A8A",
+  // VERDE
   "#10B981",
-  "#84CC16",
-  "#EAB308",
-  "#F59E0B",
-  "#F97316",
-  "#EA580C",
+  "#D1FAE5",
+  "#6EE7B7",
+  "#059669",
+  "#065F46",
+  "#064E3B",
+  // ROJO
   "#EF4444",
+  "#FEE2E2",
+  "#FCA5A5",
   "#DC2626",
-  "#EC4899",
-  "#DB2777",
+  "#991B1B",
+  "#7F1D1D",
+  // NARANJA
+  "#F97316",
+  "#FFEDD5",
+  "#FDBA74",
+  "#EA580C",
+  "#C2410C",
+  "#7C2D12",
+  // AMARILLO
+  "#F59E0B",
+  "#FEF3C7",
+  "#FCD34D",
+  "#D97706",
+  "#92400E",
+  "#78350F",
+  // MARRON
+  "#B45309",
+  "#F3EAC2",
+  "#D9C58B",
+  "#713F12",
+  "#451A03",
+  "#271709",
+  // PURPURA
   "#8B5CF6",
+  "#EDE9FE",
+  "#C4B5FD",
   "#7C3AED",
-  "#D946EF",
-  "#A855F7",
+  "#5B21B6",
+  "#4C1D95",
+  // ROSA
+  "#EC4899",
+  "#FCE7F3",
+  "#F9A8D4",
+  "#DB2777",
+  "#9D174D",
+  "#831843",
 ];
 
 export const ICONS = [
@@ -212,6 +203,10 @@ export default function CreateProjectModal() {
     }
   };
 
+  if (isEditing && !projectToEdit) {
+    return null;
+  }
+
   return (
     <NodusLayout useSafeArea>
       <View style={styles.header}>
@@ -306,7 +301,7 @@ const styles = StyleSheet.create({
   colorGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    gap: 4,
     marginBottom: 25,
   },
   colorCircle: {
