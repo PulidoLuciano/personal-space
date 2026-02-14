@@ -25,6 +25,7 @@ export const es: TranslationKeys = {
     label_color: "Color del proyecto",
     label_icon: "Icono del proyecto",
     name_required: "El nombre del proyecto es necesario",
+    name_min_length: "El nombre del proyecto debe tener al menos 3 caracteres",
     delete_title: "Zona Peligrosa",
     delete_confirm: "¿Quieres borrar el proyecto",
     delete_warning: "Se perderán todas las tareas asociadas.",

@@ -7,6 +7,7 @@ import {
   Alert,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { useForm, Controller } from "react-hook-form";
 import { NodusLayout } from "@/components/ui/NodusLayout";
 import { MyText } from "@/components/ui/MyText";
 import { MyInput } from "@/components/ui/MyInput";
@@ -156,13 +157,12 @@ export default function CreateProjectModal() {
   const { createProject, projects, updateProject } = useProjects();
   const projectToEdit = projects.find((p) => p.id === Number(id));
 
-  useEffect(() => {
-    setName(projectToEdit?.name || "");
-    setSelectedColor(projectToEdit?.color || PROJECT_COLORS[0]);
-    setSelectedIcon(projectToEdit?.icon || ICONS[0]);
-  }, [projectToEdit, id]);
+  const { control, handleSubmit, reset, formState: { errors } } = useForm({
+    defaultValues: {
+      name: "",
+    },
+  });
 
-  const [name, setName] = useState(projectToEdit?.name || "");
   const [selectedColor, setSelectedColor] = useState(
     projectToEdit?.color || PROJECT_COLORS[0],
   );
@@ -171,26 +171,26 @@ export default function CreateProjectModal() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSave = async () => {
-    if (!name.trim()) {
-      Alert.alert(
-        t("common.error"),
-        t("projects.name_required") || "El nombre es obligatorio",
-      );
-      return;
+  useEffect(() => {
+    if (projectToEdit) {
+      reset({ name: projectToEdit.name });
+      setSelectedColor(projectToEdit.color || PROJECT_COLORS[0]);
+      setSelectedIcon(projectToEdit.icon || ICONS[0]);
     }
+  }, [projectToEdit, id, reset]);
 
+  const onSubmit = async (data: { name: string }) => {
     try {
       setIsSubmitting(true);
       if (isEditing) {
         await updateProject(Number(id), {
-          name: name.trim(),
+          name: data.name.trim(),
           color: selectedColor,
           icon: selectedIcon,
         });
       } else {
         await createProject({
-          name: name.trim(),
+          name: data.name.trim(),
           color: selectedColor,
           icon: selectedIcon,
         });
@@ -219,14 +219,29 @@ export default function CreateProjectModal() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <MyInput
-          label={t("projects.label_name") || "Nombre del Proyecto"}
-          placeholder={
-            t("projects.placeholder_name") || "Ej: TrashUp, Facultad..."
-          }
-          value={name}
-          onChangeText={setName}
-          autoFocus
+        <Controller
+          control={control}
+          name="name"
+          rules={{
+            required: t("projects.name_required"),
+            minLength: {
+              value: 3,
+              message: t("projects.name_min_length"),
+            },
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <MyInput
+              label={t("projects.label_name") || "Nombre del Proyecto"}
+              placeholder={
+                t("projects.placeholder_name") || "Ej: TrashUp, Facultad..."
+              }
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              error={errors.name?.message}
+              autoFocus
+            />
+          )}
         />
 
         <MyText variant="small" color="textMuted" style={styles.sectionTitle}>
@@ -279,7 +294,7 @@ export default function CreateProjectModal() {
       <View style={styles.footer}>
         <MyButton
           title={isEditing ? t("common.update") : t("common.save")}
-          onPress={handleSave}
+          onPress={handleSubmit(onSubmit)}
           loading={isSubmitting}
         />
       </View>

@@ -23,6 +23,7 @@ export interface TranslationKeys {
     label_color: string;
     label_icon: string;
     name_required: string;
+    name_min_length: string;
     delete_title: string;
     delete_confirm: string;
     delete_warning: string;

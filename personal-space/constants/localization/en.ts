@@ -25,6 +25,7 @@ export const en: TranslationKeys = {
     label_color: "Color identifier",
     label_icon: "Project's icon",
     name_required: "Project's name is required",
+    name_min_length: "The project name must have at least 3 characters",
     delete_title: "Be careful!",
     delete_confirm: "Are you sure you want to delete project",
     delete_warning: "All the tasks and events associated will be deleted.",
