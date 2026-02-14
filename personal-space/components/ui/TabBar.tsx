@@ -5,13 +5,17 @@ import { useTheme } from "../../hooks/useTheme";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-export const TabBar: React.FC<BottomTabBarProps> = ({
+export const TabBar: React.FC<BottomTabBarProps & { accentColor?: string; projectId?: string }> = ({
   state,
   descriptors,
   navigation,
+  accentColor,
+  projectId,
 }) => {
   const { colors, theme } = useTheme();
   const router = useRouter();
+
+  const activeColor = accentColor || colors.primary;
 
   // Calculamos el punto medio exacto de las rutas configuradas
   const middleIndex = Math.floor(state.routes.length / 2);
@@ -43,6 +47,7 @@ export const TabBar: React.FC<BottomTabBarProps> = ({
                 navigation.navigate(route.name);
             }}
             colors={colors}
+            accentColor={accentColor}
           />
         );
 
@@ -51,8 +56,8 @@ export const TabBar: React.FC<BottomTabBarProps> = ({
           return (
             <React.Fragment key="center-action-group">
               <TouchableOpacity
-                onPress={() => router.push("/modal/create")}
-                style={[styles.fab, { backgroundColor: colors.primary }]}
+                onPress={() => router.push({ pathname: "/modal/create", params: { projectId } })}
+                style={[styles.fab, { backgroundColor: activeColor }]}
                 activeOpacity={0.8}
               >
                 <Ionicons
@@ -72,18 +77,19 @@ export const TabBar: React.FC<BottomTabBarProps> = ({
   );
 };
 
-const TabItem = ({ isFocused, options, onPress, colors }: any) => {
+const TabItem = ({ isFocused, options, onPress, colors, accentColor }: any) => {
+  const activeColor = accentColor || colors.primary;
   const renderIcon = options.tabBarIcon ? (
     options.tabBarIcon({
       focused: isFocused,
-      color: isFocused ? colors.primary : colors.textMuted,
+      color: isFocused ? activeColor : colors.textMuted,
       size: 24,
     })
   ) : (
     <Ionicons
       name="ellipse"
       size={24}
-      color={isFocused ? colors.primary : colors.textMuted}
+      color={isFocused ? activeColor : colors.textMuted}
     />
   );
 

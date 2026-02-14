@@ -1,13 +1,22 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { NodusLayout } from "@/components/ui/NodusLayout";
 import { useTheme } from "@/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
+import { useProjects } from "@/hooks/useProjects";
+import { useMemo } from "react";
 
 export default function CreateModal() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { projects } = useProjects();
+  const { projectId } = useLocalSearchParams<{ projectId?: string }>();
+
+  const selectedProject = useMemo(() => {
+    if (!projectId) return null;
+    return projects.find((p) => p.id?.toString() === projectId);
+  }, [projects, projectId]);
 
   return (
     <NodusLayout useSafeArea={true}>
@@ -29,10 +38,17 @@ export default function CreateModal() {
       </View>
 
       <View style={styles.content}>
-        {/* Aquí irá el formulario de creación rápida */}
+        {/* Project ID from query param - for now just log/display */}
         <Text style={{ color: colors.textMuted, textAlign: "center" }}>
-          El contenido del modal aparecerá aquí.
+          {projectId
+            ? `projectId: ${projectId}`
+            : "No project selected - user must select a project first"}
         </Text>
+        {selectedProject && (
+          <Text style={{ color: selectedProject.color, marginTop: 10 }}>
+            Selected Project: {selectedProject.name}
+          </Text>
+        )}
       </View>
     </NodusLayout>
   );

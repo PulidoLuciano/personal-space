@@ -80,7 +80,14 @@ export default function ProjectsScreen() {
         renderItem={({ item }) => (
           <ProjectListItem
             project={item}
-            onPress={() => console.log("Abrir proyecto", item.id)}
+            onPress={() => {
+              if (item.id) {
+                router.push({
+                  pathname: "/[projectId]",
+                  params: { projectId: item.id.toString() },
+                } as any);
+              }
+            }}
             onEdit={() => handleEdit(item)}
             onDelete={() => handleDelete(item)}
           />
