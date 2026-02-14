@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useDependencies } from "@/components/providers/DatabaseContext";
 import { ProjectEntity } from "@/core/entities/ProjectEntity";
+import { projectEvents, PROJECT_CHANGED } from "@/utils/events/ProjectEvents";
 
 export const useProjects = () => {
   const controller = useDependencies();
@@ -26,6 +27,14 @@ export const useProjects = () => {
     }
   }, [controller.getAllProjects]);
 
+  useEffect(() => {
+    fetchProjects();
+    projectEvents.on(PROJECT_CHANGED, fetchProjects);
+    return () => {
+      projectEvents.off(PROJECT_CHANGED, fetchProjects);
+    };
+  }, [fetchProjects]);
+
   /**
    * Crea un nuevo proyecto y actualiza la lista local
    */
@@ -36,7 +45,7 @@ export const useProjects = () => {
   }) => {
     try {
       await controller.createProject.execute(data);
-      await fetchProjects(); // Recargar lista
+      projectEvents.emit(PROJECT_CHANGED);
     } catch (err: any) {
       throw new Error(err.message || "Error al crear el proyecto");
     }
@@ -51,7 +60,7 @@ export const useProjects = () => {
   ) => {
     try {
       await controller.updateProject.execute(id, data);
-      await fetchProjects(); // Recargar lista
+      projectEvents.emit(PROJECT_CHANGED);
     } catch (err: any) {
       throw new Error(err.message || "Error al actualizar el proyecto");
     }
@@ -63,7 +72,7 @@ export const useProjects = () => {
   const deleteProject = async (id: number) => {
     try {
       await controller.deleteProject.execute(id);
-      await fetchProjects(); // Recargar lista
+      projectEvents.emit(PROJECT_CHANGED);
     } catch (err: any) {
       throw new Error(err.message || "Error al eliminar el proyecto");
     }
