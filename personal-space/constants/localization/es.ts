@@ -43,4 +43,14 @@ export const es: TranslationKeys = {
     form_finance: "Formulario de Finanzas",
     form_note: "Formulario de Nota",
   },
+  notes: {
+    title_label: "Título",
+    title_placeholder: "Título de la nota...",
+    content_label: "Contenido",
+    content_placeholder: "Escribe tu nota en markdown...",
+    title_required: "El título de la nota es obligatorio",
+    title_too_long: "El título es demasiado largo (máximo 100 caracteres)",
+    edit_mode: "Editar",
+    preview_mode: "Vista",
+  },
 };

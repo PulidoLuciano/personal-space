@@ -43,4 +43,14 @@ export const en: TranslationKeys = {
     form_finance: "Finance Form",
     form_note: "Note Form",
   },
+  notes: {
+    title_label: "Title",
+    title_placeholder: "Note title...",
+    content_label: "Content",
+    content_placeholder: "Write your note in markdown...",
+    title_required: "Note title is required",
+    title_too_long: "Title is too long (max 100 characters)",
+    edit_mode: "Edit",
+    preview_mode: "View",
+  },
 };

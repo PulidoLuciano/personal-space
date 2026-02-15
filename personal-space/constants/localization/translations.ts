@@ -41,4 +41,14 @@ export interface TranslationKeys {
     form_finance: string;
     form_note: string;
   };
+  notes: {
+    title_label: string;
+    title_placeholder: string;
+    content_label: string;
+    content_placeholder: string;
+    title_required: string;
+    title_too_long: string;
+    edit_mode: string;
+    preview_mode: string;
+  };
 }

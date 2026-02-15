@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { View, StyleSheet, Pressable } from "react-native";
+import { View, StyleSheet, Pressable, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { NodusLayout } from "@/components/ui/NodusLayout";
 import { useTheme } from "@/hooks/useTheme";
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/ProjectSelector";
 import { TypeSelector, ElementType } from "@/components/ui/TypeSelector";
 import { ProjectEntity } from "@/core/entities/ProjectEntity";
+import { NoteForm } from "@/components/forms/NoteForm";
 
 export default function CreateModal() {
   const router = useRouter();
@@ -40,46 +41,71 @@ export default function CreateModal() {
 
   const accentColor = selectedProject?.color;
 
+  const handleSave = () => {
+    router.back();
+  };
+
+  const handleCancel = () => {
+    setSelectedType("event");
+  };
+
+  const showNoteForm = selectedType === "note" && selectedProject;
+
   return (
     <NodusLayout useSafeArea={true}>
-      <View style={styles.header}>
-        <MyText variant="h2" weight="bold">
-          {t("common.save")}
-        </MyText>
-
-        <Pressable
-          onPress={() => router.back()}
-          style={({ pressed }) => [
-            styles.closeButton,
-            { backgroundColor: pressed ? colors.press : "transparent" },
-          ]}
-        >
-          <Ionicons name="close" size={24} color={colors.text} />
-        </Pressable>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.section}>
-          <ProjectSelectorTrigger
-            selectedProject={selectedProject}
-            onPress={() => setSelectorVisible(true)}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <TypeSelector
-            selectedType={selectedType}
-            onSelect={setSelectedType}
-            accentColor={accentColor}
-          />
-        </View>
-
-        <View style={styles.formPlaceholder}>
-          <MyText variant="h2" weight="semi" color="textMuted">
-            {t(`create.form_${selectedType}`)}
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <View style={styles.header}>
+          <MyText variant="h2" weight="bold">
+            {showNoteForm ? t("create.note") : t("common.save")}
           </MyText>
+
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => [
+              styles.closeButton,
+              { backgroundColor: pressed ? colors.press : "transparent" },
+            ]}
+          >
+            <Ionicons name="close" size={24} color={colors.text} />
+          </Pressable>
         </View>
-      </View>
+
+        <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
+          <View style={styles.section}>
+            <ProjectSelectorTrigger
+              selectedProject={selectedProject}
+              onPress={() => setSelectorVisible(true)}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <TypeSelector
+              selectedType={selectedType}
+              onSelect={setSelectedType}
+              accentColor={accentColor}
+            />
+          </View>
+
+          {showNoteForm ? (
+            <View style={styles.formContainer}>
+              <NoteForm
+                projectId={selectedProject.id!}
+                onSave={handleSave}
+                onCancel={handleCancel}
+              />
+            </View>
+          ) : (
+            <View style={styles.formPlaceholder}>
+              <MyText variant="h2" weight="semi" color="textMuted">
+                {t(`create.form_${selectedType}`)}
+              </MyText>
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <ProjectSelector
         selectedProject={selectedProject}
@@ -92,6 +118,9 @@ export default function CreateModal() {
 }
 
 const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -105,10 +134,17 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 20,
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 16,
+  },
+  formContainer: {
+    flex: 1,
   },
   formPlaceholder: {
     flex: 1,
