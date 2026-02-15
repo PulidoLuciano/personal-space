@@ -31,4 +31,16 @@ export const en: TranslationKeys = {
     delete_warning: "All the tasks and events associated will be deleted.",
     edit_project: "Edit project",
   },
+  create: {
+    select_project: "Select project",
+    search_project: "Search project...",
+    event: "Event",
+    task: "Task",
+    finance: "Finance",
+    note: "Note",
+    form_event: "Event Form",
+    form_task: "Task Form",
+    form_finance: "Finance Form",
+    form_note: "Note Form",
+  },
 };

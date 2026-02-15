@@ -29,4 +29,16 @@ export interface TranslationKeys {
     delete_warning: string;
     edit_project: string;
   };
+  create: {
+    select_project: string;
+    search_project: string;
+    event: string;
+    task: string;
+    finance: string;
+    note: string;
+    form_event: string;
+    form_task: string;
+    form_finance: string;
+    form_note: string;
+  };
 }

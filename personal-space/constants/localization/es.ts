@@ -31,4 +31,16 @@ export const es: TranslationKeys = {
     delete_warning: "Se perderán todas las tareas asociadas.",
     edit_project: "Editar proyecto",
   },
+  create: {
+    select_project: "Seleccionar proyecto",
+    search_project: "Buscar proyecto...",
+    event: "Evento",
+    task: "Tarea",
+    finance: "Finanza",
+    note: "Nota",
+    form_event: "Formulario de Evento",
+    form_task: "Formulario de Tarea",
+    form_finance: "Formulario de Finanzas",
+    form_note: "Formulario de Nota",
+  },
 };
