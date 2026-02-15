@@ -9,6 +9,7 @@ export const en: TranslationKeys = {
     error: "There was an unexpected error",
     update: "Update",
     error_save: "There was an error while saving",
+    search: "Search",
   },
   tabs: {
     projects: "Projects",
@@ -52,5 +53,8 @@ export const en: TranslationKeys = {
     title_too_long: "Title is too long (max 100 characters)",
     edit_mode: "Edit",
     preview_mode: "View",
+    search_placeholder: "Search notes...",
+    empty_list: "No notes in this project",
+    no_results: "No notes found",
   },
 };

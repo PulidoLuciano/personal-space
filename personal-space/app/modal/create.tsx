@@ -20,13 +20,13 @@ export default function CreateModal() {
   const { colors } = useTheme();
   const { t } = useLocale();
   const { projects } = useProjects();
-  const { projectId } = useLocalSearchParams<{ projectId?: string }>();
+  const { projectId, noteId } = useLocalSearchParams<{ projectId?: string; noteId?: string }>();
 
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [selectedProject, setSelectedProject] = useState<ProjectEntity | null>(
     null
   );
-  const [selectedType, setSelectedType] = useState<ElementType>("event");
+  const [selectedType, setSelectedType] = useState<ElementType>(noteId ? "note" : "event");
 
   const initialProject = useMemo(() => {
     if (!projectId) return null;
@@ -40,6 +40,8 @@ export default function CreateModal() {
   }, [initialProject]);
 
   const accentColor = selectedProject?.color;
+  const isEditing = !!noteId;
+  const showNoteForm = selectedType === "note" && selectedProject;
 
   const handleSave = () => {
     router.back();
@@ -49,8 +51,6 @@ export default function CreateModal() {
     setSelectedType("event");
   };
 
-  const showNoteForm = selectedType === "note" && selectedProject;
-
   return (
     <NodusLayout useSafeArea={true}>
       <KeyboardAvoidingView
@@ -59,7 +59,7 @@ export default function CreateModal() {
       >
         <View style={styles.header}>
           <MyText variant="h2" weight="bold">
-            {showNoteForm ? t("create.note") : t("common.save")}
+            {isEditing ? t("create.note") : (showNoteForm ? t("create.note") : t("common.save"))}
           </MyText>
 
           <Pressable
@@ -74,25 +74,30 @@ export default function CreateModal() {
         </View>
 
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
-          <View style={styles.section}>
-            <ProjectSelectorTrigger
-              selectedProject={selectedProject}
-              onPress={() => setSelectorVisible(true)}
-            />
-          </View>
+          {!isEditing && (
+            <>
+              <View style={styles.section}>
+                <ProjectSelectorTrigger
+                  selectedProject={selectedProject}
+                  onPress={() => setSelectorVisible(true)}
+                />
+              </View>
 
-          <View style={styles.section}>
-            <TypeSelector
-              selectedType={selectedType}
-              onSelect={setSelectedType}
-              accentColor={accentColor}
-            />
-          </View>
+              <View style={styles.section}>
+                <TypeSelector
+                  selectedType={selectedType}
+                  onSelect={setSelectedType}
+                  accentColor={accentColor}
+                />
+              </View>
+            </>
+          )}
 
-          {showNoteForm ? (
+          {showNoteForm || isEditing ? (
             <View style={styles.formContainer}>
               <NoteForm
-                projectId={selectedProject.id!}
+                projectId={selectedProject?.id || parseInt(projectId!)}
+                noteId={noteId ? parseInt(noteId) : undefined}
                 onSave={handleSave}
                 onCancel={handleCancel}
               />
@@ -107,12 +112,14 @@ export default function CreateModal() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <ProjectSelector
-        selectedProject={selectedProject}
-        onSelect={setSelectedProject}
-        visible={selectorVisible}
-        onClose={() => setSelectorVisible(false)}
-      />
+      {!isEditing && (
+        <ProjectSelector
+          selectedProject={selectedProject}
+          onSelect={setSelectedProject}
+          visible={selectorVisible}
+          onClose={() => setSelectorVisible(false)}
+        />
+      )}
     </NodusLayout>
   );
 }

@@ -7,6 +7,7 @@ export interface TranslationKeys {
     error: string;
     update: string;
     error_save: string;
+    search: string;
   };
   tabs: {
     home: string;
@@ -50,5 +51,8 @@ export interface TranslationKeys {
     title_too_long: string;
     edit_mode: string;
     preview_mode: string;
+    search_placeholder: string;
+    empty_list: string;
+    no_results: string;
   };
 }

@@ -1,23 +1,17 @@
-import { Tabs, useLocalSearchParams, useNavigation } from "expo-router";
-import React, { useMemo } from "react";
+import { Tabs, useNavigation, useLocalSearchParams } from "expo-router";
+import React from "react";
 import { ActivityIndicator, View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { TabBar } from "@/components/ui/TabBar";
-import { useProjects } from "@/hooks/useProjects";
 import { useTheme } from "@/hooks/useTheme";
+import { ProjectProvider, useCurrentProject } from "@/components/providers/ProjectContext";
 
-export default function ProjectLayout() {
-  const { projectId } = useLocalSearchParams<{ projectId: string }>();
-  const { projects, loading } = useProjects();
+function ProjectContent() {
+  const { currentProject, projectId } = useCurrentProject();
   const { colors } = useTheme();
   const navigation = useNavigation();
 
-  const project = useMemo(() => {
-    if (!projectId) return null;
-    return projects.find((p) => p.id?.toString() === projectId);
-  }, [projects, projectId]);
-
-  if (loading || !project) {
+  if (!currentProject || !projectId) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -28,13 +22,13 @@ export default function ProjectLayout() {
   return (
     <Tabs
       tabBar={(props) => (
-        <TabBar {...props} accentColor={project.color} projectId={projectId} />
+        <TabBar {...props} accentColor={currentProject.color} projectId={projectId} />
       )}
       screenOptions={{
         headerShown: true,
-        headerStyle: { backgroundColor: project.color },
+        headerStyle: { backgroundColor: currentProject.color },
         headerTintColor: "#fff",
-        headerTitle: project.name,
+        headerTitle: currentProject.name,
         headerLeft: () => (
           <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 10 }}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -79,5 +73,24 @@ export default function ProjectLayout() {
         }}
       />
     </Tabs>
+  );
+}
+
+export default function ProjectLayout() {
+  const { projectId } = useLocalSearchParams<{ projectId: string }>();
+  const { colors } = useTheme();
+
+  if (!projectId) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <ProjectProvider>
+      <ProjectContent />
+    </ProjectProvider>
   );
 }

@@ -2,7 +2,9 @@ export interface NoteProps {
   id?: number;
   projectId: number;
   title: string;
-  content: string; // Markdown
+  content: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export class NoteEntity {
@@ -10,9 +12,10 @@ export class NoteEntity {
   public readonly projectId: number;
   public readonly title: string;
   public readonly content: string;
+  public readonly createdAt?: string;
+  public readonly updatedAt?: string;
 
   constructor(props: NoteProps) {
-    // Validaciones de Negocio
     if (!props.title || props.title.trim().length === 0) {
       throw new Error("La nota debe tener un título.");
     }
@@ -27,27 +30,23 @@ export class NoteEntity {
     this.projectId = props.projectId;
     this.title = props.title.trim();
     this.content = props.content ?? "";
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
   }
 
-  /**
-   * Mapper para transformar los datos crudos de SQLite a la Entidad.
-   * SQLite devuelve fechas como strings (ISO), aquí las convertimos a objetos Date.
-   */
   static fromDatabase(row: any): NoteEntity {
     return new NoteEntity({
       id: row.id,
       projectId: row.project_id,
       title: row.title,
       content: row.content,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     });
   }
 
-  /**
-   * Método de utilidad para obtener una vista previa corta del contenido.
-   * Útil para los listados de la UI.
-   */
   get excerpt(): string {
-    const plainText = this.content.replace(/[#*`]/g, ""); // Limpieza básica de Markdown
+    const plainText = this.content.replace(/[#*`]/g, "");
     return plainText.length > 50
       ? `${plainText.substring(0, 50)}...`
       : plainText;

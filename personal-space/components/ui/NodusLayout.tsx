@@ -6,7 +6,7 @@ import { useTheme } from "../../hooks/useTheme";
 interface Props {
   children: React.ReactNode;
   useSafeArea?: boolean;
-  safeAreaEdges?: Array<"top" | "bottom" | "left" | "right">;
+  safeAreaEdges?: ("top" | "bottom" | "left" | "right")[];
 }
 
 export const NodusLayout: React.FC<Props> = ({

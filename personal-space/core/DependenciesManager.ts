@@ -16,6 +16,7 @@ import { UpdateNoteUseCase } from "./useCases/notes/UpdateNoteUseCase";
 import { DeleteNoteUseCase } from "./useCases/notes/DeleteNoteUseCase";
 import { GetNoteByIdUseCase } from "./useCases/notes/GetNoteByIdUseCase";
 import { GetNotesByProjectUseCase } from "./useCases/notes/GetNotesByProjectUseCase";
+import { SearchNotesUseCase } from "./useCases/notes/SearchNotesUseCase";
 
 export class DependenciesManager {
   private projectRepo: ProjectRepository;
@@ -31,6 +32,7 @@ export class DependenciesManager {
   public deleteNote: DeleteNoteUseCase;
   public getNoteById: GetNoteByIdUseCase;
   public getNotesByProject: GetNotesByProjectUseCase;
+  public searchNotes: SearchNotesUseCase;
 
   constructor(db: SQLiteDatabase) {
     this.projectRepo = new ProjectRepository(db);
@@ -46,5 +48,6 @@ export class DependenciesManager {
     this.deleteNote = new DeleteNoteUseCase(this.noteRepo);
     this.getNoteById = new GetNoteByIdUseCase(this.noteRepo);
     this.getNotesByProject = new GetNotesByProjectUseCase(this.noteRepo);
+    this.searchNotes = new SearchNotesUseCase(this.noteRepo);
   }
 }
