@@ -41,31 +41,51 @@ npm run reset-project  # Reset to fresh template
 - **Functions/variables**: camelCase
 - **Constants**: UPPER_SNAKE_CASE for values, camelCase for object keys
 - **Files**: kebab-case for components, PascalCase for classes
+- **Database columns**: snake_case (e.g., `created_at`, `project_id`)
+
+### Imports Order
+```typescript
+// 1. React/external imports
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet } from "react-native";
+
+// 2. Internal @/ imports
+import { useTheme } from "@/hooks/useTheme";
+import { ProjectEntity } from "@/core/entities/ProjectEntity";
+
+// 3. Relative imports (avoid unless necessary)
+```
 
 ### Architecture Pattern (Clean Architecture)
 
 ```
 core/
   entities/      # Business entities with validation
-  useCases/      # Business logic, orchestrate repositories
+  useCases/     # Business logic, orchestrate repositories
 database/
-  repositories/  # Data access layer (SQLite)
-app/             # Expo Router pages
-components/      # Reusable UI components
-hooks/           # Custom React hooks
-constants/       # App constants (themes, localization)
-utils/           # Utility functions
+  repositories/ # Data access layer (SQLite)
+app/            # Expo Router pages
+components/     # Reusable UI components
+hooks/          # Custom React hooks
+constants/      # App constants (themes, localization)
+utils/          # Utility functions
 ```
 
 ### Entity Pattern
 Entities validate input in their constructor and throw errors with user-friendly Spanish messages:
 
 ```typescript
+export interface ProjectProps {
+  id?: number;
+  name: string;
+  color?: string;
+}
+
 export class ProjectEntity {
   public readonly id?: number;
   public readonly name: string;
   
-  constructor(props: { id?: number; name: string }) {
+  constructor(props: ProjectProps) {
     if (!props.name || props.name.trim().length < 3) {
       throw new Error("El nombre del proyecto debe tener al menos 3 caracteres.");
     }
@@ -73,7 +93,10 @@ export class ProjectEntity {
   }
   
   static fromDatabase(row: any): ProjectEntity {
-    return new ProjectEntity({...row});
+    return new ProjectEntity({
+      id: row.id,
+      name: row.name,
+    });
   }
 }
 ```
@@ -103,46 +126,113 @@ Extend `BaseRepository<T>` for database operations. The base class provides:
 - UI components go in `components/ui/`
 - Feature components in `components/[feature]/`
 - Use Context providers in `components/providers/`
+- Screen components in `app/` directories
 
-### Imports
-- Use absolute imports with `@/` prefix
-- Group imports: React/external → internal (@/) → relative
-- Avoid barrel files unless necessary
+### Context Providers Pattern
+```typescript
+// components/providers/ExampleContext.tsx
+const ExampleContext = createContext<ExampleContextType | null>(null);
+
+export const ExampleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // ... provider logic
+  return (
+    <ExampleContext.Provider value={...}>
+      {children}
+    </ExampleContext.Provider>
+  );
+};
+
+export const useExample = () => {
+  const context = useContext(ExampleContext);
+  if (!context) {
+    throw new Error("useExample must be used within ExampleProvider");
+  }
+  return context;
+};
+```
+
+### Event System Pattern
+Use event emitters for cross-component communication (similar to projects/notifications):
+
+```typescript
+// utils/events/ExampleEvents.ts
+import { EventEmitter } from "eventemitter3";
+export const exampleEvents = new EventEmitter();
+export const EXAMPLE_CHANGED = "exampleChanged";
+
+// In hooks or components:
+import { exampleEvents, EXAMPLE_CHANGED } from "@/utils/events/ExampleEvents";
+
+// Emit event after data changes:
+exampleEvents.emit(EXAMPLE_CHANGED, { id: 123 });
+
+// Listen for events:
+useEffect(() => {
+  const handleChanged = () => { /* reload data */ };
+  exampleEvents.on(EXAMPLE_CHANGED, handleChanged);
+  return () => exampleEvents.off(EXAMPLE_CHANGED, handleChanged);
+}, [...]);
+```
 
 ### Error Handling
 - Throw `Error` with Spanish messages for user-facing errors
 - Use try/catch in async operations
 - Repository methods return `Promise<T>` or `Promise<void>`
+- Show user-friendly alerts in UI components
 
 ### UI/Styling
 - Components use React Native built-in styling
 - Theme context in `components/providers/ThemeContext.tsx`
 - Use constants from `constants/themes.ts`
+- Avoid inline styles - use StyleSheet.create()
 
 ### ESLint Configuration
 - Uses `eslint-config-expo` (flat config format)
 - Check `eslint.config.js` for full rules
 - Run `npm run lint` before committing
 
+## Database Schema
+
+### Tables (SQLite)
+- `projects`: id, name, color, icon, created_at, updated_at
+- `currencies`: id, name, symbol, created_at, updated_at
+- `habits`: id, project_id, is_strict, title, due_minutes, location_*, completition_by, count_goal, begin_at, created_at, updated_at
+- `tasks`: id, project_id, habit_id, title, due_date, location_*, completition_by, count_goal, created_at, updated_at
+- `events`: id, project_id, title, start_at, end_at, description, recurrence_rule, location_*, is_external, external_id, created_at, updated_at
+- `finances`: id, project_id, task_id, event_id, habit_id, amount, currency_id, title, created_at, updated_at
+- `task_executions`: id, task_id, start_time, end_time, created_at, updated_at
+- `finance_executions`: id, finance_id, date, amount, currency_id, created_at, updated_at
+- `notes`: id, project_id, title, content, created_at, updated_at
+
+### Key Conventions
+- All tables have `created_at` and `updated_at` timestamps
+- Foreign keys use snake_case (e.g., `project_id`)
+- Use `expo-sqlite` with async API (`openDatabaseAsync`, `execAsync`, etc.)
+- Always wrap multiple operations in `withTransactionAsync`
+
 ## File Structure Summary
 
 ```
 personal-space/
-├── app/                    # Expo Router pages (file-based routing)
+├── app/                    # Expo Router pages
 │   ├── (tabs)/            # Tab navigation screens
-│   └── modal/            # Modal screens
-├── components/            # Reusable components
-│   ├── providers/        # React Context providers
-│   └── ui/               # Base UI components
-├── constants/            # App constants
-│   └── localization/     # i18n translations
-├── core/                 # Business logic
-│   ├── entities/         # Domain entities
+│   ├── [projectId]/       # Project detail screens (tabs + stack)
+│   └── modal/             # Modal screens
+├── components/
+│   ├── providers/         # React Context providers
+│   ├── ui/                # Base UI components
+│   └── [feature]/         # Feature-specific components
+├── constants/
+│   └── localization/      # i18n translations
+├── core/
+│   ├── entities/          # Domain entities
 │   └── useCases/         # Business use cases
-├── database/             # Data layer
+├── database/              # Data layer
+│   ├── initializeDatabase.ts
 │   └── repositories/     # SQLite repositories
-├── hooks/                # Custom React hooks
-└── utils/                # Utility functions
+├── hooks/                 # Custom React hooks
+└── utils/                 # Utility functions
+    └── events/            # Event emitters
 ```
 
 ## Important Notes
@@ -152,3 +242,5 @@ personal-space/
 - Spanish is used for user-facing strings in error messages
 - Database uses expo-sqlite for local storage
 - Localization uses i18next with English and Spanish
+- Use Stack navigation for detail screens, Tabs for main navigation
+- Wrap Stack screens in parent directory _layout.tsx for proper navigation hierarchy

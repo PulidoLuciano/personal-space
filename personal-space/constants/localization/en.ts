@@ -57,4 +57,17 @@ export const en: TranslationKeys = {
     empty_list: "No notes in this project",
     no_results: "No notes found",
   },
+  finance: {
+    title_label: "Title",
+    title_placeholder: "Ex: Salary, Rent...",
+    title_required: "Title is required",
+    amount_label: "Amount",
+    amount_placeholder: "0.00",
+    amount_required: "Amount must be greater than zero",
+    amount_hint: "Negative values are for expenses",
+    currency_label: "Currency",
+    currency_required: "Currency is required",
+    delete_title: "Delete Finance",
+    delete_confirm: "Are you sure you want to delete this transaction?",
+  },
 };

@@ -40,7 +40,7 @@ export const initializeDatabase = async () => {
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS currencies (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL CHECK(name <> ''),
+        name TEXT NOT NULL UNIQUE CHECK(name <> ''),
         symbol TEXT NOT NULL DEFAULT '$' CHECK(symbol <> ''),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP

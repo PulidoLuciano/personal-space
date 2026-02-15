@@ -55,4 +55,17 @@ export interface TranslationKeys {
     empty_list: string;
     no_results: string;
   };
+  finance: {
+    title_label: string;
+    title_placeholder: string;
+    title_required: string;
+    amount_label: string;
+    amount_placeholder: string;
+    amount_required: string;
+    amount_hint: string;
+    currency_label: string;
+    currency_required: string;
+    delete_title: string;
+    delete_confirm: string;
+  };
 }

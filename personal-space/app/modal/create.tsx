@@ -14,19 +14,27 @@ import {
 import { TypeSelector, ElementType } from "@/components/ui/TypeSelector";
 import { ProjectEntity } from "@/core/entities/ProjectEntity";
 import { NoteForm } from "@/components/forms/NoteForm";
+import { FinanceForm } from "@/components/forms/FinanceForm";
 
 export default function CreateModal() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t } = useLocale();
   const { projects } = useProjects();
-  const { projectId, noteId } = useLocalSearchParams<{ projectId?: string; noteId?: string }>();
+  const { projectId, noteId, taskId, eventId, habitId, financeId } = useLocalSearchParams<{
+    projectId?: string;
+    noteId?: string;
+    taskId?: string;
+    eventId?: string;
+    habitId?: string;
+    financeId?: string;
+  }>();
 
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [selectedProject, setSelectedProject] = useState<ProjectEntity | null>(
     null
   );
-  const [selectedType, setSelectedType] = useState<ElementType>(noteId ? "note" : "event");
+  const [selectedType, setSelectedType] = useState<ElementType>(noteId ? "note" : (financeId ? "finance" : "event"));
 
   const initialProject = useMemo(() => {
     if (!projectId) return null;
@@ -40,8 +48,10 @@ export default function CreateModal() {
   }, [initialProject]);
 
   const accentColor = selectedProject?.color;
-  const isEditing = !!noteId;
+  const isEditing = !!noteId || !!financeId;
+  const isAssociated = !!taskId || !!eventId || !!habitId;
   const showNoteForm = selectedType === "note" && selectedProject;
+  const showFinanceForm = selectedType === "finance" && (selectedProject || isAssociated || financeId);
 
   const handleSave = () => {
     router.back();
@@ -59,7 +69,7 @@ export default function CreateModal() {
       >
         <View style={styles.header}>
           <MyText variant="h2" weight="bold">
-            {isEditing ? t("create.note") : (showNoteForm ? t("create.note") : t("common.save"))}
+            {isEditing ? (selectedType === "note" ? t("create.note") : t("create.finance")) : (showNoteForm ? t("create.note") : (showFinanceForm ? t("create.finance") : t("common.save")))}
           </MyText>
 
           <Pressable
@@ -74,7 +84,7 @@ export default function CreateModal() {
         </View>
 
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
-          {!isEditing && (
+          {!isEditing && !isAssociated && (
             <>
               <View style={styles.section}>
                 <ProjectSelectorTrigger
@@ -102,6 +112,18 @@ export default function CreateModal() {
                 onCancel={handleCancel}
               />
             </View>
+          ) : showFinanceForm ? (
+            <View style={styles.formContainer}>
+              <FinanceForm
+                projectId={selectedProject?.id || parseInt(projectId!)}
+                taskId={taskId ? parseInt(taskId) : undefined}
+                eventId={eventId ? parseInt(eventId) : undefined}
+                habitId={habitId ? parseInt(habitId) : undefined}
+                financeId={financeId ? parseInt(financeId) : undefined}
+                onSave={handleSave}
+                onCancel={handleCancel}
+              />
+            </View>
           ) : (
             <View style={styles.formPlaceholder}>
               <MyText variant="h2" weight="semi" color="textMuted">
@@ -112,7 +134,7 @@ export default function CreateModal() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {!isEditing && (
+      {!isEditing && !isAssociated && (
         <ProjectSelector
           selectedProject={selectedProject}
           onSelect={setSelectedProject}
