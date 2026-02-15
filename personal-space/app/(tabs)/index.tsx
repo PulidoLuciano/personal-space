@@ -2,8 +2,27 @@ import { MyText } from "@/components/ui/MyText";
 import { MyButton } from "@/components/ui/MyButton";
 import { NodusLayout } from "@/components/ui/NodusLayout";
 import { MyInput } from "@/components/ui/MyInput";
+import { useResetDatabase } from "@/components/providers/DatabaseContext";
+import { Alert } from "react-native";
 
 export default function HomeScreen() {
+  const { resetDatabase } = useResetDatabase();
+
+  const handleResetDatabase = () => {
+    Alert.alert(
+      "Resetear Base de Datos",
+      "¿Estás seguro de eliminar todos los datos? Esta acción es irreversible.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Resetear",
+          style: "destructive",
+          onPress: () => resetDatabase(),
+        },
+      ],
+    );
+  };
+
   return (
     <NodusLayout>
       <MyText variant="h1">Title 1</MyText>
@@ -25,6 +44,12 @@ export default function HomeScreen() {
       <MyButton title="Okay" onPress={() => {}} variant="ghost" />
       <MyButton title="Okay" onPress={() => {}} loading={true} />
       <MyButton title="Okay" onPress={() => {}} disabled={true} />
+      
+      <MyButton
+        title="Resetear Base de Datos"
+        variant="danger"
+        onPress={handleResetDatabase}
+      />
     </NodusLayout>
   );
 }

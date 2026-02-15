@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext, useMemo, useCallback } from "react";
 import { SQLiteDatabase } from "expo-sqlite";
 import { DependenciesManager } from "@/core/DependenciesManager";
+import { deleteDatabase } from "@/database/initializeDatabase";
 
 const DependenciesContext = createContext<DependenciesManager | null>(null);
 
@@ -25,6 +26,37 @@ export const useDependencies = () => {
     throw new Error(
       "useDependencies debe usarse dentro de un DependenciesProvider",
     );
+  }
+  return context;
+};
+
+interface ResetDatabaseContextType {
+  resetDatabase: () => Promise<void>;
+}
+
+const ResetDatabaseContext = createContext<ResetDatabaseContextType | null>(null);
+
+export const ResetDatabaseProvider: React.FC<{ children: React.ReactNode; onReset: () => void }> = ({ children, onReset }) => {
+  const resetDatabase = useCallback(async () => {
+    try {
+      await deleteDatabase();
+      onReset();
+    } catch (error) {
+      console.error("Error resetting database:", error);
+    }
+  }, [onReset]);
+
+  return (
+    <ResetDatabaseContext.Provider value={{ resetDatabase }}>
+      {children}
+    </ResetDatabaseContext.Provider>
+  );
+};
+
+export const useResetDatabase = () => {
+  const context = useContext(ResetDatabaseContext);
+  if (!context) {
+    throw new Error("useResetDatabase must be used within ResetDatabaseProvider");
   }
   return context;
 };

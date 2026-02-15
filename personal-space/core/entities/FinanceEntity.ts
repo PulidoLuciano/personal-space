@@ -3,10 +3,12 @@ export interface FinanceProps {
   projectId: number;
   taskId?: number;
   eventId?: number;
-  isIncome: boolean;
+  habitId?: number;
   amount: number;
-  date?: Date;
-  description?: string;
+  currencyId: number;
+  title: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export class FinanceEntity {
@@ -14,34 +16,36 @@ export class FinanceEntity {
   public readonly projectId: number;
   public readonly taskId?: number;
   public readonly eventId?: number;
-  public readonly isIncome: boolean;
+  public readonly habitId?: number;
   public readonly amount: number;
-  public readonly date: Date;
-  public readonly description?: string;
+  public readonly currencyId: number;
+  public readonly title: string;
+  public readonly createdAt?: string;
+  public readonly updatedAt?: string;
 
   constructor(props: FinanceProps) {
-    if (props.amount <= 0) {
-      throw new Error("El monto de la transacción debe ser mayor a cero.");
+    if (!props.title || props.title.trim().length === 0) {
+      throw new Error("La transacción financiera debe tener un título.");
     }
 
-    if (!props.projectId) {
-      throw new Error(
-        "Toda transacción financiera debe estar vinculada a un proyecto.",
-      );
+    if (props.amount <= 0) {
+      throw new Error("El monto de la transacción debe ser mayor a cero.");
     }
 
     this.id = props.id;
     this.projectId = props.projectId;
     this.taskId = props.taskId;
     this.eventId = props.eventId;
-    this.isIncome = props.isIncome;
+    this.habitId = props.habitId;
     this.amount = props.amount;
-    this.date = props.date || new Date();
-    this.description = props.description?.trim();
+    this.currencyId = props.currencyId;
+    this.title = props.title.trim();
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
   }
 
   /**
-   * Transforma datos crudos de SQLite (donde booleanos son 0/1) a la Entidad.
+   * Transforma datos crudos de SQLite a la Entidad.
    */
   static fromDatabase(row: any): FinanceEntity {
     return new FinanceEntity({
@@ -49,25 +53,12 @@ export class FinanceEntity {
       projectId: row.project_id,
       taskId: row.task_id || undefined,
       eventId: row.event_id || undefined,
-      isIncome: Boolean(row.is_income),
+      habitId: row.habit_id || undefined,
       amount: row.amount,
-      date: new Date(row.date),
-      description: row.description,
+      currencyId: row.currency_id,
+      title: row.title,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     });
-  }
-
-  /**
-   * Devuelve el monto con el signo correspondiente para cálculos matemáticos.
-   */
-  get signedAmount(): number {
-    return this.isIncome ? this.amount : -this.amount;
-  }
-
-  /**
-   * Formateador básico para la UI.
-   */
-  get formattedAmount(): string {
-    const symbol = this.isIncome ? "+" : "-";
-    return `${symbol} $${this.amount.toLocaleString()}`;
   }
 }

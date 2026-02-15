@@ -5,12 +5,14 @@ export interface EventProps {
   startAt: Date;
   endAt: Date;
   description?: string;
-  recurrenceRule?: string; // RFC5545 RRULE
+  recurrenceRule?: string;
   locationName?: string;
   locationLat?: number;
   locationLon?: number;
   isExternal: boolean;
   externalId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export class EventEntity {
@@ -26,6 +28,8 @@ export class EventEntity {
   public readonly locationLon?: number;
   public readonly isExternal: boolean;
   public readonly externalId?: string;
+  public readonly createdAt?: string;
+  public readonly updatedAt?: string;
 
   constructor(props: EventProps) {
     // Validaciones de Negocio
@@ -51,6 +55,8 @@ export class EventEntity {
     this.locationLon = props.locationLon;
     this.isExternal = props.isExternal;
     this.externalId = props.externalId;
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
   }
 
   /**
@@ -70,6 +76,8 @@ export class EventEntity {
       locationLon: row.location_lon,
       isExternal: Boolean(row.is_external),
       externalId: row.external_id,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     });
   }
 
