@@ -75,6 +75,7 @@ export const initializeDatabase = async () => {
         completition_by INTEGER CHECK(completition_by > 0 AND completition_by < 3),
         count_goal INTEGER CHECK(count_goal > 0) DEFAULT 1,
         begin_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        recurrence_rule TEXT NOT NULL DEFAULT '',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE

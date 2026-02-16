@@ -7,6 +7,7 @@ import { CurrencyRepository } from "../database/repositories/CurrencyRepository"
 import { FinanceRepository } from "../database/repositories/FinanceRepository";
 import { FinanceExecutionRepository } from "../database/repositories/FinanceExecutionRepository";
 import { TaskRepository } from "../database/repositories/TaskRepository";
+import { HabitRepository } from "../database/repositories/HabitRepository";
 
 // Casos de Uso (Proyectos)
 import { CreateProjectUseCase } from "./useCases/projects/CreateProjectUseCase";
@@ -45,6 +46,13 @@ import { DeleteTaskUseCase } from "./useCases/tasks/DeleteTaskUseCase";
 import { GetTaskByIdUseCase } from "./useCases/tasks/GetTaskByIdUseCase";
 import { GetTasksByProjectUseCase } from "./useCases/tasks/GetTasksByProjectUseCase";
 
+// Casos de Uso (Hábitos)
+import { CreateHabitUseCase } from "./useCases/habits/CreateHabitUseCase";
+import { UpdateHabitUseCase } from "./useCases/habits/UpdateHabitUseCase";
+import { DeleteHabitUseCase } from "./useCases/habits/DeleteHabitUseCase";
+import { GetHabitByIdUseCase } from "./useCases/habits/GetHabitByIdUseCase";
+import { GetHabitsByProjectUseCase } from "./useCases/habits/GetHabitsByProjectUseCase";
+
 export class DependenciesManager {
   private projectRepo: ProjectRepository;
   private noteRepo: NoteRepository;
@@ -52,6 +60,7 @@ export class DependenciesManager {
   private financeRepo: FinanceRepository;
   private financeExecutionRepo: FinanceExecutionRepository;
   private taskRepo: TaskRepository;
+  private habitRepo: HabitRepository;
 
   public createProject: CreateProjectUseCase;
   public updateProject: UpdateProjectUseCase;
@@ -84,6 +93,12 @@ export class DependenciesManager {
   public getTaskById: GetTaskByIdUseCase;
   public getTasksByProject: GetTasksByProjectUseCase;
 
+  public createHabit: CreateHabitUseCase;
+  public updateHabit: UpdateHabitUseCase;
+  public deleteHabit: DeleteHabitUseCase;
+  public getHabitById: GetHabitByIdUseCase;
+  public getHabitsByProject: GetHabitsByProjectUseCase;
+
   constructor(db: SQLiteDatabase) {
     this.projectRepo = new ProjectRepository(db);
     this.noteRepo = new NoteRepository(db);
@@ -91,6 +106,7 @@ export class DependenciesManager {
     this.financeRepo = new FinanceRepository(db);
     this.financeExecutionRepo = new FinanceExecutionRepository(db);
     this.taskRepo = new TaskRepository(db);
+    this.habitRepo = new HabitRepository(db);
 
     this.createProject = new CreateProjectUseCase(this.projectRepo);
     this.updateProject = new UpdateProjectUseCase(this.projectRepo);
@@ -122,5 +138,11 @@ export class DependenciesManager {
     this.deleteTask = new DeleteTaskUseCase(this.taskRepo);
     this.getTaskById = new GetTaskByIdUseCase(this.taskRepo);
     this.getTasksByProject = new GetTasksByProjectUseCase(this.taskRepo);
+
+    this.createHabit = new CreateHabitUseCase(this.habitRepo);
+    this.updateHabit = new UpdateHabitUseCase(this.habitRepo);
+    this.deleteHabit = new DeleteHabitUseCase(this.habitRepo);
+    this.getHabitById = new GetHabitByIdUseCase(this.habitRepo);
+    this.getHabitsByProject = new GetHabitsByProjectUseCase(this.habitRepo);
   }
 }

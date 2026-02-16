@@ -10,6 +10,7 @@ export interface HabitProps {
   completitionBy?: number;
   countGoal?: number;
   beginAt?: string;
+  recurrenceRule?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -26,6 +27,7 @@ export class HabitEntity {
   public readonly completitionBy?: number;
   public readonly countGoal: number;
   public readonly beginAt?: string;
+  public readonly recurrenceRule: string;
   public readonly createdAt?: string;
   public readonly updatedAt?: string;
 
@@ -53,6 +55,7 @@ export class HabitEntity {
     this.completitionBy = props.completitionBy;
     this.countGoal = props.countGoal ?? 1;
     this.beginAt = props.beginAt;
+    this.recurrenceRule = props.recurrenceRule || "";
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
   }
@@ -70,6 +73,7 @@ export class HabitEntity {
       completitionBy: row.completition_by,
       countGoal: row.count_goal,
       beginAt: row.begin_at,
+      recurrenceRule: row.recurrence_rule || "",
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     });

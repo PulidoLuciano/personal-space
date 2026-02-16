@@ -27,6 +27,8 @@ export interface TranslationKeys {
     calendar: string;
     time: string;
     select_unit: string;
+    yes: string;
+    no: string;
   };
   tabs: {
     home: string;
@@ -117,5 +119,43 @@ export interface TranslationKeys {
     time_value_placeholder: string;
     habit_due_time_helper: string;
     select_unit: string;
+  };
+  habit: {
+    title_label: string;
+    title_placeholder: string;
+    title_required: string;
+    is_strict_label: string;
+    is_strict_helper: string;
+    due_time_label: string;
+    begin_at_label: string;
+    begin_at_placeholder: string;
+    location_label: string;
+    location_placeholder: string;
+    completion_by_label: string;
+    executions_count: string;
+    execution_time: string;
+    count_goal_label: string;
+    count_goal_placeholder: string;
+    count_goal_required: string;
+    time_goal_required: string;
+    recurrence_label: string;
+    recurrence_required: string;
+    every: string;
+    until: string;
+    frequency: string;
+    interval: string;
+    on_days: string;
+    on_day_of_month: string;
+    ends: string;
+    end_never: string;
+    end_count: string;
+    end_until: string;
+    times: string;
+    select_end_date: string;
+    daily: string;
+    weekly: string;
+    monthly: string;
+    yearly: string;
+    recurrence: string;
   };
 }

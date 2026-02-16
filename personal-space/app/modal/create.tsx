@@ -17,6 +17,7 @@ import { ProjectEntity } from "@/core/entities/ProjectEntity";
 import { NoteForm } from "@/components/forms/NoteForm";
 import { FinanceForm } from "@/components/forms/FinanceForm";
 import { TaskForm } from "@/components/forms/TaskForm";
+import { HabitForm } from "@/components/forms/HabitForm";
 
 export default function CreateModal() {
   const router = useRouter();
@@ -51,13 +52,14 @@ export default function CreateModal() {
   }, [initialProject]);
 
   const accentColor = selectedProject?.color;
-  const isEditing = !!noteId || !!financeId || !!taskId;
+  const isEditing = !!noteId || !!financeId || !!taskId || !!habitId;
   const isEditingTask = !!taskId;
+  const isEditingHabit = !!habitId;
   const isAssociated = !!taskId || !!eventId || !!habitId;
   const showNoteForm = selectedType === "note" && selectedProject;
   const showFinanceForm = selectedType === "finance" && (selectedProject || isAssociated || financeId);
   const showTaskForm = (selectedType === "task" || isEditingTask) && selectedProject && taskHabitType === "task";
-  const showHabitForm = selectedType === "task" && selectedProject && taskHabitType === "habit";
+  const showHabitForm = (selectedType === "task" || isEditingHabit) && selectedProject && taskHabitType === "habit";
 
   const handleSave = () => {
     router.back();
@@ -150,10 +152,13 @@ export default function CreateModal() {
               />
             </View>
 ) : showHabitForm ? (
-            <View style={styles.formPlaceholder}>
-              <MyText variant="h2" weight="semi" color="textMuted">
-                {t("create.form_habit", { defaultValue: "Formulario de Hábito" })}
-              </MyText>
+            <View style={styles.formContainer}>
+              <HabitForm
+                projectId={selectedProject?.id || parseInt(projectId!)}
+                habitId={habitId ? parseInt(habitId) : undefined}
+                onSave={handleSave}
+                onCancel={handleCancel}
+              />
             </View>
           ) : (
             <View style={styles.formPlaceholder}>
