@@ -41,13 +41,13 @@ export class HabitRepository extends BaseRepository<HabitData> {
     projectId: number;
     isStrict?: boolean;
     title: string;
-    dueMinutes?: number;
-    locationName?: string;
-    locationLat?: number;
-    locationLon?: number;
-    completitionBy?: number;
+    dueMinutes?: number | null;
+    locationName?: string | null;
+    locationLat?: number | null;
+    locationLon?: number | null;
+    completitionBy?: number | null;
     countGoal?: number;
-    beginAt?: string;
+    beginAt?: string | null;
     recurrenceRule?: string;
   }): Promise<number> {
     const result = await this.db.runAsync(
@@ -78,13 +78,13 @@ export class HabitRepository extends BaseRepository<HabitData> {
     data: {
       isStrict?: boolean;
       title?: string;
-      dueMinutes?: number;
-      locationName?: string;
-      locationLat?: number;
-      locationLon?: number;
-      completitionBy?: number;
+      dueMinutes?: number | null;
+      locationName?: string | null;
+      locationLat?: number | null;
+      locationLon?: number | null;
+      completitionBy?: number | null;
       countGoal?: number;
-      beginAt?: string;
+      beginAt?: string | null;
       recurrenceRule?: string;
     }
   ): Promise<void> {

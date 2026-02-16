@@ -1,5 +1,6 @@
 import { TaskRepository } from "@/database/repositories/TaskRepository";
 import { TaskEntity } from "@/core/entities/TaskEntity";
+import { taskEvents, TASK_CHANGED } from "@/utils/events/TaskEvents";
 
 export class CreateTaskUseCase {
   constructor(private taskRepo: TaskRepository) {}
@@ -33,6 +34,8 @@ export class CreateTaskUseCase {
       completition_by: task.completitionBy || null,
       count_goal: task.countGoal,
     } as any);
+
+    taskEvents.emit(TASK_CHANGED, { projectId: task.projectId, taskId: id });
 
     return id;
   }

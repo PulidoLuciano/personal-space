@@ -8,6 +8,7 @@ import { FinanceRepository } from "../database/repositories/FinanceRepository";
 import { FinanceExecutionRepository } from "../database/repositories/FinanceExecutionRepository";
 import { TaskRepository } from "../database/repositories/TaskRepository";
 import { HabitRepository } from "../database/repositories/HabitRepository";
+import { TaskExecutionRepository } from "../database/repositories/TaskExecutionRepository";
 
 // Casos de Uso (Proyectos)
 import { CreateProjectUseCase } from "./useCases/projects/CreateProjectUseCase";
@@ -53,6 +54,13 @@ import { DeleteHabitUseCase } from "./useCases/habits/DeleteHabitUseCase";
 import { GetHabitByIdUseCase } from "./useCases/habits/GetHabitByIdUseCase";
 import { GetHabitsByProjectUseCase } from "./useCases/habits/GetHabitsByProjectUseCase";
 
+// Casos de Uso (Ejecuciones de Tareas)
+import { CreateTaskExecutionUseCase } from "./useCases/taskExecutions/CreateTaskExecutionUseCase";
+import { UpdateTaskExecutionUseCase } from "./useCases/taskExecutions/UpdateTaskExecutionUseCase";
+import { DeleteTaskExecutionUseCase } from "./useCases/taskExecutions/DeleteTaskExecutionUseCase";
+import { GetTaskExecutionsByTaskUseCase } from "./useCases/taskExecutions/GetTaskExecutionsByTaskUseCase";
+import { GetTaskProgressUseCase } from "./useCases/taskExecutions/GetTaskProgressUseCase";
+
 export class DependenciesManager {
   private projectRepo: ProjectRepository;
   private noteRepo: NoteRepository;
@@ -61,6 +69,7 @@ export class DependenciesManager {
   private financeExecutionRepo: FinanceExecutionRepository;
   private taskRepo: TaskRepository;
   private habitRepo: HabitRepository;
+  private taskExecutionRepo: TaskExecutionRepository;
 
   public createProject: CreateProjectUseCase;
   public updateProject: UpdateProjectUseCase;
@@ -99,6 +108,12 @@ export class DependenciesManager {
   public getHabitById: GetHabitByIdUseCase;
   public getHabitsByProject: GetHabitsByProjectUseCase;
 
+  public createTaskExecution: CreateTaskExecutionUseCase;
+  public updateTaskExecution: UpdateTaskExecutionUseCase;
+  public deleteTaskExecution: DeleteTaskExecutionUseCase;
+  public getTaskExecutionsByTask: GetTaskExecutionsByTaskUseCase;
+  public getTaskProgress: GetTaskProgressUseCase;
+
   constructor(db: SQLiteDatabase) {
     this.projectRepo = new ProjectRepository(db);
     this.noteRepo = new NoteRepository(db);
@@ -107,6 +122,7 @@ export class DependenciesManager {
     this.financeExecutionRepo = new FinanceExecutionRepository(db);
     this.taskRepo = new TaskRepository(db);
     this.habitRepo = new HabitRepository(db);
+    this.taskExecutionRepo = new TaskExecutionRepository(db);
 
     this.createProject = new CreateProjectUseCase(this.projectRepo);
     this.updateProject = new UpdateProjectUseCase(this.projectRepo);
@@ -144,5 +160,12 @@ export class DependenciesManager {
     this.deleteHabit = new DeleteHabitUseCase(this.habitRepo);
     this.getHabitById = new GetHabitByIdUseCase(this.habitRepo);
     this.getHabitsByProject = new GetHabitsByProjectUseCase(this.habitRepo);
+
+    this.taskExecutionRepo = new TaskExecutionRepository(db);
+    this.createTaskExecution = new CreateTaskExecutionUseCase(this.taskExecutionRepo, this.taskRepo);
+    this.updateTaskExecution = new UpdateTaskExecutionUseCase(this.taskExecutionRepo, this.taskRepo);
+    this.deleteTaskExecution = new DeleteTaskExecutionUseCase(this.taskExecutionRepo, this.taskRepo);
+    this.getTaskExecutionsByTask = new GetTaskExecutionsByTaskUseCase(this.taskExecutionRepo);
+    this.getTaskProgress = new GetTaskProgressUseCase(this.taskExecutionRepo);
   }
 }

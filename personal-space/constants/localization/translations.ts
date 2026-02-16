@@ -101,6 +101,7 @@ export interface TranslationKeys {
     no_finances: string;
   };
   task: {
+    section_title: string;
     title_label: string;
     title_placeholder: string;
     title_required: string;
@@ -119,6 +120,20 @@ export interface TranslationKeys {
     time_value_placeholder: string;
     habit_due_time_helper: string;
     select_unit: string;
+    executions_label: string;
+    no_executions: string;
+    progress_label: string;
+    progress_count: string;
+    progress_time: string;
+    complete: string;
+    incomplete: string;
+    start_execution: string;
+    stop_execution: string;
+    delete_execution: string;
+    delete_confirm: string;
+    edit_task: string;
+    delete_task: string;
+    task_detail: string;
   };
   habit: {
     title_label: string;
@@ -157,5 +172,15 @@ export interface TranslationKeys {
     monthly: string;
     yearly: string;
     recurrence: string;
+    today: string;
+    tomorrow: string;
+    days: string;
+  };
+  habits: {
+    section_title: string;
+    no_habits: string;
+    edit_habit: string;
+    delete_habit: string;
+    delete_confirm: string;
   };
 }

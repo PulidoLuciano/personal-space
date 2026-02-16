@@ -36,10 +36,15 @@ export const useTasks = () => {
     return await controller.getTaskById.execute(id);
   };
 
+  const getTasksByProject = async (projectId: number): Promise<TaskEntity[]> => {
+    return await controller.getTasksByProject.execute(projectId);
+  };
+
   return {
     createTask,
     updateTask,
     deleteTask,
     getTaskById,
+    getTasksByProject,
   };
 };

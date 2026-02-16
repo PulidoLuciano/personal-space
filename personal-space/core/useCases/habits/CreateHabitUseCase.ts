@@ -1,5 +1,6 @@
 import { HabitRepository } from "@/database/repositories/HabitRepository";
 import { HabitEntity } from "@/core/entities/HabitEntity";
+import { habitEvents, HABIT_CHANGED } from "@/utils/events/HabitEvents";
 
 export class CreateHabitUseCase {
   constructor(private habitRepo: HabitRepository) {}
@@ -44,6 +45,8 @@ export class CreateHabitUseCase {
       beginAt: habit.beginAt,
       recurrenceRule: habit.recurrenceRule,
     });
+
+    habitEvents.emit(HABIT_CHANGED, { projectId: habit.projectId, habitId: id });
 
     return id;
   }

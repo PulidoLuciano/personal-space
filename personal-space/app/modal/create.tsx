@@ -37,8 +37,8 @@ export default function CreateModal() {
   const [selectedProject, setSelectedProject] = useState<ProjectEntity | null>(
     null
   );
-  const [selectedType, setSelectedType] = useState<ElementType>(noteId ? "note" : (financeId ? "finance" : "event"));
-  const [taskHabitType, setTaskHabitType] = useState<TaskHabitType>("task");
+  const [selectedType, setSelectedType] = useState<ElementType>(noteId ? "note" : (financeId ? "finance" : (habitId ? "task" : "event")));
+  const [taskHabitType, setTaskHabitType] = useState<TaskHabitType>(habitId ? "habit" : "task");
 
   const initialProject = useMemo(() => {
     if (!projectId) return null;
@@ -77,7 +77,23 @@ export default function CreateModal() {
       >
         <View style={styles.header}>
           <MyText variant="h2" weight="bold">
-            {isEditingTask ? t("create.task") : (isEditing ? (selectedType === "note" ? t("create.note") : t("create.finance")) : (showNoteForm ? t("create.note") : (showFinanceForm ? t("create.finance") : (showTaskForm ? t("create.task") : (showHabitForm ? t("create.habit") : t("common.save"))))))}
+            {isEditingHabit
+              ? t("create.habit")
+              : isEditingTask
+              ? t("create.task")
+              : isEditing
+              ? selectedType === "note"
+                ? t("create.note")
+                : t("create.finance")
+              : showNoteForm
+              ? t("create.note")
+              : showFinanceForm
+              ? t("create.finance")
+              : showTaskForm
+              ? t("create.task")
+              : showHabitForm
+              ? t("create.habit")
+              : t("common.save")}
           </MyText>
 
           <Pressable
