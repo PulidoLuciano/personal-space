@@ -161,12 +161,14 @@ export const initializeDatabase = async () => {
       CREATE TABLE IF NOT EXISTS finance_executions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         finance_id INTEGER,
+        project_id INTEGER NOT NULL,
         date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         amount REAL NOT NULL DEFAULT 0,
         currency_id INTEGER NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (finance_id) REFERENCES finances (id) ON DELETE SET NULL,
+        FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE,
         FOREIGN KEY (currency_id) REFERENCES currencies (id) ON DELETE NO ACTION
       );
     `);

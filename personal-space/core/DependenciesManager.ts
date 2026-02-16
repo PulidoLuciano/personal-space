@@ -5,6 +5,8 @@ import { ProjectRepository } from "../database/repositories/ProjectRepository";
 import { NoteRepository } from "../database/repositories/NoteRepository";
 import { CurrencyRepository } from "../database/repositories/CurrencyRepository";
 import { FinanceRepository } from "../database/repositories/FinanceRepository";
+import { FinanceExecutionRepository } from "../database/repositories/FinanceExecutionRepository";
+import { TaskRepository } from "../database/repositories/TaskRepository";
 
 // Casos de Uso (Proyectos)
 import { CreateProjectUseCase } from "./useCases/projects/CreateProjectUseCase";
@@ -28,12 +30,28 @@ import { CreateFinanceUseCase } from "./useCases/finances/CreateFinanceUseCase";
 import { UpdateFinanceUseCase } from "./useCases/finances/UpdateFinanceUseCase";
 import { DeleteFinanceUseCase } from "./useCases/finances/DeleteFinanceUseCase";
 import { GetFinanceByIdUseCase } from "./useCases/finances/GetFinanceByIdUseCase";
+import { GetFinancesByProjectUseCase } from "./useCases/finances/GetFinancesByProjectUseCase";
+
+// Casos de Uso (Ejecuciones de Finanzas)
+import { CreateFinanceExecutionUseCase } from "./useCases/financeExecutions/CreateFinanceExecutionUseCase";
+import { DeleteFinanceExecutionUseCase } from "./useCases/financeExecutions/DeleteFinanceExecutionUseCase";
+import { GetFinanceExecutionsByProjectUseCase } from "./useCases/financeExecutions/GetFinanceExecutionsByProjectUseCase";
+import { GetProjectTotalAmountUseCase } from "./useCases/financeExecutions/GetProjectTotalAmountUseCase";
+
+// Casos de Uso (Tareas)
+import { CreateTaskUseCase } from "./useCases/tasks/CreateTaskUseCase";
+import { UpdateTaskUseCase } from "./useCases/tasks/UpdateTaskUseCase";
+import { DeleteTaskUseCase } from "./useCases/tasks/DeleteTaskUseCase";
+import { GetTaskByIdUseCase } from "./useCases/tasks/GetTaskByIdUseCase";
+import { GetTasksByProjectUseCase } from "./useCases/tasks/GetTasksByProjectUseCase";
 
 export class DependenciesManager {
   private projectRepo: ProjectRepository;
   private noteRepo: NoteRepository;
   private currencyRepo: CurrencyRepository;
   private financeRepo: FinanceRepository;
+  private financeExecutionRepo: FinanceExecutionRepository;
+  private taskRepo: TaskRepository;
 
   public createProject: CreateProjectUseCase;
   public updateProject: UpdateProjectUseCase;
@@ -53,12 +71,26 @@ export class DependenciesManager {
   public updateFinance: UpdateFinanceUseCase;
   public deleteFinance: DeleteFinanceUseCase;
   public getFinanceById: GetFinanceByIdUseCase;
+  public getFinancesByProject: GetFinancesByProjectUseCase;
+
+  public createFinanceExecution: CreateFinanceExecutionUseCase;
+  public deleteFinanceExecution: DeleteFinanceExecutionUseCase;
+  public getFinanceExecutionsByProject: GetFinanceExecutionsByProjectUseCase;
+  public getProjectTotalAmount: GetProjectTotalAmountUseCase;
+
+  public createTask: CreateTaskUseCase;
+  public updateTask: UpdateTaskUseCase;
+  public deleteTask: DeleteTaskUseCase;
+  public getTaskById: GetTaskByIdUseCase;
+  public getTasksByProject: GetTasksByProjectUseCase;
 
   constructor(db: SQLiteDatabase) {
     this.projectRepo = new ProjectRepository(db);
     this.noteRepo = new NoteRepository(db);
     this.currencyRepo = new CurrencyRepository(db);
     this.financeRepo = new FinanceRepository(db);
+    this.financeExecutionRepo = new FinanceExecutionRepository(db);
+    this.taskRepo = new TaskRepository(db);
 
     this.createProject = new CreateProjectUseCase(this.projectRepo);
     this.updateProject = new UpdateProjectUseCase(this.projectRepo);
@@ -78,5 +110,17 @@ export class DependenciesManager {
     this.updateFinance = new UpdateFinanceUseCase(this.financeRepo);
     this.deleteFinance = new DeleteFinanceUseCase(this.financeRepo);
     this.getFinanceById = new GetFinanceByIdUseCase(this.financeRepo);
+    this.getFinancesByProject = new GetFinancesByProjectUseCase(this.financeRepo);
+
+    this.createFinanceExecution = new CreateFinanceExecutionUseCase(this.financeExecutionRepo);
+    this.deleteFinanceExecution = new DeleteFinanceExecutionUseCase(this.financeExecutionRepo);
+    this.getFinanceExecutionsByProject = new GetFinanceExecutionsByProjectUseCase(this.financeExecutionRepo);
+    this.getProjectTotalAmount = new GetProjectTotalAmountUseCase(this.financeExecutionRepo);
+
+    this.createTask = new CreateTaskUseCase(this.taskRepo);
+    this.updateTask = new UpdateTaskUseCase(this.taskRepo);
+    this.deleteTask = new DeleteTaskUseCase(this.taskRepo);
+    this.getTaskById = new GetTaskByIdUseCase(this.taskRepo);
+    this.getTasksByProject = new GetTasksByProjectUseCase(this.taskRepo);
   }
 }

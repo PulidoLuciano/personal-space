@@ -77,6 +77,14 @@ export default function RootLayout() {
                   contentStyle: { backgroundColor: "transparent" },
                 }}
               />
+              <Stack.Screen
+                name="modal/create-finance-execution"
+                options={{
+                  presentation: "modal",
+                  headerShown: false,
+                  contentStyle: { backgroundColor: "transparent" },
+                }}
+              />
             </Stack>
           </ThemeProvider>
         </LocalizationProvider>

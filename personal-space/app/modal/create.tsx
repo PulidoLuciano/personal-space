@@ -12,9 +12,11 @@ import {
   ProjectSelectorTrigger,
 } from "@/components/ui/ProjectSelector";
 import { TypeSelector, ElementType } from "@/components/ui/TypeSelector";
+import { TypeSelectorTaskHabit, TaskHabitType } from "@/components/ui/TypeSelectorTaskHabit";
 import { ProjectEntity } from "@/core/entities/ProjectEntity";
 import { NoteForm } from "@/components/forms/NoteForm";
 import { FinanceForm } from "@/components/forms/FinanceForm";
+import { TaskForm } from "@/components/forms/TaskForm";
 
 export default function CreateModal() {
   const router = useRouter();
@@ -35,6 +37,7 @@ export default function CreateModal() {
     null
   );
   const [selectedType, setSelectedType] = useState<ElementType>(noteId ? "note" : (financeId ? "finance" : "event"));
+  const [taskHabitType, setTaskHabitType] = useState<TaskHabitType>("task");
 
   const initialProject = useMemo(() => {
     if (!projectId) return null;
@@ -48,10 +51,13 @@ export default function CreateModal() {
   }, [initialProject]);
 
   const accentColor = selectedProject?.color;
-  const isEditing = !!noteId || !!financeId;
+  const isEditing = !!noteId || !!financeId || !!taskId;
+  const isEditingTask = !!taskId;
   const isAssociated = !!taskId || !!eventId || !!habitId;
   const showNoteForm = selectedType === "note" && selectedProject;
   const showFinanceForm = selectedType === "finance" && (selectedProject || isAssociated || financeId);
+  const showTaskForm = (selectedType === "task" || isEditingTask) && selectedProject && taskHabitType === "task";
+  const showHabitForm = selectedType === "task" && selectedProject && taskHabitType === "habit";
 
   const handleSave = () => {
     router.back();
@@ -69,7 +75,7 @@ export default function CreateModal() {
       >
         <View style={styles.header}>
           <MyText variant="h2" weight="bold">
-            {isEditing ? (selectedType === "note" ? t("create.note") : t("create.finance")) : (showNoteForm ? t("create.note") : (showFinanceForm ? t("create.finance") : t("common.save")))}
+            {isEditingTask ? t("create.task") : (isEditing ? (selectedType === "note" ? t("create.note") : t("create.finance")) : (showNoteForm ? t("create.note") : (showFinanceForm ? t("create.finance") : (showTaskForm ? t("create.task") : (showHabitForm ? t("create.habit") : t("common.save"))))))}
           </MyText>
 
           <Pressable
@@ -100,10 +106,20 @@ export default function CreateModal() {
                   accentColor={accentColor}
                 />
               </View>
+
+              {selectedType === "task" && (
+                <View style={styles.section}>
+                  <TypeSelectorTaskHabit
+                    selectedType={taskHabitType}
+                    onSelect={setTaskHabitType}
+                    accentColor={accentColor}
+                  />
+                </View>
+              )}
             </>
           )}
 
-          {showNoteForm || isEditing ? (
+          {showNoteForm && !financeId ? (
             <View style={styles.formContainer}>
               <NoteForm
                 projectId={selectedProject?.id || parseInt(projectId!)}
@@ -112,7 +128,7 @@ export default function CreateModal() {
                 onCancel={handleCancel}
               />
             </View>
-          ) : showFinanceForm ? (
+          ) : showFinanceForm || financeId ? (
             <View style={styles.formContainer}>
               <FinanceForm
                 projectId={selectedProject?.id || parseInt(projectId!)}
@@ -123,6 +139,21 @@ export default function CreateModal() {
                 onSave={handleSave}
                 onCancel={handleCancel}
               />
+            </View>
+          ) : showTaskForm || isEditingTask ? (
+            <View style={styles.formContainer}>
+              <TaskForm
+                projectId={selectedProject?.id || parseInt(projectId!)}
+                taskId={taskId ? parseInt(taskId) : undefined}
+                onSave={handleSave}
+                onCancel={handleCancel}
+              />
+            </View>
+) : showHabitForm ? (
+            <View style={styles.formPlaceholder}>
+              <MyText variant="h2" weight="semi" color="textMuted">
+                {t("create.form_habit", { defaultValue: "Formulario de Hábito" })}
+              </MyText>
             </View>
           ) : (
             <View style={styles.formPlaceholder}>

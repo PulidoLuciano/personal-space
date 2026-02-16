@@ -92,7 +92,7 @@ export const FinanceForm: React.FC<FinanceFormProps> = ({
     }
 
     const amount = parseFloat(data.amount);
-    if (isNaN(amount) || amount <= 0) {
+    if (isNaN(amount)) {
       Alert.alert(t("common.error"), t("finance.amount_required"));
       return;
     }

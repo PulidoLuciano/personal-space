@@ -28,10 +28,6 @@ export class FinanceEntity {
       throw new Error("La transacción financiera debe tener un título.");
     }
 
-    if (props.amount <= 0) {
-      throw new Error("El monto de la transacción debe ser mayor a cero.");
-    }
-
     this.id = props.id;
     this.projectId = props.projectId;
     this.taskId = props.taskId;

@@ -1,6 +1,7 @@
 export interface FinanceExecutionProps {
   id?: number;
   financeId?: number;
+  projectId?: number;
   date: string;
   amount: number;
   currencyId: number;
@@ -11,6 +12,7 @@ export interface FinanceExecutionProps {
 export class FinanceExecutionEntity {
   public readonly id?: number;
   public readonly financeId?: number;
+  public readonly projectId?: number;
   public readonly date: string;
   public readonly amount: number;
   public readonly currencyId: number;
@@ -22,12 +24,9 @@ export class FinanceExecutionEntity {
       throw new Error("La ejecución financiera debe tener una fecha.");
     }
 
-    if (props.amount < 0) {
-      throw new Error("El monto de la ejecución no puede ser negativo.");
-    }
-
     this.id = props.id;
     this.financeId = props.financeId;
+    this.projectId = props.projectId;
     this.date = props.date;
     this.amount = props.amount;
     this.currencyId = props.currencyId;
@@ -39,6 +38,7 @@ export class FinanceExecutionEntity {
     return new FinanceExecutionEntity({
       id: row.id,
       financeId: row.finance_id || undefined,
+      projectId: row.project_id || undefined,
       date: row.date,
       amount: row.amount,
       currencyId: row.currency_id,

@@ -31,10 +31,21 @@ export const useFinances = () => {
     return await controller.getFinanceById.execute(id);
   };
 
+  const createFinanceExecution = async (data: {
+    financeId: number;
+    projectId: number;
+    date: string;
+    amount: number;
+    currencyId: number;
+  }): Promise<number> => {
+    return await controller.createFinanceExecution.execute(data);
+  };
+
   return {
     createFinance,
     updateFinance,
     deleteFinance,
     getFinanceById,
+    createFinanceExecution,
   };
 };
