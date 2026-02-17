@@ -1,0 +1,35 @@
+{
+  "name": "personal-space-core",
+  "version": "1.0.0",
+  "description": "This is the core domain and functionality for personal-space app",
+  "keywords": [
+    "Events",
+    "tasks",
+    "personal",
+    "organization",
+    "agenda",
+    "finances"
+  ],
+  "homepage": "https://github.com/PulidoLuciano/personal-space#readme",
+  "bugs": {
+    "url": "https://github.com/PulidoLuciano/personal-space/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PulidoLuciano/personal-space.git"
+  },
+  "license": "ISC",
+  "author": "Luciano Pulido",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}
