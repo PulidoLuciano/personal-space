@@ -1,0 +1,33 @@
+{
+  "name": "@personal-space/cli",
+  "version": "1.0.0",
+  "description": "Personal Space CLI",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "personal-space": "./bin/run.js"
+  },
+  "oclif": {
+    "bin": "personal-space",
+    "commands": "./dist"
+  },
+  "scripts": {
+    "dev": "node --loader ts-node/esm bin/run.js",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@oclif/core": "^3",
+    "@oclif/plugin-help": "^5",
+    "@personal-space/db": "^1.0.0",
+    "@personal-space/logic": "^1.0.0"
+  },
+  "devDependencies": {
+    "oclif": "^4",
+    "ts-node": "^10",
+    "typescript": "^5.0.0"
+  }
+}
