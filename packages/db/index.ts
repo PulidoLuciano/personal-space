@@ -3,11 +3,12 @@ import { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import * as schema from "./schema";
 
 export * from "./schema";
-export * from "./seed"; // <--- Add this line
+export * from "./seed";
+export * from "./migrations";
 
 export type PersonalSpaceDB = BaseSQLiteDatabase<
   "sync" | "async",
-  void,
+  unknown,
   typeof schema,
   ExtractTablesWithRelations<typeof schema>
 >;

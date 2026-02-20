@@ -11,11 +11,14 @@ config.watchFolders = [workspaceRoot];
 config.resolver.extraNodeModules = {
   react: path.resolve(projectRoot, 'node_modules/react'),
   'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
+  '@personal-space/db': path.resolve(workspaceRoot, 'packages/db'),
 };
 
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),
 ];
+
+config.resolver.sourceExts = [...config.resolver.sourceExts, 'sql'];
 
 module.exports = config;

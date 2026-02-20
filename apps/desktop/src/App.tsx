@@ -1,15 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
+import { initDatabase } from "./lib/db";
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
+  const [dbReady, setDbReady] = useState(false);
+  const [dbError, setDbError] = useState<string | null>(null);
+
+  useEffect(() => {
+    initDatabase()
+      .then(() => setDbReady(true))
+      .catch((err) => {
+        console.error("[App] DB init error:", err);
+        setDbError(err.message);
+      });
+  }, []);
 
   async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
     setGreetMsg(await invoke("greet", { name }));
+  }
+
+  if (dbError) {
+    return <div>Database Error: {dbError}</div>;
+  }
+
+  if (!dbReady) {
+    return <div>Loading...</div>;
   }
 
   return (
