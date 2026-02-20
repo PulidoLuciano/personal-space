@@ -5,6 +5,7 @@ import * as schema from "./schema";
 export * from "./schema";
 export * from "./seed";
 export * from "./migrations";
+export * from "./zod";
 
 export type PersonalSpaceDB = BaseSQLiteDatabase<
   "sync" | "async",
