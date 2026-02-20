@@ -9,10 +9,10 @@
   },
   "oclif": {
     "bin": "personal-space",
-    "commands": "./dist"
+    "commands": "./src/commands"
   },
   "scripts": {
-    "dev": "node --loader ts-node/esm bin/run.js",
+    "dev": "tsx ./bin/run.js",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -31,6 +31,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "oclif": "^4",
     "ts-node": "^10",
+    "tsx": "^4.21.0",
     "typescript": "^5.0.0"
   }
 }
