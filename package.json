@@ -1,0 +1,24 @@
+{
+  "name": "personal-space",
+  "private": true,
+  "version": "0.0.0",
+  "description": "This is the monorepo for personal-space a local-first personal organization app.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Personal organization",
+    "Events",
+    "Tasks",
+    "Agenda",
+    "Notes",
+    "Finances",
+    "Life"
+  ],
+  "author": "Luciano Pulido",
+  "license": "ISC",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
