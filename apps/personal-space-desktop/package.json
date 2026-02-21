@@ -10,9 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tauri-apps/plugin-sql": "^2.3.2",
+    "personal-space-core": "*",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "personal-space-core": "*"
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

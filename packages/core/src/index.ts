@@ -1,3 +1,5 @@
-const hello = "Hola mundo como andan esto es el core";
+import type { DBClient } from "./database/index.js";
+export type { DBClient };
 
-export { hello };
+import { testDatabase, sumSql } from "./database/index.js";
+export { testDatabase, sumSql };

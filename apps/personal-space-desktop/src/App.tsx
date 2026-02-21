@@ -2,11 +2,13 @@ import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
-import { hello } from "personal-space-core";
+import { db } from "./lib/db";
+import { sumSql, testDatabase } from "personal-space-core";
 
 function App() {
   const [count, setCount] = useState(0);
-  console.log(hello);
+  console.log(sumSql(db));
+  console.log(testDatabase(db));
 
   return (
     <>

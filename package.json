@@ -20,5 +20,8 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@tauri-apps/plugin-sql": "^2.3.2"
+  }
 }

@@ -1,3 +1,3 @@
-const hello = "Hola mundo como andan esto es el core";
-export { hello };
+import { testDatabase, sumSql } from "./database/index.js";
+export { testDatabase, sumSql };
 //# sourceMappingURL=index.js.map
