@@ -76,7 +76,7 @@ export abstract class BaseRepository<T> {
    */
   async getAll(columns: (keyof T)[] = []): Promise<T[]> {
     const selectedColumns = columns.length > 0 ? columns.join(", ") : "*";
-    const query = `SELECT ${selectedColumns} FROM ${this.tableName};`;
+    const query = `SELECT ${selectedColumns} FROM ${this.tableName} WHERE is_deleted = FALSE;`;
     return await this.db.query<T>(query);
   }
 
@@ -88,7 +88,7 @@ export abstract class BaseRepository<T> {
     columns: (keyof T)[] = [],
   ): Promise<T | null> {
     const selectedColumns = columns.length > 0 ? columns.join(", ") : "*";
-    const query = `SELECT ${selectedColumns} FROM ${this.tableName} WHERE id = ?;`;
+    const query = `SELECT ${selectedColumns} FROM ${this.tableName} WHERE id = ? AND is_deleted = FALSE;`;
     const result = await this.db.queryOne<T>(query, [id]);
     return result ?? null;
   }
@@ -159,7 +159,7 @@ export abstract class BaseRepository<T> {
    * Elimina un registro de forma permanente.
    */
   async delete(id: number | string): Promise<void> {
-    const query = `DELETE FROM ${this.tableName} WHERE id = ?;`;
+    const query = `UPDATE ${this.tableName} SET is_deleted = TRUE WHERE id = ?;`;
     await this.db.execute(query, [id]);
   }
 
@@ -167,7 +167,7 @@ export abstract class BaseRepository<T> {
    * Cuenta el total de registros en la tabla.
    */
   async count(): Promise<number> {
-    const query = `SELECT COUNT(*) as total FROM ${this.tableName};`;
+    const query = `SELECT COUNT(*) as total FROM ${this.tableName} WHERE is_deleted = FALSE;`;
     const result = await this.db.queryOne<{ total: number }>(query);
     return result?.total || 0;
   }
