@@ -9,5 +9,8 @@
     "build": "tsc"
   },
   "author": "Luciano Pulido",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
 }
