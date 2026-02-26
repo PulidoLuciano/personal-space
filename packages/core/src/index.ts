@@ -4,7 +4,7 @@ export type { DBClient };
 import ProjectsRepository from "./database/repositories/ProjectsRepository.js";
 import ProjectsService from "./services/ProjectsService.js";
 
-export class PersonalCore {
+export default class PersonalCore {
   protected db: DBClient;
   private _projectService: ProjectsService | null;
 
