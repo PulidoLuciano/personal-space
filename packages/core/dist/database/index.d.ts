@@ -6,6 +6,5 @@ export interface DBClient {
         changes: number;
     }>;
 }
-export declare function testDatabase(db: DBClient): Promise<string | undefined>;
-export declare function sumSql(db: DBClient): Promise<number | undefined>;
+export declare function createDatabase(db: DBClient): Promise<void>;
 //# sourceMappingURL=index.d.ts.map

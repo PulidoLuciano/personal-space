@@ -4,14 +4,14 @@ import {DBClient} from 'personal-space-core'
 const sqlite = new Database('personal-space.db')
 
 export const db: DBClient = {
-  query: async (sql: string, params = []) => {
+  async execute(sql: string, params = []) {
+    const info = sqlite.prepare(sql).run(...params)
+    return {changes: info.changes, insertId: info.lastInsertRowid}
+  },
+  async query(sql: string, params = []) {
     return sqlite.prepare(sql).all(...params) as any[]
   },
-  queryOne: async (sql: string, params = []) => {
+  async queryOne(sql: string, params = []) {
     return sqlite.prepare(sql).get(...params) as any
-  },
-  execute: async (sql: string, params = []) => {
-    const info = sqlite.prepare(sql).run(...params)
-    return {insertId: info.lastInsertRowid, changes: info.changes}
   },
 }

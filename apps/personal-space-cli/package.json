@@ -59,6 +59,9 @@
     "topics": {
       "hello": {
         "description": "Say hello to the world and others"
+      },
+      "project": {
+        "description": "Manage projects"
       }
     }
   },

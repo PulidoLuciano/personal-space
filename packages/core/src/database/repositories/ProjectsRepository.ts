@@ -62,6 +62,7 @@ export default class ProjectsRepository extends BaseRepository<Project> {
   }
 
   public async archiveProject(id: string) {
-    super.update(id, { is_archived: true });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    super.update(id, { is_archived: 1, updated_at: new Date().toISOString() } as any);
   }
 }

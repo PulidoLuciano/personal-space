@@ -1,6 +1,7 @@
 import {Command} from '@oclif/core'
+import PersonalCore from 'personal-space-core'
+
 import {db} from '../../lib/db.js'
-import {testDatabase, sumSql} from 'personal-space-core'
 
 export default class World extends Command {
   static args = {}
@@ -13,8 +14,7 @@ hello world! (./src/commands/hello/world.ts)
   static flags = {}
 
   async run(): Promise<void> {
+    const core = new PersonalCore(db)
     this.log('hello world! (./src/commands/hello/world.ts)')
-    this.log(await testDatabase(db))
-    this.log(await sumSql(db)?.toString())
   }
 }
