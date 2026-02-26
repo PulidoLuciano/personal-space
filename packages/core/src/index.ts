@@ -1,4 +1,4 @@
-import type { DBClient } from "./database/index.js";
+import { createDatabase, type DBClient } from "./database/index.js";
 export type { DBClient };
 
 import ProjectsRepository from "./database/repositories/ProjectsRepository.js";
@@ -19,5 +19,7 @@ export default class PersonalCore {
   constructor(db: DBClient) {
     this.db = db;
     this._projectService = null;
+
+    createDatabase(this.db);
   }
 }
