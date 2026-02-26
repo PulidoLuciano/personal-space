@@ -1,14 +1,36 @@
 import type ProjectsRepository from "../database/repositories/ProjectsRepository.js";
-import type { Project } from "../schemas/project.js";
+import type { InsertProject, Project } from "../schemas/project.js";
+import BaseService from "./BaseService.js";
 
-export default class ProjectsService {
-  protected repository: ProjectsRepository;
-
+export default class ProjectsService extends BaseService<
+  Project,
+  InsertProject,
+  ProjectsRepository
+> {
   constructor(repository: ProjectsRepository) {
-    this.repository = repository;
+    super(repository);
   }
 
-  async getAllProjects(): Promise<Project[]> {
-    return await this.repository.getAll();
+  public async getAllPaginated(
+    page: number,
+    size: number,
+    searchText: string,
+    archived: boolean = false,
+  ) {
+    if (archived)
+      return await this.repository.searchArchivedProjectsPaginated(
+        page,
+        size,
+        searchText,
+      );
+    return await this.repository.searchNoArchivedProjectsPaginated(
+      page,
+      size,
+      searchText,
+    );
+  }
+
+  public async archive(id: string) {
+    return await this.repository.archiveProject(id);
   }
 }
