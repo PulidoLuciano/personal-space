@@ -16,7 +16,7 @@ export default class ProjectsRepository extends BaseRepository<Project> {
       {
         column: "is_archived",
         operator: "=",
-        value: "FALSE",
+        value: 0,
       },
     ];
     if (searchText && searchText != "") {
@@ -43,7 +43,7 @@ export default class ProjectsRepository extends BaseRepository<Project> {
       {
         column: "is_archived",
         operator: "=",
-        value: "TRUE",
+        value: 1,
       },
     ];
     if (searchText && searchText != "") {

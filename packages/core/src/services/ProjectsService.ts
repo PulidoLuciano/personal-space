@@ -14,7 +14,7 @@ export default class ProjectsService extends BaseService<
   public async getAllPaginated(
     page: number,
     size: number,
-    searchText: string,
+    searchText: string | null = null,
     archived: boolean = false,
   ) {
     if (archived)
@@ -32,5 +32,16 @@ export default class ProjectsService extends BaseService<
 
   public async archive(id: string) {
     return await this.repository.archiveProject(id);
+  }
+
+  public async getProjectById(id: string) {
+    return await this.repository.getById(id, [
+      "id",
+      "name",
+      "color_id",
+      "icon_id",
+      "is_archived",
+      "updated_at",
+    ]);
   }
 }
