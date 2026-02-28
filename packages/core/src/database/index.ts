@@ -11,6 +11,7 @@ export async function createDatabase(db: DBClient) {
   await createColorsTable(db);
   await createIconsTable(db);
   await createProjectsTable(db);
+  await createNotesTable(db);
   await seedColorsTable(db);
   await seedIconsTable(db);
 }
@@ -45,6 +46,20 @@ async function createProjectsTable(db: DBClient) {
       is_archived INTEGER NOT NULL DEFAULT 0,
       updated_at TEXT NOT NULL,
       is_deleted INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+}
+
+async function createNotesTable(db: DBClient) {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS notes (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      content TEXT,
+      project_id TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      is_deleted INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (project_id) REFERENCES projects(id)
     )
   `);
 }

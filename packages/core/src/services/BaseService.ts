@@ -22,4 +22,8 @@ export default abstract class BaseService<
   public async create(data: InsertT) {
     return await this.repository.create(data);
   }
+
+  public async getById(id: string, columns: (keyof T)[]) {
+    return await this.repository.getById(id, columns);
+  }
 }
