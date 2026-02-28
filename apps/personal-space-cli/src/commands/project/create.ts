@@ -18,16 +18,14 @@ export default class Create extends Command {
 
     const core = new PersonalCore(db)
 
-    const project = await core.projectService.create({
+    const projectId = await core.projectService.create({
       // eslint-disable-next-line camelcase
       color_id: flags.color,
       // eslint-disable-next-line camelcase
       icon_id: flags.icon,
       name: args.name,
-      // eslint-disable-next-line camelcase
-      updated_at: new Date().toISOString(),
     } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    this.log(`Project created with id: ${project}`)
+    this.log(`Project created with id: ${projectId}`)
   }
 }

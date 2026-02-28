@@ -11,6 +11,10 @@
   "author": "Luciano Pulido",
   "license": "ISC",
   "dependencies": {
+    "uuid": "^11.1.0",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/uuid": "^10.0.0"
   }
 }

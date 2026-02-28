@@ -1,4 +1,5 @@
 import type { DBClient } from "../index.js";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Tipos de operadores permitidos para las consultas avanzadas.
@@ -132,14 +133,20 @@ export abstract class BaseRepository<T> {
   /**
    * Inserta un nuevo registro en la base de datos.
    */
-  async create(data: Partial<T>): Promise<number> {
-    const keys = Object.keys(data);
-    const values = Object.values(data);
+  async create(data: Partial<T>): Promise<string> {
+    const dataWithDefaults = {
+      id: uuidv4(),
+      updated_at: new Date().toISOString(),
+      ...data,
+    };
+
+    const keys = Object.keys(dataWithDefaults);
+    const values = Object.values(dataWithDefaults);
     const placeholders = keys.map(() => "?").join(", ");
     const query = `INSERT INTO ${this.tableName} (${keys.join(", ")}) VALUES (${placeholders});`;
 
-    const result = await this.db.execute(query, values);
-    return Number(result.insertId);
+    await this.db.execute(query, values);
+    return dataWithDefaults.id;
   }
 
   /**
