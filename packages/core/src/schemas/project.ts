@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { baseSchema } from "./baseSchema.js";
 
 export const insertProjectSchema = z.object({
   name: z.string().min(1, "can not be empty."),
@@ -9,12 +10,11 @@ export const insertProjectSchema = z.object({
   icon_id: z.string().default("circle"),
 });
 
-export const projectSchema = insertProjectSchema.extend({
-  id: z.uuid(),
-  is_archived: z.boolean().default(false),
-  updated_at: z.date(),
-  is_deleted: z.boolean().default(false),
-});
+export const projectSchema = insertProjectSchema.extend(
+  baseSchema.extend({
+    is_archived: z.boolean().default(false),
+  }),
+);
 
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type Project = z.infer<typeof projectSchema>;
