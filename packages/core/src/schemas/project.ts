@@ -10,11 +10,11 @@ export const insertProjectSchema = z.object({
   icon_id: z.string().default("circle"),
 });
 
-export const projectSchema = insertProjectSchema.extend(
-  baseSchema.extend({
-    is_archived: z.boolean().default(false),
-  }),
-);
+export const projectSchema = z.object({
+  ...baseSchema.shape,
+  ...insertProjectSchema.shape,
+  is_archived: z.boolean().default(false),
+});
 
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type Project = z.infer<typeof projectSchema>;

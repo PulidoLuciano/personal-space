@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { baseSchema } from "./baseSchema.js";
 
-export const currency = z.object({
+export const currencySchema = z.object({
   name: z.string().min(1, "can not be empty"),
   symbol: z.string().min(1, "can not be empty"),
 });
@@ -11,37 +11,39 @@ export const insertFinanceSchema = z.object({
   description: z.string().nullable().default(null),
   amount: z.number(),
   is_favorite: z.boolean().default(false),
-  project_id: z.uuid(),
-  currecy_id: z.uuid(),
+  project_id: z.string().uuid(),
+  currency_id: z.string(),
 });
 
-export const financeSchema = insertFinanceSchema.extend(baseSchema);
+export const financeSchema = z.object({
+  ...baseSchema.shape,
+  ...insertFinanceSchema.shape,
+});
 
 export const financeWithCurrencySchema = financeSchema.extend({
-  currency: currency,
+  currency: currencySchema,
 });
 
 export const insertFinanceExecutionSchema = z.object({
   amount: z.number(),
   date: z.date(),
-  finance_id: z.uuid(),
-  currecy_id: z.uuid(),
+  finance_id: z.string().uuid(),
+  currency_id: z.string(),
 });
 
-export const financeExecutionSchema = insertFinanceSchema.extend(baseSchema);
-export const financeExecutionWithCurrencySchema = financeExecutionSchema.extend(
-  {
-    currency: currency,
-  },
-);
+export const financeExecutionSchema = z.object({
+  ...baseSchema.shape,
+  ...insertFinanceExecutionSchema.shape,
+});
 
+export const financeExecutionWithCurrencySchema = financeExecutionSchema.extend({
+  currency: currencySchema,
+});
+
+export type Currency = z.infer<typeof currencySchema>;
 export type InsertFinance = z.infer<typeof insertFinanceSchema>;
 export type Finance = z.infer<typeof financeSchema>;
-export type InsertFinanceExecution = z.infer<
-  typeof insertFinanceExecutionSchema
->;
+export type InsertFinanceExecution = z.infer<typeof insertFinanceExecutionSchema>;
 export type FinanceExecution = z.infer<typeof financeExecutionSchema>;
 export type FinanceWithCurrency = z.infer<typeof financeWithCurrencySchema>;
-export type FinanceExecutionWithCurrency = z.infer<
-  typeof financeExecutionWithCurrencySchema
->;
+export type FinanceExecutionWithCurrency = z.infer<typeof financeExecutionWithCurrencySchema>;

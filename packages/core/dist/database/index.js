@@ -3,8 +3,12 @@ export async function createDatabase(db) {
     await createIconsTable(db);
     await createProjectsTable(db);
     await createNotesTable(db);
+    await createCurrenciesTable(db);
+    await createFinancesTable(db);
+    await createFinanceExecutionsTable(db);
     await seedColorsTable(db);
     await seedIconsTable(db);
+    await seedCurrenciesTable(db);
 }
 async function createColorsTable(db) {
     await db.execute(`
@@ -50,6 +54,48 @@ async function createNotesTable(db) {
     )
   `);
 }
+async function createCurrenciesTable(db) {
+    await db.execute(`
+    CREATE TABLE IF NOT EXISTS currencies (
+      name TEXT PRIMARY KEY,
+      symbol TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      is_deleted INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+}
+async function createFinancesTable(db) {
+    await db.execute(`
+    CREATE TABLE IF NOT EXISTS finances (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      amount REAL NOT NULL,
+      is_favorite INTEGER NOT NULL DEFAULT 0,
+      project_id TEXT NOT NULL,
+      currency_id TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      is_deleted INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (project_id) REFERENCES projects(id),
+      FOREIGN KEY (currency_id) REFERENCES currencies(name)
+    )
+  `);
+}
+async function createFinanceExecutionsTable(db) {
+    await db.execute(`
+    CREATE TABLE IF NOT EXISTS finance_executions (
+      id TEXT PRIMARY KEY,
+      amount REAL NOT NULL,
+      date TEXT NOT NULL,
+      finance_id TEXT NOT NULL,
+      currency_id TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      is_deleted INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (finance_id) REFERENCES finances(id),
+      FOREIGN KEY (currency_id) REFERENCES currencies(name)
+    )
+  `);
+}
 async function seedColorsTable(db) {
     const colors = [
         "#1565C0", "#0D47A1", "#1976D2", "#0D47A1", "#1A237E",
@@ -82,6 +128,21 @@ async function seedIconsTable(db) {
     const now = new Date().toISOString();
     for (const name of icons) {
         await db.execute("INSERT OR IGNORE INTO icons (name, is_deleted, updated_at) VALUES (?, 0, ?)", [name, now]);
+    }
+}
+async function seedCurrenciesTable(db) {
+    const currencies = [
+        { name: "USD", symbol: "$" },
+        { name: "EUR", symbol: "€" },
+        { name: "COP", symbol: "$" },
+        { name: "MXN", symbol: "$" },
+        { name: "GBP", symbol: "£" },
+        { name: "JPY", symbol: "¥" },
+        { name: "ARS", symbol: "$" },
+    ];
+    const now = new Date().toISOString();
+    for (const { name, symbol } of currencies) {
+        await db.execute("INSERT OR IGNORE INTO currencies (name, symbol, is_deleted, updated_at) VALUES (?, ?, 0, ?)", [name, symbol, now]);
     }
 }
 //# sourceMappingURL=index.js.map

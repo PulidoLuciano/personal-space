@@ -7,7 +7,10 @@ export const insertNoteSchema = z.object({
   project_id: z.string().uuid(),
 });
 
-export const noteSchema = insertNoteSchema.extend(baseSchema);
+export const noteSchema = z.object({
+  ...baseSchema.shape,
+  ...insertNoteSchema.shape,
+});
 
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 export type Note = z.infer<typeof noteSchema>;
