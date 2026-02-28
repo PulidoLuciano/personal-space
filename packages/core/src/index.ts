@@ -5,11 +5,14 @@ import ProjectsRepository from "./database/repositories/ProjectsRepository.js";
 import ProjectsService from "./services/ProjectsService.js";
 import NotesRepository from "./database/repositories/NotesRepository.js";
 import NotesService from "./services/NotesService.js";
+import FinancesRepository from "./database/repositories/FinancesRepository.js";
+import FinancesService from "./services/FinancesService.js";
 
 export default class PersonalCore {
   protected db: DBClient;
   private _projectService: ProjectsService | null;
   private _noteService: NotesService | null;
+  private _financeService: FinancesService | null;
 
   public get projectService() {
     if (!this._projectService) {
@@ -27,10 +30,19 @@ export default class PersonalCore {
     return this._noteService;
   }
 
+  public get financeService() {
+    if (!this._financeService) {
+      const repo = new FinancesRepository(this.db);
+      this._financeService = new FinancesService(repo);
+    }
+    return this._financeService;
+  }
+
   constructor(db: DBClient) {
     this.db = db;
     this._projectService = null;
     this._noteService = null;
+    this._financeService = null;
 
     createDatabase(this.db);
   }
