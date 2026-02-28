@@ -15,7 +15,7 @@ export default class FinancesService extends BaseService<
     projectId: string,
     page: number,
     size: number,
-    isFavorite: number = 1,
+    isFavorite?: number,
   ) {
     return await this.repository.searchFinancesByProjectPaginated(
       page,

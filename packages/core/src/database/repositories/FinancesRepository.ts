@@ -19,12 +19,14 @@ export default class FinancesRepository extends BaseRepository<Finance> {
     page: number,
     size: number,
     projectId: string,
-    isFavorite: number = 1,
+    isFavorite?: number,
   ) {
     const criteria: QueryCriteria<Finance>[] = [
       { column: "project_id", operator: "=", value: projectId },
-      { column: "is_favorite", operator: "=", value: isFavorite },
     ];
+    if (isFavorite !== undefined) {
+      criteria.push({ column: "is_favorite", operator: "=", value: isFavorite });
+    }
     const results = await this.paginate(page, size, criteria, [
       "id",
       "title",
@@ -93,9 +95,8 @@ export default class FinancesRepository extends BaseRepository<Finance> {
   }
 
   public async toggleFavorite(id: string, isFavorite: boolean) {
-    await super.update(id, {
-      is_favorite: isFavorite,
-    } as Partial<Finance>);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await super.update(id, { is_favorite: isFavorite ? 1 : 0 } as any);
   }
 
   public async getFinanceById(id: string) {
