@@ -15,6 +15,9 @@ export async function createDatabase(db: DBClient) {
   await createCurrenciesTable(db);
   await createFinancesTable(db);
   await createFinanceExecutionsTable(db);
+  await createTasksInfoTable(db);
+  await createTasksTable(db);
+  await createTaskExecutionsTable(db);
   await seedColorsTable(db);
   await seedIconsTable(db);
   await seedCurrenciesTable(db);
@@ -109,6 +112,55 @@ async function createFinanceExecutionsTable(db: DBClient) {
       is_deleted INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY (finance_id) REFERENCES finances(id),
       FOREIGN KEY (currency_id) REFERENCES currencies(name)
+    )
+  `);
+}
+
+async function createTasksInfoTable(db: DBClient) {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tasks_info (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      localization TEXT,
+      due_rule TEXT,
+      by_time INTEGER NOT NULL DEFAULT 0,
+      objective INTEGER NOT NULL,
+      recurrency TEXT,
+      begin_date TEXT,
+      project_id TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      is_deleted INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (project_id) REFERENCES projects(id)
+    )
+  `);
+}
+
+async function createTasksTable(db: DBClient) {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id TEXT PRIMARY KEY,
+      is_skipped INTEGER NOT NULL DEFAULT 0,
+      due_date TEXT,
+      creation_date TEXT NOT NULL DEFAULT (datetime('now')),
+      info_id TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      is_deleted INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (info_id) REFERENCES tasks_info(id)
+    )
+  `);
+}
+
+async function createTaskExecutionsTable(db: DBClient) {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS task_executions (
+      id TEXT PRIMARY KEY,
+      start_time TEXT,
+      end_time TEXT,
+      task_id TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      is_deleted INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (task_id) REFERENCES tasks(id)
     )
   `);
 }
