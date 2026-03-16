@@ -1,18 +1,18 @@
-import type { Project } from "../../schemas/project.js";
+import type { List } from "../../schemas/lists.js";
 import type { DBClient } from "../index.js";
 import { BaseRepository, type QueryCriteria } from "./BaseRepository.js";
 
-export default class ProjectsRepository extends BaseRepository<Project> {
+export default class ListsRepository extends BaseRepository<List> {
   constructor(db: DBClient) {
-    super(db, "Projects");
+    super(db, "Lists");
   }
 
-  public async searchNoArchivedProjectsPaginated(
+  public async searchNoArchivedPaginated(
     page: number,
     size: number,
     searchText: string | null = null,
   ) {
-    const conditions: QueryCriteria<Project>[] = [
+    const conditions: QueryCriteria<List>[] = [
       {
         column: "is_archived",
         operator: "=",
@@ -34,12 +34,12 @@ export default class ProjectsRepository extends BaseRepository<Project> {
     ]);
   }
 
-  public async searchArchivedProjectsPaginated(
+  public async searchArchivedPaginated(
     page: number,
     size: number,
     searchText: string | null = null,
   ) {
-    const conditions: QueryCriteria<Project>[] = [
+    const conditions: QueryCriteria<List>[] = [
       {
         column: "is_archived",
         operator: "=",
@@ -61,8 +61,19 @@ export default class ProjectsRepository extends BaseRepository<Project> {
     ]);
   }
 
-  public async archiveProject(id: string) {
+  public async archive(id: string) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    super.update(id, { is_archived: 1, updated_at: new Date().toISOString() } as any);
+    super.update(id, {
+      is_archived: 1,
+      updated_at: new Date().toISOString(),
+    } as any);
+  }
+
+  public async unarchive(id: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    super.update(id, {
+      is_archived: 0,
+      updated_at: new Date().toISOString(),
+    } as any);
   }
 }
