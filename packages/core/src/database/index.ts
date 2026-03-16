@@ -128,8 +128,8 @@ async function createTasksTable(db: DBClient) {
       body TEXT,
       location TEXT,
       due_rule TEXT,
-      by_time INTEGER NOT NULL DEFAULT 0,
-      objective INTEGER NOT NULL,
+      rol TEXT CHECK(rol IN ('by time', 'by executions', 'note')) NOT NULL DEFAULT 'by executions'
+      objective INTEGER NOT NULL DEFAULT 1,
       recurrency TEXT,
       begin_date TEXT,
       section_id TEXT NOT NULL,

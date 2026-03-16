@@ -1,5 +1,5 @@
 import { BaseRepository } from "./BaseRepository.js";
-import type { TaskInfo, Task, TaskExecution } from "../../schemas/tasks.js";
+import type { Task, TaskExecution } from "../../schemas/tasks.js";
 import type { DBClient } from "../index.js";
 
 export class TasksInfoRepository extends BaseRepository<TaskInfo> {
