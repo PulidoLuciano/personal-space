@@ -4,7 +4,7 @@ import { BaseRepository, type QueryCriteria } from "./BaseRepository.js";
 
 export default class ListsRepository extends BaseRepository<List> {
   constructor(db: DBClient) {
-    super(db, "Lists");
+    super(db, "lists");
   }
 
   public async searchNoArchivedPaginated(
