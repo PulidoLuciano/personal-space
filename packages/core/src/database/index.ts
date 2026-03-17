@@ -15,6 +15,7 @@ export async function createDatabase(db: DBClient) {
   await createCurrenciesTable(db);
   await createTasksTable(db);
   await createTaskExecutionsTable(db);
+  await createTaskExecutionsTable(db);
   await createUpdateTriggers(db);
   await seedColorsTable(db);
   await seedIconsTable(db);
@@ -128,7 +129,7 @@ async function createTasksTable(db: DBClient) {
       body TEXT,
       location TEXT,
       due_rule TEXT,
-      rol TEXT CHECK(rol IN ('by time', 'by executions', 'note')) NOT NULL DEFAULT 'by executions'
+      type TEXT CHECK(type IN ('by time', 'by executions', 'note')) NOT NULL DEFAULT 'by executions'
       objective INTEGER NOT NULL DEFAULT 1,
       recurrency TEXT,
       begin_date TEXT,
@@ -144,9 +145,27 @@ async function createTaskExecutionsTable(db: DBClient) {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS task_executions (
       id TEXT PRIMARY KEY,
+      ocurrence_date TEXT,
       start_time TEXT NOT NULL DEFAULT (datetime('now')),
       end_time TEXT,
       task_id TEXT NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      is_deleted INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (task_id) REFERENCES tasks(id)
+    )
+  `);
+}
+
+async function createTaskExceptionsTable(db: DBClient) {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS task_exceptions (
+      id TEXT PRIMARY KEY,
+      ocurrence_date TEXT,
+      rescheduled_due TEXT,
+      override_description TEXT,
+      override_location TEXT,
+      override_type TEXT CHECK(override_type IN ('by time', 'by executions', 'note')),
+      override_objective INTEGER,
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
       is_deleted INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY (task_id) REFERENCES tasks(id)

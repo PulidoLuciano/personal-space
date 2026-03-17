@@ -49,7 +49,7 @@ export const taskExceptionsSchema = z.object({
 
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = z.infer<typeof taskSchema>;
-export type InsertTaskExecutions = z.infer<typeof insertTaskExecutionsSchema>;
-export type TaskExecutions = z.infer<typeof taskExecutionsSchema>;
-export type InsertTaskExceptions = z.infer<typeof insertTaskExceptionsSchema>;
-export type TaskExceptions = z.infer<typeof taskExceptionsSchema>;
+export type InsertTaskExecution = z.infer<typeof insertTaskExecutionsSchema>;
+export type TaskExecution = z.infer<typeof taskExecutionsSchema>;
+export type InsertTaskException = z.infer<typeof insertTaskExceptionsSchema>;
+export type TaskException = z.infer<typeof taskExceptionsSchema>;
