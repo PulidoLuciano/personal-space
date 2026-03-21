@@ -62,6 +62,9 @@
       },
       "project": {
         "description": "Manage projects"
+      },
+      "list": {
+        "description": "Manage lists"
       }
     }
   },

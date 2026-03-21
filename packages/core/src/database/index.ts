@@ -55,9 +55,9 @@ async function createListsTable(db: DBClient) {
       show_completed INTEGER NOT NULL DEFAULT 1,
       mutable INTEGER NOT NULL DEFAULT 1,
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-      is_deleted INTEGER NOT NULL DEFAULT 0
+      is_deleted INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY (color_id) REFERENCES colors(rgb),
-      FOREIGN KEY (icon_id) REFERENCES icons(name),
+      FOREIGN KEY (icon_id) REFERENCES icons(name)
     )
   `);
 }
@@ -70,8 +70,8 @@ async function createSectionsTable(db: DBClient) {
       list_id TEXT NOT NULL,
       mutable INTEGER NOT NULL DEFAULT 1,
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-      is_deleted INTEGER NOT NULL DEFAULT 0
-      FOREIGN KEY (list_id) REFERENCES lists(id),
+      is_deleted INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (list_id) REFERENCES lists(id)
     )
   `);
 }
@@ -129,7 +129,7 @@ async function createTasksTable(db: DBClient) {
       body TEXT,
       location TEXT,
       due_rule TEXT,
-      type TEXT CHECK(type IN ('by time', 'by executions', 'note')) NOT NULL DEFAULT 'by executions'
+      type TEXT CHECK(type IN ('by time', 'by executions', 'note')) NOT NULL DEFAULT 'by executions',
       objective INTEGER NOT NULL DEFAULT 1,
       recurrency TEXT,
       begin_date TEXT,
@@ -216,6 +216,14 @@ async function seedColorsTable(db: DBClient) {
     "#6A1B9A",
     "#4A148C",
     "#00000000",
+    "#FF5733",
+    "#FF0000",
+    "#00FF00",
+    "#0000FF",
+    "#FFFF00",
+    "#FF00FF",
+    "#00FFFF",
+    "#777777",
   ];
   const now = new Date().toISOString();
   for (const rgb of colors) {
@@ -320,33 +328,29 @@ async function seedCurrenciesTable(db: DBClient) {
 
 async function seedListTable(db: DBClient) {
   await db.execute(
-    "INSERT OR IGNORE INTO lists (id, name, mutable, icon_id, color_id) VALUES (0, Inbox, 0, inbox, #00000000)",
+    "INSERT OR IGNORE INTO lists (id, name, mutable, icon_id, color_id) VALUES ('0', 'Inbox', 0, 'inbox', '#00000000')",
   );
 }
 
 async function seedSectionTable(db: DBClient) {
   await db.execute(
-    "INSERT OR IGNORE INTO sections (id, name, mutable, list_id) VALUES (0, Not sectioned, 0, 0)",
+    "INSERT OR IGNORE INTO sections (id, name, mutable, list_id) VALUES ('0', 'Not sectioned', 0, '0')",
   );
 }
 
 async function createUpdateTriggers(db: DBClient) {
   const tables: { name: string }[] = await db.query(
-    "SELECT name FROM sqlit_master WHERE type='table' AND name NOT LIKE sqlite_%",
+    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
   );
-  tables.forEach(async (row) => {
+  for (const row of tables) {
     const tableName = row.name;
-    const sqlCreateTrigger = `
-      CREATE TRIGGER IF NOT EXISTS actualizar_updated_at_${tableName}
-      AFTER UPDATE ON ${tableName}
-      FOR EACH ROW
-      WHEN NEW.updated_at = OLD.updated_at
-      BEGIN
-          UPDATE ${tableName} 
-          SET updated_at = CURRENT_TIMESTAMP 
-          WHERE id = OLD.id;
-      END;
-    `;
+    const sqlCreateTrigger = "CREATE TRIGGER IF NOT EXISTS actualizar_updated_at_" + tableName + " "
+      + "AFTER UPDATE ON " + tableName + " "
+      + "FOR EACH ROW "
+      + "WHEN NEW.updated_at = OLD.updated_at "
+      + "BEGIN "
+      + "UPDATE " + tableName + " SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;"
+      + "END;";
     await db.execute(sqlCreateTrigger);
-  });
+  }
 }

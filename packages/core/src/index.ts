@@ -1,12 +1,15 @@
 import { createDatabase, type DBClient } from "./database/index.js";
 export type { DBClient };
+export { createDatabase };
 
 import ListsService from "./services/ListsService.js";
 import ListsRepository from "./database/repositories/ListsRepository.js";
 import SectionsService from "./services/SectionsService.js";
 import SectionsRepository from "./database/repositories/SectionsRepository.js";
+import type { InsertList, List } from "./schemas/lists.js";
+export type { InsertList, List };
 
-export default class PersonalCore {
+class PersonalCore {
   protected db: DBClient;
   private _listsService: ListsService | null;
   private _sectionsService: SectionsService | null;
@@ -27,11 +30,17 @@ export default class PersonalCore {
     return this._sectionsService;
   }
 
-  constructor(db: DBClient) {
+  private constructor(db: DBClient) {
     this.db = db;
     this._listsService = null;
     this._sectionsService = null;
+  }
 
-    createDatabase(this.db);
+  static async initialize(db: DBClient): Promise<PersonalCore> {
+    await createDatabase(db);
+    return new PersonalCore(db);
   }
 }
+
+export { PersonalCore };
+export default PersonalCore;

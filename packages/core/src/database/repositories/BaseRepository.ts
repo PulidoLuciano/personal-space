@@ -103,7 +103,7 @@ export abstract class BaseRepository<T> {
   ): Promise<T[]> {
     const selectedColumns = columns.length > 0 ? columns.join(", ") : "*";
     const { where, values } = this.buildWhereClause(criteria);
-    const query = `SELECT ${selectedColumns} FROM ${this.tableName} ${where};`;
+    const query = `SELECT ${selectedColumns} FROM ${this.tableName} ${where} AND is_deleted = 0;`;
     return await this.db.query<T>(query, values);
   }
 
@@ -123,7 +123,7 @@ export abstract class BaseRepository<T> {
     const query = `
       SELECT ${selectedColumns} 
       FROM ${this.tableName} 
-      ${where} 
+      ${where} AND is_deleted = 0
       LIMIT ? OFFSET ?;
     `;
 
