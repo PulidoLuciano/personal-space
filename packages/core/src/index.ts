@@ -6,10 +6,21 @@ import ListsService from "./services/ListsService.js";
 import ListsRepository from "./database/repositories/ListsRepository.js";
 import SectionsService from "./services/SectionsService.js";
 import SectionsRepository from "./database/repositories/SectionsRepository.js";
+import TasksService from "./services/TasksService.js";
+import { TasksRepository } from "./database/repositories/TasksRepository.js";
 import type { InsertList, List } from "./schemas/lists.js";
 export type { InsertList, List };
 import type { InsertSection, Section } from "./schemas/sections.js";
 export type { InsertSection, Section };
+import type { InsertTask, Task } from "./schemas/tasks.js";
+export type { InsertTask, Task };
+
+export {
+  isDueRuleRelative,
+  parseDueRuleToFixed,
+  calculateDueDate,
+} from "./utils/dueRuleParser.js";
+export { validateRRule, createRRule } from "./utils/rruleHelper.js";
 
 class PersonalCore {
   protected db: DBClient;
