@@ -34,14 +34,6 @@ export default class ListsService extends BaseService<
     );
   }
 
-  public async archive(id: string) {
-    return await this.repository.archive(id);
-  }
-
-  public async unarchive(id: string) {
-    return await this.repository.unarchive(id);
-  }
-
   public async create(data: InsertList) {
     const list_id = await super.create(data);
     this._sectionsService.create({ name: "Not sectioned", list_id: list_id });
@@ -55,7 +47,41 @@ export default class ListsService extends BaseService<
       "color_id",
       "icon_id",
       "is_archived",
+      "mutable",
       "updated_at",
     ]);
+  }
+
+  private checkMutable(list: List | null) {
+    if (!list) {
+      throw new Error("List not found");
+    }
+    if (!list.mutable) {
+      throw new Error("Cannot modify an immutable list");
+    }
+  }
+
+  public async update(id: string, data: Partial<InsertList>): Promise<void> {
+    const list = await this.getById(id);
+    this.checkMutable(list);
+    return await this.repository.update(id, data);
+  }
+
+  public async delete(id: string): Promise<void> {
+    const list = await this.getById(id);
+    this.checkMutable(list);
+    return await this.repository.delete(id);
+  }
+
+  public async archive(id: string): Promise<void> {
+    const list = await this.getById(id);
+    this.checkMutable(list);
+    return await this.repository.archive(id);
+  }
+
+  public async unarchive(id: string): Promise<void> {
+    const list = await this.getById(id);
+    this.checkMutable(list);
+    return await this.repository.unarchive(id);
   }
 }
