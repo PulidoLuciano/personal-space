@@ -8,6 +8,8 @@ import SectionsService from "./services/SectionsService.js";
 import SectionsRepository from "./database/repositories/SectionsRepository.js";
 import type { InsertList, List } from "./schemas/lists.js";
 export type { InsertList, List };
+import type { InsertSection, Section } from "./schemas/sections.js";
+export type { InsertSection, Section };
 
 class PersonalCore {
   protected db: DBClient;

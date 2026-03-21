@@ -65,6 +65,9 @@
       },
       "list": {
         "description": "Manage lists"
+      },
+      "section": {
+        "description": "Manage sections"
       }
     }
   },

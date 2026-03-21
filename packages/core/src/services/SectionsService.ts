@@ -10,4 +10,12 @@ export default class SectionsService extends BaseService<
   constructor(repo: SectionsRepository) {
     super(repo);
   }
+
+  public async getAll() {
+    return await this.repository.getAll(["id", "name", "list_id", "updated_at"]);
+  }
+
+  public async getByListId(listId: string) {
+    return await this.repository.findByListId(listId);
+  }
 }
