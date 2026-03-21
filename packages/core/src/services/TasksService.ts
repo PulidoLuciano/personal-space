@@ -3,7 +3,7 @@ import type {
   TaskExceptionsRepository,
   TasksRepository,
 } from "../database/repositories/TasksRepository.js";
-import type { InsertTask, Task } from "../schemas/tasks.js";
+import type { InsertTask, Task, TaskExecution } from "../schemas/tasks.js";
 import {
   calculateDueDate,
   isDueRuleRelative,
@@ -18,8 +18,14 @@ export default class TasksService extends BaseService<
   InsertTask,
   TasksRepository
 > {
-  public constructor(tasksRepository: TasksRepository) {
+  private taskExecutionsRepository: TaskExecutionsRepository;
+
+  public constructor(
+    tasksRepository: TasksRepository,
+    taskExecutionsRepository: TaskExecutionsRepository,
+  ) {
     super(tasksRepository);
+    this.taskExecutionsRepository = taskExecutionsRepository;
   }
 
   public isRecurrent(task: Partial<InsertTask>): boolean {
@@ -112,5 +118,52 @@ export default class TasksService extends BaseService<
     }
 
     return await this.repository.update(id, processedData);
+  }
+
+  public async startExecution(
+    id_task: string,
+    ocurrence_date: Date,
+    instant: boolean = true,
+  ): Promise<string> {
+    const task = await this.repository.getById(id_task, []);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    const executionData = {
+      task_id: id_task,
+      ocurrence_date,
+      start_time: new Date(),
+      end_time: instant ? new Date() : null,
+    };
+
+    return await this.taskExecutionsRepository.create(executionData);
+  }
+
+  public async stopExecution(execution_id: string): Promise<void> {
+    await this.taskExecutionsRepository.update(execution_id, {
+      end_time: new Date(),
+    });
+  }
+
+  public async getExecutionsByTaskAndDate(
+    task_id: string,
+    ocurrence_date: Date,
+  ): Promise<TaskExecution[]> {
+    return await this.taskExecutionsRepository.find([
+      { column: "task_id", operator: "=", value: task_id },
+      { column: "ocurrence_date", operator: "=", value: ocurrence_date },
+    ]);
+  }
+
+  public async updateExecution(
+    execution_id: string,
+    data: Partial<TaskExecution>,
+  ): Promise<void> {
+    return await this.taskExecutionsRepository.update(execution_id, data);
+  }
+
+  public async deleteExecution(execution_id: string): Promise<void> {
+    return await this.taskExecutionsRepository.delete(execution_id);
   }
 }

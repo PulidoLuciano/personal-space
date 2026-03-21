@@ -26,8 +26,8 @@ export const insertTaskExecutionsSchema = z.object({
 });
 
 export const taskExecutionsSchema = z.object({
-  ...baseSchema,
-  ...insertTaskExecutionsSchema,
+  ...baseSchema.shape,
+  ...insertTaskExecutionsSchema.shape,
 });
 
 export const insertTaskExceptionsSchema = z.object({
@@ -43,8 +43,8 @@ export const insertTaskExceptionsSchema = z.object({
 });
 
 export const taskExceptionsSchema = z.object({
-  ...baseSchema,
-  ...insertTaskExecutionsSchema,
+  ...baseSchema.shape,
+  ...insertTaskExceptionsSchema.shape,
 });
 
 export type InsertTask = z.infer<typeof insertTaskSchema>;
