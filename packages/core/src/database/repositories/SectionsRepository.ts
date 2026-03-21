@@ -17,4 +17,10 @@ export default class SectionsRepository extends BaseRepository<Section> {
     ];
     return await this.find(criteria, ["id", "name", "list_id", "updated_at"]);
   }
+
+  public async countByListId(listId: string): Promise<number> {
+    const query = `SELECT COUNT(*) as count FROM ${this.tableName} WHERE list_id = ? AND is_deleted = FALSE`;
+    const result = await this.db.queryOne<{ count: number }>(query, [listId]);
+    return result?.count ?? 0;
+  }
 }
