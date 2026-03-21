@@ -17,7 +17,7 @@ class PersonalCore {
   public get listsService() {
     if (!this._listsService) {
       const repo = new ListsRepository(this.db);
-      this._listsService = new ListsService(repo);
+      this._listsService = new ListsService(repo, this.sectionsService);
     }
     return this._listsService;
   }
