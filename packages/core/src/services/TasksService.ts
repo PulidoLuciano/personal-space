@@ -55,14 +55,15 @@ export default class TasksService extends BaseService<
 
   private prepareTaskData(data: InsertTask): InsertTask {
     const isRecurrent = this.isRecurrent(data);
-    const processedDueRule = data.due_rule !== undefined 
-      ? isRecurrent 
-        ? data.due_rule
-        : this.processDueRuleForUnique(data.due_rule)
-      : null;
+    const processedDueRule =
+      data.due_rule !== undefined
+        ? isRecurrent
+          ? data.due_rule
+          : this.processDueRuleForUnique(data.due_rule)
+        : null;
 
     const beginDate =
-      isRecurrent && !data.begin_date ? new Date() : data.begin_date ?? null;
+      isRecurrent && !data.begin_date ? new Date() : (data.begin_date ?? null);
 
     return {
       ...data,
@@ -74,7 +75,7 @@ export default class TasksService extends BaseService<
   public async create(data: InsertTask): Promise<string> {
     const preparedData = this.prepareTaskData(data);
     this.validateRecurrentDueRule(preparedData.due_rule);
-    return await this.repository.create(preparedData);
+    return await super.create(preparedData);
   }
 
   public async update(id: string, data: Partial<InsertTask>): Promise<void> {
@@ -90,7 +91,8 @@ export default class TasksService extends BaseService<
       (data.recurrency === undefined && this.isRecurrent(existingTask));
 
     if (willBeRecurrent) {
-      const newDueRule = data.due_rule !== undefined ? data.due_rule : existingTask.due_rule;
+      const newDueRule =
+        data.due_rule !== undefined ? data.due_rule : existingTask.due_rule;
       this.validateRecurrentDueRule(newDueRule);
     }
 
@@ -110,13 +112,5 @@ export default class TasksService extends BaseService<
     }
 
     return await this.repository.update(id, processedData);
-  }
-
-  public async delete(id: string): Promise<void> {
-    return await this.repository.delete(id);
-  }
-
-  public async getById(id: string, columns: (keyof Task)[] = []): Promise<Task | null> {
-    return await this.repository.getById(id, columns);
   }
 }
