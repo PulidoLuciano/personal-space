@@ -11,6 +11,7 @@ import type {
   TaskException,
   TaskWithProgress,
   TaskInRange,
+  TaskOccurrenceDetail,
 } from "../schemas/tasks.js";
 import { RRule } from "rrule";
 import {
@@ -461,6 +462,46 @@ export default class TasksService extends BaseService<
     }
 
     return results;
+  }
+
+  public async getTaskOccurrence(
+    taskId: string,
+    occurrenceDate?: Date,
+  ): Promise<TaskOccurrenceDetail> {
+    const task = await this.repository.getById(taskId, []);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    let exception: TaskException | null = null;
+    if (occurrenceDate) {
+      exception = await this.getExceptionForOccurrence(taskId, occurrenceDate);
+      if (exception?.is_deleted) {
+        throw new Error("Occurrence has been deleted");
+      }
+    }
+
+    const progress = await this.calculateProgress(task, occurrenceDate ?? null);
+
+    const dueDate = occurrenceDate
+      ? this.calculateDueDateForOccurrence(task.due_rule, occurrenceDate)
+      : task.due_rule
+        ? new Date(task.due_rule)
+        : null;
+
+    const result: TaskOccurrenceDetail = {
+      id: task.id,
+      occurrence_date: occurrenceDate ?? null,
+      name: task.name,
+      location: exception?.override_location ?? task.location,
+      body: exception?.override_body ?? task.body,
+      due_date: exception?.reschedule_due ?? dueDate,
+      type: exception?.override_type ?? task.type,
+      objective: exception?.override_objective ?? task.objective,
+      progress,
+    };
+
+    return result;
   }
 
   private calculateDueDateForOccurrence(

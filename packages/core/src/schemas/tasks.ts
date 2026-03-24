@@ -70,3 +70,15 @@ export interface TaskInRange {
   is_complete: boolean;
   occurrence_date: Date | null;
 }
+
+export interface TaskOccurrenceDetail {
+  id: string;
+  occurrence_date: Date | null;
+  name: string;
+  location: string | null;
+  body: string | null;
+  due_date: Date | null;
+  type: "by time" | "by executions" | "note";
+  objective: number;
+  progress: number;
+}
