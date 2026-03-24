@@ -8,6 +8,9 @@ import type {
   InsertTaskException,
   Task,
   TaskExecution,
+  TaskException,
+  TaskWithProgress,
+  TaskInRange,
 } from "../schemas/tasks.js";
 import { RRule } from "rrule";
 import {
@@ -347,5 +350,194 @@ export default class TasksService extends BaseService<
 
   public async deleteExecution(execution_id: string): Promise<void> {
     return await this.taskExecutionsRepository.delete(execution_id);
+  }
+
+  public async getTasksBySection(
+    sectionId: string,
+    onlyCompleted: boolean = false,
+  ): Promise<TaskWithProgress[]> {
+    const tasks = await this.repository.findBySection(sectionId);
+    const results: TaskWithProgress[] = [];
+    const filterClause = (progress: number, objective: number) =>
+      onlyCompleted ? progress >= objective : progress < objective;
+
+    for (const task of tasks) {
+      if (this.isRecurrent(task)) {
+        const occurrences = this.getAllOccurrences(task);
+        for (const occurrenceDate of occurrences) {
+          const exception = await this.getExceptionForOccurrence(
+            task.id,
+            occurrenceDate,
+          );
+          if (exception?.is_deleted) continue;
+
+          const progress = await this.calculateProgress(task, occurrenceDate);
+          if (
+            filterClause(
+              progress,
+              exception?.override_objective ?? task.objective,
+            )
+          ) {
+            const dueDate =
+              exception?.reschedule_due ??
+              this.calculateDueDateForOccurrence(task.due_rule, occurrenceDate);
+            results.push({
+              id: task.id,
+              name: task.name,
+              due_date: dueDate,
+              type: exception?.override_type ?? task.type,
+              objective: exception?.override_objective ?? task.objective,
+              progress,
+              occurrence_date: occurrenceDate,
+            });
+          }
+        }
+      } else {
+        const progress = await this.calculateProgress(task, null);
+        if (filterClause(progress, task.objective)) {
+          results.push({
+            id: task.id,
+            name: task.name,
+            due_date: task.due_rule ? new Date(task.due_rule) : null,
+            type: task.type,
+            objective: task.objective,
+            progress,
+            occurrence_date: null,
+          });
+        }
+      }
+    }
+
+    return results;
+  }
+
+  public async getTasksByDateRange(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<TaskInRange[]> {
+    const allTasks = await this.repository.getAll();
+    const results: TaskInRange[] = [];
+
+    for (const task of allTasks) {
+      if (this.isRecurrent(task)) {
+        const occurrences = this.getOccurrencesInRange(
+          task,
+          startDate,
+          endDate,
+        );
+        for (const occurrenceDate of occurrences) {
+          const exception = await this.getExceptionForOccurrence(
+            task.id,
+            occurrenceDate,
+          );
+          if (exception?.is_deleted) continue;
+
+          const progress = await this.calculateProgress(task, occurrenceDate);
+          const isComplete =
+            progress >= (exception?.override_objective ?? task.objective);
+          results.push({
+            id: task.id,
+            name: task.name,
+            is_complete: isComplete,
+            occurrence_date: occurrenceDate,
+          });
+        }
+      } else {
+        if (
+          task.begin_date &&
+          task.begin_date >= startDate &&
+          task.begin_date <= endDate
+        ) {
+          const progress = await this.calculateProgress(task, null);
+          const isComplete = progress >= task.objective;
+          results.push({
+            id: task.id,
+            name: task.name,
+            is_complete: isComplete,
+            occurrence_date: null,
+          });
+        }
+      }
+    }
+
+    return results;
+  }
+
+  private calculateDueDateForOccurrence(
+    dueRule: string | null,
+    occurrenceDate: Date,
+  ): Date | null {
+    if (!dueRule) return null;
+    return calculateDueDate(dueRule, occurrenceDate);
+  }
+
+  private async calculateProgress(
+    task: Task,
+    occurrenceDate: Date | null,
+  ): Promise<number> {
+    const executions = occurrenceDate
+      ? await this.getExecutionsByTaskAndDate(task.id, occurrenceDate)
+      : await this.getExecutionsForTaskWithoutOccurrence(task.id);
+
+    if (task.type === "by time") {
+      let totalTimeMs = 0;
+      for (const exec of executions) {
+        if (exec.end_time) {
+          totalTimeMs +=
+            new Date(exec.end_time).getTime() -
+            new Date(exec.start_time).getTime();
+        }
+      }
+      return totalTimeMs / 1000;
+    }
+
+    if (task.type === "by executions") {
+      const completedExecutions = executions.filter((e) => e.end_time !== null);
+      return completedExecutions.length;
+    }
+
+    return 0;
+  }
+
+  private async getExecutionsForTaskWithoutOccurrence(
+    taskId: string,
+  ): Promise<TaskExecution[]> {
+    return await this.taskExecutionsRepository.findByTaskWithoutOccurrence(
+      taskId,
+    );
+  }
+
+  private async getExceptionForOccurrence(
+    taskId: string,
+    occurrenceDate: Date,
+  ): Promise<TaskException | null> {
+    return await this.taskExceptionsRepository.findByTaskAndOccurrence(
+      taskId,
+      occurrenceDate,
+    );
+  }
+
+  private getAllOccurrences(task: Task): Date[] {
+    if (!task.recurrency || !task.begin_date) return [];
+
+    const rule = RRule.fromString(task.recurrency);
+    const occurrences = rule.between(task.begin_date, new Date(), true);
+
+    return occurrences;
+  }
+
+  private getOccurrencesInRange(
+    task: Task,
+    startDate: Date,
+    endDate: Date,
+  ): Date[] {
+    if (!task.recurrency || !task.begin_date) return [];
+
+    const rule = RRule.fromString(task.recurrency);
+
+    const effectiveStart =
+      task.begin_date > startDate ? task.begin_date : startDate;
+
+    return rule.between(effectiveStart, endDate, true);
   }
 }

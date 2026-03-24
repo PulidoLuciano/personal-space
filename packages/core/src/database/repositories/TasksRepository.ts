@@ -11,11 +11,43 @@ export class TasksRepository extends BaseRepository<Task> {
   public constructor(db: DBClient) {
     super(db, "tasks");
   }
+
+  public async findBySection(sectionId: string): Promise<Task[]> {
+    const query = `
+      SELECT * FROM tasks 
+      WHERE section_id = ? AND is_deleted = FALSE;
+    `;
+    return await this.db.query<Task>(query, [sectionId]);
+  }
+
+  public async findNonRecurrentBySection(sectionId: string): Promise<Task[]> {
+    const query = `
+      SELECT * FROM tasks 
+      WHERE section_id = ? AND is_deleted = FALSE AND (recurrency IS NULL OR recurrency = '');
+    `;
+    return await this.db.query<Task>(query, [sectionId]);
+  }
+
+  public async findRecurrentBySection(sectionId: string): Promise<Task[]> {
+    const query = `
+      SELECT * FROM tasks 
+      WHERE section_id = ? AND is_deleted = FALSE AND recurrency IS NOT NULL AND recurrency != '';
+    `;
+    return await this.db.query<Task>(query, [sectionId]);
+  }
 }
 
 export class TaskExecutionsRepository extends BaseRepository<TaskExecution> {
   public constructor(db: DBClient) {
     super(db, "task_executions");
+  }
+
+  public async findByTaskWithoutOccurrence(taskId: string): Promise<TaskExecution[]> {
+    const query = `
+      SELECT * FROM task_executions 
+      WHERE task_id = ? AND (ocurrence_date IS NULL OR ocurrence_date = '') AND is_deleted = FALSE;
+    `;
+    return await this.db.query<TaskExecution>(query, [taskId]);
   }
 }
 

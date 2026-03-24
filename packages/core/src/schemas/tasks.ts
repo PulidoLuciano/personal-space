@@ -53,3 +53,20 @@ export type InsertTaskExecution = z.infer<typeof insertTaskExecutionsSchema>;
 export type TaskExecution = z.infer<typeof taskExecutionsSchema>;
 export type InsertTaskException = z.infer<typeof insertTaskExceptionsSchema>;
 export type TaskException = z.infer<typeof taskExceptionsSchema>;
+
+export interface TaskWithProgress {
+  id: string;
+  name: string;
+  due_date: Date | null;
+  type: "by time" | "by executions" | "note";
+  objective: number;
+  progress: number;
+  occurrence_date: Date | null;
+}
+
+export interface TaskInRange {
+  id: string;
+  name: string;
+  is_complete: boolean;
+  occurrence_date: Date | null;
+}
