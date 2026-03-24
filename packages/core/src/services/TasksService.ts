@@ -3,7 +3,13 @@ import type {
   TaskExceptionsRepository,
   TasksRepository,
 } from "../database/repositories/TasksRepository.js";
-import type { InsertTask, Task, TaskExecution } from "../schemas/tasks.js";
+import type {
+  InsertTask,
+  InsertTaskException,
+  Task,
+  TaskExecution,
+} from "../schemas/tasks.js";
+import { RRule } from "rrule";
 import {
   calculateDueDate,
   isDueRuleRelative,
@@ -11,7 +17,7 @@ import {
 } from "../utils/dueRuleParser.js";
 import BaseService from "./BaseService.js";
 
-type deleteMethods = "all" | "following" | "current";
+type RecurrentScope = "all" | "current" | "following";
 
 export default class TasksService extends BaseService<
   Task,
@@ -19,13 +25,16 @@ export default class TasksService extends BaseService<
   TasksRepository
 > {
   private taskExecutionsRepository: TaskExecutionsRepository;
+  private taskExceptionsRepository: TaskExceptionsRepository;
 
   public constructor(
     tasksRepository: TasksRepository,
     taskExecutionsRepository: TaskExecutionsRepository,
+    taskExceptionsRepository: TaskExceptionsRepository,
   ) {
     super(tasksRepository);
     this.taskExecutionsRepository = taskExecutionsRepository;
+    this.taskExceptionsRepository = taskExceptionsRepository;
   }
 
   public isRecurrent(task: Partial<InsertTask>): boolean {
@@ -84,12 +93,38 @@ export default class TasksService extends BaseService<
     return await super.create(preparedData);
   }
 
-  public async update(id: string, data: Partial<InsertTask>): Promise<void> {
+  public async update(
+    id: string,
+    data: Partial<InsertTask>,
+    occurrenceDate?: Date,
+    scope?: RecurrentScope,
+  ): Promise<void> {
     const existingTask = await this.repository.getById(id, []);
     if (!existingTask) {
       throw new Error("Task not found");
     }
 
+    if (!scope || !this.isRecurrent(existingTask) || scope == "all") {
+      await this.performSimpleUpdate(id, data, existingTask);
+      return;
+    }
+
+    if (scope === "current") {
+      await this.createTaskException(id, occurrenceDate, data);
+      return;
+    }
+
+    if (scope === "following") {
+      await this.updateFollowingOccurrences(id, data, occurrenceDate);
+      return;
+    }
+  }
+
+  private async performSimpleUpdate(
+    id: string,
+    data: Partial<InsertTask>,
+    existingTask: Task,
+  ): Promise<void> {
     const isUpdatingToRecurrent =
       data.recurrency !== undefined && data.recurrency !== null;
     const willBeRecurrent =
@@ -118,6 +153,153 @@ export default class TasksService extends BaseService<
     }
 
     return await this.repository.update(id, processedData);
+  }
+
+  private async createTaskException(
+    taskId: string,
+    occurrenceDate: Date | undefined,
+    overrides: Partial<InsertTask>,
+  ): Promise<void> {
+    if (!occurrenceDate) {
+      throw new Error("occurrenceDate is required for current scope update");
+    }
+
+    await this.taskExceptionsRepository.upsert(taskId, occurrenceDate, {
+      reschedule_due: null,
+      override_body: overrides.body ?? null,
+      override_location: overrides.location ?? null,
+      override_type: overrides.type ?? null,
+      override_objective: overrides.objective ?? null,
+    });
+  }
+
+  private async updateFollowingOccurrences(
+    id: string,
+    updates: Partial<InsertTask>,
+    occurrenceDate: Date | undefined,
+  ): Promise<void> {
+    const existingTask = await this.repository.getById(id, []);
+    if (!existingTask) {
+      throw new Error("Task not found");
+    }
+
+    if (!occurrenceDate) {
+      throw new Error("Ocurrence date is necessary");
+    }
+
+    const newTaskData: InsertTask = {
+      name: updates.name ?? existingTask.name,
+      body: updates.body ?? existingTask.body,
+      location: updates.location ?? existingTask.location,
+      due_rule: updates.due_rule ?? existingTask.due_rule,
+      type: updates.type ?? existingTask.type,
+      objective: updates.objective ?? existingTask.objective,
+      recurrency: existingTask.recurrency,
+      begin_date: occurrenceDate,
+      section_id: existingTask.section_id,
+    };
+
+    await super.create(newTaskData);
+
+    if (occurrenceDate) {
+      const dayBeforeOccurrence = new Date(occurrenceDate);
+      dayBeforeOccurrence.setDate(dayBeforeOccurrence.getDate() - 1);
+      dayBeforeOccurrence.setHours(23, 59, 59, 999);
+
+      const updatedRRule = this.addUntilToRRule(
+        existingTask.recurrency,
+        dayBeforeOccurrence,
+      );
+      await this.repository.update(id, { recurrency: updatedRRule } as never);
+    }
+  }
+
+  private addUntilToRRule(rruleString: string | null, untilDate: Date): string {
+    if (!rruleString) {
+      throw new Error("Cannot add UNTIL to null RRule");
+    }
+
+    const rule = RRule.fromString(rruleString);
+    const newRule = new RRule({
+      ...rule.options,
+      until: untilDate,
+    });
+
+    return newRule.toString();
+  }
+
+  public async delete(
+    id: string,
+    occurrenceDate?: Date,
+    scope?: RecurrentScope,
+  ): Promise<void> {
+    const existingTask = await this.repository.getById(id, []);
+    if (!existingTask) {
+      throw new Error("Task not found");
+    }
+
+    if (!scope || !this.isRecurrent(existingTask) || scope === "all") {
+      return await super.delete(id);
+    }
+
+    if (scope === "current") {
+      await this.createTaskExceptionForDelete(id, occurrenceDate);
+      return;
+    }
+
+    if (scope === "following") {
+      await this.deleteFollowingOccurrences(id, occurrenceDate);
+      return;
+    }
+  }
+
+  private async createTaskExceptionForDelete(
+    taskId: string,
+    occurrenceDate: Date | undefined,
+  ): Promise<void> {
+    if (!occurrenceDate) {
+      throw new Error("occurrenceDate is required for current scope delete");
+    }
+
+    const existingId = await this.taskExceptionsRepository.upsert(
+      taskId,
+      occurrenceDate,
+      {
+        reschedule_due: null,
+        override_body: null,
+        override_location: null,
+        override_type: null,
+        override_objective: null,
+      },
+    );
+
+    await this.taskExceptionsRepository.update(existingId, {
+      is_deleted: true,
+    } as never);
+  }
+
+  private async deleteFollowingOccurrences(
+    id: string,
+    occurrenceDate: Date | undefined,
+  ): Promise<void> {
+    if (!occurrenceDate) {
+      throw new Error("occurrenceDate is required for following scope delete");
+    }
+
+    const dayBeforeOccurrence = new Date(occurrenceDate);
+    dayBeforeOccurrence.setDate(dayBeforeOccurrence.getDate() - 1);
+    dayBeforeOccurrence.setHours(23, 59, 59, 999);
+
+    const existingTask = await this.repository.getById(id, []);
+    if (!existingTask || !existingTask.recurrency) {
+      throw new Error("Task not found or not recurrent");
+    }
+
+    const updatedRRule = this.addUntilToRRule(
+      existingTask.recurrency,
+      dayBeforeOccurrence,
+    );
+    await this.repository.update(id, { recurrency: updatedRRule } as never);
   }
 
   public async startExecution(
