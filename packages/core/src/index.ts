@@ -7,7 +7,7 @@ import ListsRepository from "./database/repositories/ListsRepository.js";
 import SectionsService from "./services/SectionsService.js";
 import SectionsRepository from "./database/repositories/SectionsRepository.js";
 import TasksService from "./services/TasksService.js";
-import { TasksRepository } from "./database/repositories/TasksRepository.js";
+import { TasksRepository, TaskExecutionsRepository, TaskExceptionsRepository } from "./database/repositories/TasksRepository.js";
 import type { InsertList, List } from "./schemas/lists.js";
 export type { InsertList, List };
 import type { InsertSection, Section } from "./schemas/sections.js";
@@ -26,6 +26,7 @@ class PersonalCore {
   protected db: DBClient;
   private _listsService: ListsService | null;
   private _sectionsService: SectionsService | null;
+  private _tasksService: TasksService | null;
 
   public get listsService() {
     if (!this._listsService) {
@@ -43,10 +44,21 @@ class PersonalCore {
     return this._sectionsService;
   }
 
+  public get tasksService() {
+    if (!this._tasksService) {
+      const tasksRepo = new TasksRepository(this.db);
+      const taskExecutionsRepo = new TaskExecutionsRepository(this.db);
+      const taskExceptionsRepo = new TaskExceptionsRepository(this.db);
+      this._tasksService = new TasksService(tasksRepo, taskExecutionsRepo, taskExceptionsRepo);
+    }
+    return this._tasksService;
+  }
+
   private constructor(db: DBClient) {
     this.db = db;
     this._listsService = null;
     this._sectionsService = null;
+    this._tasksService = null;
   }
 
   static async initialize(db: DBClient): Promise<PersonalCore> {

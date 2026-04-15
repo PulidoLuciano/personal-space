@@ -58,11 +58,16 @@ export abstract class BaseRepository<T> {
       if (c.operator === "IN") {
         // Asumimos que c.value es un array
         const placeholders = (c.value as any[]).map(() => "?").join(", ");
-        values.push(...(c.value as any[]));
+        const serializedArray = (c.value as any[]).map((v) =>
+          v instanceof Date ? v.toISOString() : v
+        );
+        values.push(...serializedArray);
         return `${String(c.column)} IN (${placeholders})`;
       }
 
-      values.push(c.value);
+      const serializedValue =
+        c.value instanceof Date ? c.value.toISOString() : c.value;
+      values.push(serializedValue);
       return `${String(c.column)} ${c.operator} ?`;
     });
 
@@ -70,6 +75,15 @@ export abstract class BaseRepository<T> {
       where: `WHERE ${clauses.join(" AND ")}`,
       values,
     };
+  }
+
+  private _serializeDates(data: any): any {
+    const serialized: any = {};
+    for (const key in data) {
+      const value = data[key];
+      serialized[key] = value instanceof Date ? value.toISOString() : value;
+    }
+    return serialized;
   }
 
   /**
@@ -136,12 +150,13 @@ export abstract class BaseRepository<T> {
   async create(data: Partial<T>): Promise<string> {
     const dataWithDefaults = {
       id: uuidv4(),
-      updated_at: new Date().toISOString(),
+      updated_at: new Date(),
       ...data,
     };
 
-    const keys = Object.keys(dataWithDefaults);
-    const values = Object.values(dataWithDefaults);
+    const serialized = this._serializeDates(dataWithDefaults);
+    const keys = Object.keys(serialized);
+    const values = Object.values(serialized);
     const placeholders = keys.map(() => "?").join(", ");
     const query = `INSERT INTO ${this.tableName} (${keys.join(", ")}) VALUES (${placeholders});`;
 
@@ -153,8 +168,9 @@ export abstract class BaseRepository<T> {
    * Actualiza un registro existente basándose en su ID.
    */
   async update(id: number | string, data: Partial<T>): Promise<void> {
-    const keys = Object.keys(data);
-    const values = Object.values(data);
+    const serialized = this._serializeDates(data);
+    const keys = Object.keys(serialized);
+    const values = Object.values(serialized);
     const setClause = keys.map((key) => `${key} = ?`).join(", ");
 
     const query = `UPDATE ${this.tableName} SET ${setClause} WHERE id = ?;`;

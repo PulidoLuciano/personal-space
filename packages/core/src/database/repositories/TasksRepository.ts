@@ -42,7 +42,9 @@ export class TaskExecutionsRepository extends BaseRepository<TaskExecution> {
     super(db, "task_executions");
   }
 
-  public async findByTaskWithoutOccurrence(taskId: string): Promise<TaskExecution[]> {
+  public async findByTaskWithoutOccurrence(
+    taskId: string,
+  ): Promise<TaskExecution[]> {
     const query = `
       SELECT * FROM task_executions 
       WHERE task_id = ? AND (ocurrence_date IS NULL OR ocurrence_date = '') AND is_deleted = FALSE;
@@ -62,11 +64,11 @@ export class TaskExceptionsRepository extends BaseRepository<TaskException> {
   ): Promise<TaskException | null> {
     const query = `
       SELECT * FROM task_exceptions 
-      WHERE task_id = ? AND ocurrence_date = ? AND is_deleted = FALSE;
+      WHERE task_id = ? AND DATE(ocurrence_date) = ?;
     `;
     const result = await this.db.queryOne<TaskException>(query, [
       taskId,
-      ocurrenceDate,
+      `${ocurrenceDate.getUTCFullYear()}-${String(ocurrenceDate.getUTCMonth() + 1).padStart(2, "0")}-${String(ocurrenceDate.getUTCDate()).padStart(2, "0")}`,
     ]);
     return result ?? null;
   }
@@ -77,18 +79,15 @@ export class TaskExceptionsRepository extends BaseRepository<TaskException> {
     data: Partial<InsertTaskException>,
   ): Promise<string> {
     const existing = await this.findByTaskAndOccurrence(taskId, ocurrenceDate);
-
     if (existing) {
       await this.update(existing.id, data as Partial<TaskException>);
       return existing.id;
     }
-
     const createData = {
       task_id: taskId,
-      ocurrence_date: ocurrenceDate,
+      ocurrence_date: ocurrenceDate.toISOString(),
       ...data,
     } as Partial<TaskException>;
-
     return await this.create(createData);
   }
 }

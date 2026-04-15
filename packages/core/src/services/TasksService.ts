@@ -5,7 +5,6 @@ import type {
 } from "../database/repositories/TasksRepository.js";
 import type {
   InsertTask,
-  InsertTaskException,
   Task,
   TaskExecution,
   TaskException,
@@ -13,13 +12,14 @@ import type {
   TaskInRange,
   TaskOccurrenceDetail,
 } from "../schemas/tasks.js";
-import { RRule } from "rrule";
+import RRule from "rrule";
 import {
   calculateDueDate,
   isDueRuleRelative,
   parseDueRuleToFixed,
 } from "../utils/dueRuleParser.js";
 import BaseService from "./BaseService.js";
+import type { QueryCriteria } from "../database/repositories/BaseRepository.js";
 
 type RecurrentScope = "all" | "current" | "following";
 
@@ -74,6 +74,8 @@ export default class TasksService extends BaseService<
 
   private prepareTaskData(data: InsertTask): InsertTask {
     const isRecurrent = this.isRecurrent(data);
+    if (isRecurrent && data.due_rule)
+      this.validateRecurrentDueRule(data.due_rule);
     const processedDueRule =
       data.due_rule !== undefined
         ? isRecurrent
@@ -81,19 +83,14 @@ export default class TasksService extends BaseService<
           : this.processDueRuleForUnique(data.due_rule)
         : null;
 
-    const beginDate =
-      isRecurrent && !data.begin_date ? new Date() : (data.begin_date ?? null);
-
     return {
       ...data,
       due_rule: processedDueRule,
-      begin_date: beginDate,
     };
   }
 
   public async create(data: InsertTask): Promise<string> {
     const preparedData = this.prepareTaskData(data);
-    this.validateRecurrentDueRule(preparedData.due_rule);
     return await super.create(preparedData);
   }
 
@@ -149,13 +146,6 @@ export default class TasksService extends BaseService<
         : this.processDueRuleForUnique(data.due_rule);
     }
 
-    if (
-      isUpdatingToRecurrent &&
-      (data.begin_date === undefined || data.begin_date === null)
-    ) {
-      processedData.begin_date = new Date();
-    }
-
     return await this.repository.update(id, processedData);
   }
 
@@ -169,7 +159,7 @@ export default class TasksService extends BaseService<
     }
 
     await this.taskExceptionsRepository.upsert(taskId, occurrenceDate, {
-      reschedule_due: null,
+      rescheduled_due: null,
       override_body: overrides.body ?? null,
       override_location: overrides.location ?? null,
       override_type: overrides.type ?? null,
@@ -186,11 +176,14 @@ export default class TasksService extends BaseService<
     if (!existingTask) {
       throw new Error("Task not found");
     }
-
-    if (!occurrenceDate) {
+    if (!occurrenceDate || !existingTask.recurrency) {
       throw new Error("Ocurrence date is necessary");
     }
-
+    const rrule = RRule.RRule.fromString(existingTask.recurrency);
+    const newRrule = new RRule.RRule({
+      ...rrule.options,
+      dtstart: occurrenceDate,
+    });
     const newTaskData: InsertTask = {
       name: updates.name ?? existingTask.name,
       body: updates.body ?? existingTask.body,
@@ -198,18 +191,14 @@ export default class TasksService extends BaseService<
       due_rule: updates.due_rule ?? existingTask.due_rule,
       type: updates.type ?? existingTask.type,
       objective: updates.objective ?? existingTask.objective,
-      recurrency: existingTask.recurrency,
-      begin_date: occurrenceDate,
+      recurrency: newRrule.toString(),
       section_id: existingTask.section_id,
     };
-
     await super.create(newTaskData);
-
     if (occurrenceDate) {
       const dayBeforeOccurrence = new Date(occurrenceDate);
       dayBeforeOccurrence.setDate(dayBeforeOccurrence.getDate() - 1);
       dayBeforeOccurrence.setHours(23, 59, 59, 999);
-
       const updatedRRule = this.addUntilToRRule(
         existingTask.recurrency,
         dayBeforeOccurrence,
@@ -223,8 +212,8 @@ export default class TasksService extends BaseService<
       throw new Error("Cannot add UNTIL to null RRule");
     }
 
-    const rule = RRule.fromString(rruleString);
-    const newRule = new RRule({
+    const rule = RRule.RRule.fromString(rruleString);
+    const newRule = new RRule.RRule({
       ...rule.options,
       until: untilDate,
     });
@@ -269,7 +258,7 @@ export default class TasksService extends BaseService<
       taskId,
       occurrenceDate,
       {
-        reschedule_due: null,
+        rescheduled_due: null,
         override_body: null,
         override_location: null,
         override_type: null,
@@ -278,7 +267,7 @@ export default class TasksService extends BaseService<
     );
 
     await this.taskExceptionsRepository.update(existingId, {
-      is_deleted: true,
+      is_deleted: 1,
     } as never);
   }
 
@@ -308,7 +297,7 @@ export default class TasksService extends BaseService<
 
   public async startExecution(
     id_task: string,
-    ocurrence_date: Date,
+    ocurrence_date: Date | null = null,
     instant: boolean = true,
   ): Promise<string> {
     const task = await this.repository.getById(id_task, []);
@@ -334,18 +323,45 @@ export default class TasksService extends BaseService<
 
   public async getExecutionsByTaskAndDate(
     task_id: string,
-    ocurrence_date: Date,
+    ocurrence_date: Date | null = null,
   ): Promise<TaskExecution[]> {
-    return await this.taskExecutionsRepository.find([
+    const task = await this.getById(task_id, []);
+    if (!task) throw new Error("Task not found");
+    const filters: QueryCriteria<TaskExecution>[] = [
       { column: "task_id", operator: "=", value: task_id },
-      { column: "ocurrence_date", operator: "=", value: ocurrence_date },
-    ]);
+    ];
+    if (this.isRecurrent(task)) {
+      if (!ocurrence_date) throw new Error("An occurrence date is necessary");
+      filters.push({
+        column: "ocurrence_date",
+        operator: "=",
+        value: ocurrence_date.toISOString(),
+      });
+    }
+    return await this.taskExecutionsRepository.find(filters);
   }
 
   public async updateExecution(
     execution_id: string,
     data: Partial<TaskExecution>,
   ): Promise<void> {
+    const existingExecution =
+      await this.taskExecutionsRepository.getById(execution_id);
+    if (!existingExecution) {
+      throw new Error("Execution not found");
+    }
+
+    const startTime = data.start_time
+      ? new Date(data.start_time)
+      : existingExecution.start_time
+        ? new Date(existingExecution.start_time)
+        : null;
+    const endTime = data.end_time ? new Date(data.end_time) : null;
+
+    if (startTime && endTime && endTime < startTime) {
+      throw new Error("end_time must be greater than or equal to start_time");
+    }
+
     return await this.taskExecutionsRepository.update(execution_id, data);
   }
 
@@ -380,7 +396,7 @@ export default class TasksService extends BaseService<
             )
           ) {
             const dueDate =
-              exception?.reschedule_due ??
+              exception?.rescheduled_due ??
               this.calculateDueDateForOccurrence(task.due_rule, occurrenceDate);
             results.push({
               id: task.id,
@@ -444,20 +460,14 @@ export default class TasksService extends BaseService<
           });
         }
       } else {
-        if (
-          task.begin_date &&
-          task.begin_date >= startDate &&
-          task.begin_date <= endDate
-        ) {
-          const progress = await this.calculateProgress(task, null);
-          const isComplete = progress >= task.objective;
-          results.push({
-            id: task.id,
-            name: task.name,
-            is_complete: isComplete,
-            occurrence_date: null,
-          });
-        }
+        const progress = await this.calculateProgress(task, null);
+        const isComplete = progress >= task.objective;
+        results.push({
+          id: task.id,
+          name: task.name,
+          is_complete: isComplete,
+          occurrence_date: null,
+        });
       }
     }
 
@@ -466,12 +476,18 @@ export default class TasksService extends BaseService<
 
   public async getTaskOccurrence(
     taskId: string,
-    occurrenceDate?: Date,
+    occurrenceDate?: Date | null,
   ): Promise<TaskOccurrenceDetail> {
     const task = await this.repository.getById(taskId, []);
     if (!task) {
       throw new Error("Task not found");
     }
+    if (this.isRecurrent(task) && !occurrenceDate) {
+      throw new Error(
+        "You need to specify a ocurrence date for recurrent task",
+      );
+    }
+    occurrenceDate = this.isRecurrent(task) ? occurrenceDate : null;
 
     let exception: TaskException | null = null;
     if (occurrenceDate) {
@@ -495,7 +511,7 @@ export default class TasksService extends BaseService<
       name: task.name,
       location: exception?.override_location ?? task.location,
       body: exception?.override_body ?? task.body,
-      due_date: exception?.reschedule_due ?? dueDate,
+      due_date: exception?.rescheduled_due ?? dueDate,
       type: exception?.override_type ?? task.type,
       objective: exception?.override_objective ?? task.objective,
       progress,
@@ -559,12 +575,9 @@ export default class TasksService extends BaseService<
   }
 
   private getAllOccurrences(task: Task): Date[] {
-    if (!task.recurrency || !task.begin_date) return [];
-
-    const rule = RRule.fromString(task.recurrency);
-    const occurrences = rule.between(task.begin_date, new Date(), true);
-
-    return occurrences;
+    if (!task.recurrency) return [];
+    const rule = RRule.RRule.fromString(task.recurrency);
+    return rule.between(new Date("2000-01-01"), new Date(), true);
   }
 
   private getOccurrencesInRange(
@@ -572,13 +585,8 @@ export default class TasksService extends BaseService<
     startDate: Date,
     endDate: Date,
   ): Date[] {
-    if (!task.recurrency || !task.begin_date) return [];
-
-    const rule = RRule.fromString(task.recurrency);
-
-    const effectiveStart =
-      task.begin_date > startDate ? task.begin_date : startDate;
-
-    return rule.between(effectiveStart, endDate, true);
+    if (!task.recurrency) return [];
+    const rule = RRule.RRule.fromString(task.recurrency);
+    return rule.between(startDate, endDate, true);
   }
 }

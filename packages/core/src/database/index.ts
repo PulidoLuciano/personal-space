@@ -15,7 +15,7 @@ export async function createDatabase(db: DBClient) {
   await createCurrenciesTable(db);
   await createTasksTable(db);
   await createTaskExecutionsTable(db);
-  await createTaskExecutionsTable(db);
+  await createTaskExceptionsTable(db);
   await createUpdateTriggers(db);
   await seedColorsTable(db);
   await seedIconsTable(db);
@@ -132,7 +132,6 @@ async function createTasksTable(db: DBClient) {
       type TEXT CHECK(type IN ('by time', 'by executions', 'note')) NOT NULL DEFAULT 'by executions',
       objective INTEGER NOT NULL DEFAULT 1,
       recurrency TEXT,
-      begin_date TEXT,
       section_id TEXT NOT NULL,
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
       is_deleted INTEGER NOT NULL DEFAULT 0,
@@ -160,9 +159,10 @@ async function createTaskExceptionsTable(db: DBClient) {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS task_exceptions (
       id TEXT PRIMARY KEY,
+      task_id TEXT NOT NULL,
       ocurrence_date TEXT,
       rescheduled_due TEXT,
-      override_description TEXT,
+      override_body TEXT,
       override_location TEXT,
       override_type TEXT CHECK(override_type IN ('by time', 'by executions', 'note')),
       override_objective INTEGER,
@@ -344,13 +344,20 @@ async function createUpdateTriggers(db: DBClient) {
   );
   for (const row of tables) {
     const tableName = row.name;
-    const sqlCreateTrigger = "CREATE TRIGGER IF NOT EXISTS actualizar_updated_at_" + tableName + " "
-      + "AFTER UPDATE ON " + tableName + " "
-      + "FOR EACH ROW "
-      + "WHEN NEW.updated_at = OLD.updated_at "
-      + "BEGIN "
-      + "UPDATE " + tableName + " SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;"
-      + "END;";
+    const sqlCreateTrigger =
+      "CREATE TRIGGER IF NOT EXISTS actualizar_updated_at_" +
+      tableName +
+      " " +
+      "AFTER UPDATE ON " +
+      tableName +
+      " " +
+      "FOR EACH ROW " +
+      "WHEN NEW.updated_at = OLD.updated_at " +
+      "BEGIN " +
+      "UPDATE " +
+      tableName +
+      " SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;" +
+      "END;";
     await db.execute(sqlCreateTrigger);
   }
 }

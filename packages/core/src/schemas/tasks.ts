@@ -9,7 +9,6 @@ export const insertTaskSchema = z.object({
   type: z.enum(["by time", "by executions", "note"]),
   objective: z.number().int().min(1).default(1),
   recurrency: z.string().nullable().default(null),
-  begin_date: z.date().nullable().default(null),
   section_id: z.uuid(),
 });
 
@@ -32,7 +31,7 @@ export const taskExecutionsSchema = z.object({
 
 export const insertTaskExceptionsSchema = z.object({
   ocurrence_date: z.date().nullable().default(null),
-  reschedule_due: z.date().nullable().default(null),
+  rescheduled_due: z.date().nullable().default(null),
   override_body: z.string().nullable().default(null),
   override_location: z.string().nullable().default(null),
   override_type: z

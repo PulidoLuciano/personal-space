@@ -68,6 +68,9 @@
       },
       "section": {
         "description": "Manage sections"
+      },
+      "task": {
+        "description": "Manage tasks"
       }
     }
   },
