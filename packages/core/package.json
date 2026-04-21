@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
+    "test:run": "vitest run",
     "build": "tsc"
   },
   "author": "Luciano Pulido",
@@ -16,6 +17,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/uuid": "^10.0.0"
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/uuid": "^10.0.0",
+    "better-sqlite3": "^12.6.2",
+    "vitest": "^3.1.4"
   }
 }

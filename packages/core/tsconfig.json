@@ -1,27 +1,15 @@
 {
   "compilerOptions": {
-    // File Layout
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
-    // Environment Settings
     "module": "nodenext",
     "target": "esnext",
-    "types": [],
-    // Other Outputs
+    "types": ["vitest/globals"],
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    // Style Options
-    // "noImplicitReturns": true,
-    // "noImplicitOverride": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noPropertyAccessFromIndexSignature": true,
-    // Recommended Options
     "strict": true,
     "jsx": "react-jsx",
     "verbatimModuleSyntax": true,
@@ -29,5 +17,6 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true
-  }
+  },
+  "include": ["src", "test", "vitest.config.ts"]
 }

@@ -338,6 +338,12 @@ async function seedSectionTable(db: DBClient) {
   );
 }
 
+async function seedProjectsTable(db: DBClient) {
+  await db.execute(
+    "INSERT OR IGNORE INTO projects (id, name, icon_id, color_id) VALUES ('0', 'Inbox', 'inbox', '#00000000')",
+  );
+}
+
 async function createUpdateTriggers(db: DBClient) {
   const tables: { name: string }[] = await db.query(
     "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
