@@ -76,4 +76,20 @@ export default class ListsRepository extends BaseRepository<List> {
       updated_at: new Date().toISOString(),
     } as any);
   }
+
+  public async findColor(rgb: string): Promise<boolean> {
+    const result = await this.db.queryOne<{ cnt: number }>(
+      "SELECT 1 as cnt FROM colors WHERE rgb = ? AND is_deleted = 0",
+      [rgb],
+    );
+    return !!result;
+  }
+
+  public async findIcon(name: string): Promise<boolean> {
+    const result = await this.db.queryOne<{ cnt: number }>(
+      "SELECT 1 as cnt FROM icons WHERE name = ? AND is_deleted = 0",
+      [name],
+    );
+    return !!result;
+  }
 }

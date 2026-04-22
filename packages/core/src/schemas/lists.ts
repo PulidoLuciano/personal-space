@@ -10,6 +10,8 @@ export const insertListSchema = z.object({
   icon_id: z.string().default("circle"),
 });
 
+export const updateListSchema = insertListSchema.partial();
+
 export const listSchema = z.object({
   ...baseSchema.shape,
   ...insertListSchema.shape,
@@ -20,4 +22,5 @@ export const listSchema = z.object({
 });
 
 export type InsertList = z.infer<typeof insertListSchema>;
+export type UpdateList = z.infer<typeof updateListSchema>;
 export type List = z.infer<typeof listSchema>;
