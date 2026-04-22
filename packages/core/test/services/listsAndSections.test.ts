@@ -235,4 +235,30 @@ describe("ListsService", () => {
       );
     });
   });
+
+  describe("toggleShowCompleted", () => {
+    it("should toggle show_completed value", async () => {
+      const id = await listsService.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      await listsService.toggleShowCompleted(id);
+
+      const result = await listsService.getById(id);
+      expect(result?.show_completed).toBe(0);
+
+      await listsService.toggleShowCompleted(id);
+
+      const result2 = await listsService.getById(id);
+      expect(result2?.show_completed).toBe(1);
+    });
+
+    it("should throw error for non-existent list", async () => {
+      await expect(
+        listsService.toggleShowCompleted("non-existent-id"),
+      ).rejects.toThrow("List not found");
+    });
+  });
 });
