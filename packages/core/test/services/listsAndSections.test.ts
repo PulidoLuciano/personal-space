@@ -259,6 +259,59 @@ describe("ListsService", () => {
       await expect(
         listsService.toggleShowCompleted("non-existent-id"),
       ).rejects.toThrow("List not found");
+});
+  });
+});
+
+describe("SectionsService", () => {
+  let db: DBClient;
+  let repo: SectionsRepository;
+  let service: SectionsService;
+
+  beforeEach(async () => {
+    db = await createTestDatabase();
+    repo = new SectionsRepository(db);
+    service = new SectionsService(repo);
+  });
+
+  describe("create", () => {
+    it("should create a new section with valid data", async () => {
+      const listsRepo = new ListsRepository(db);
+      const listId = await listsRepo.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const id = await service.create({ name: "My Section", list_id: listId });
+      expect(id).toBeDefined();
+
+      const result = await service.getById(id, [
+        "id",
+        "name",
+        "list_id",
+        "updated_at",
+      ]);
+      expect(result?.name).toBe("My Section");
+    });
+
+    it("should throw error when creating section with empty name", async () => {
+      const listsRepo = new ListsRepository(db);
+      const listId = await listsRepo.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      await expect(
+        service.create({ name: "", list_id: listId }),
+      ).rejects.toThrow("cannot be empty");
+    });
+
+    it("should throw error when creating section with non-existent list", async () => {
+      await expect(
+        service.create({ name: "My Section", list_id: "non-existent-list-id" }),
+      ).rejects.toThrow("List does not exist");
     });
   });
 });

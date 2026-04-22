@@ -67,7 +67,7 @@ export default class ListsService extends BaseService<
       icon_id: data.icon_id ?? "circle",
     };
     const list_id = await super.create(dataWithDefaults);
-    this._sectionsService.create({ name: "Not sectioned", list_id: list_id });
+    await this._sectionsService.create({ name: "Not sectioned", list_id: list_id });
     return list_id;
   }
 

@@ -3,7 +3,7 @@ import { baseSchema } from "./baseSchema.js";
 
 export const insertSectionSchema = z.object({
   name: z.string().min(1, "cannot be empty"),
-  list_id: z.uuid(),
+  list_id: z.string().min(1),
 });
 
 export const sectionSchema = z.object({

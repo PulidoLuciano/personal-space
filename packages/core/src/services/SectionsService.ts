@@ -1,5 +1,7 @@
 import BaseService from "./BaseService.js";
 import type { Section, InsertSection } from "../schemas/sections.js";
+import { insertSectionSchema } from "../schemas/sections.js";
+import { validate } from "../utils/zodValidator.js";
 import SectionsRepository from "../database/repositories/SectionsRepository.js";
 
 export default class SectionsService extends BaseService<
@@ -17,6 +19,15 @@ export default class SectionsService extends BaseService<
 
   public async getByListId(listId: string) {
     return await this.repository.findByListId(listId);
+  }
+
+  public async create(data: InsertSection): Promise<string> {
+    validate(insertSectionSchema, data);
+    const list = await this.repository.findListById(data.list_id);
+    if (!list) {
+      throw new Error("List does not exist");
+    }
+    return await super.create(data);
   }
 
   public async delete(id: string): Promise<void> {
