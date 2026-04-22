@@ -3,12 +3,15 @@ import { baseSchema } from "./baseSchema.js";
 
 export const insertTaskSchema = z.object({
   name: z.string().min(1, "cannot be empty"),
-  body: z.string().nullable().default(null),
-  location: z.string().nullable().default(null),
-  due_rule: z.string().nullable().default(null),
-  type: z.enum(["by time", "by executions", "note"]).default("by executions"),
-  objective: z.number().int().min(1).default(1),
-  recurrency: z.string().nullable().default(null),
+  body: z.string().optional().nullable().default(null),
+  location: z.string().optional().nullable().default(null),
+  due_rule: z.string().optional().nullable().default(null),
+  type: z
+    .enum(["by time", "by executions", "note"])
+    .optional()
+    .default("by executions"),
+  objective: z.number().int().min(1).optional().default(1),
+  recurrency: z.string().optional().nullable().default(null),
   section_id: z.uuid(),
 });
 

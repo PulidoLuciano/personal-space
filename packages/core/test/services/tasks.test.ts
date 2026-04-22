@@ -33,13 +33,17 @@ describe("TasksService", () => {
     tasksRepo = new TasksRepository(db);
     taskExecutionsRepo = new TaskExecutionsRepository(db);
     taskExceptionsRepo = new TaskExceptionsRepository(db);
-    tasksService = new TasksService(tasksRepo, taskExecutionsRepo, taskExceptionsRepo);
+    tasksService = new TasksService(
+      tasksRepo,
+      taskExecutionsRepo,
+      taskExceptionsRepo,
+    );
 
     const listId = await listsService.create({
       name: "Test List",
       color_id: "#1565C0",
       icon_id: "star",
-    });
+    } as any);
     const sections = await sectionsService.getByListId(listId);
     sectionId = sections[0]?.id ?? "";
   });
@@ -51,11 +55,19 @@ describe("TasksService", () => {
         body: "Test body",
         location: "Test location",
         section_id: sectionId,
-      });
+      } as any);
 
       expect(id).toBeDefined();
 
-      const task = await tasksService.getById(id);
+      const task = await tasksService.getById(id, [
+        "name",
+        "body",
+        "location",
+        "type",
+        "objective",
+        "recurrency",
+        "due_rule",
+      ]);
       expect(task?.name).toBe("Test Task");
       expect(task?.body).toBe("Test body");
       expect(task?.location).toBe("Test location");
@@ -70,7 +82,7 @@ describe("TasksService", () => {
         tasksService.create({
           name: "",
           section_id: sectionId,
-        }),
+        } as any),
       ).rejects.toThrow("cannot be empty");
     });
 
@@ -79,7 +91,7 @@ describe("TasksService", () => {
         tasksService.create({
           name: "",
           section_id: sectionId,
-        }),
+        } as any),
       ).rejects.toThrow("cannot be empty");
     });
 
@@ -88,9 +100,9 @@ describe("TasksService", () => {
         name: "Note Task",
         type: "note",
         section_id: sectionId,
-      });
+      } as any);
 
-      const task = await tasksService.getById(id);
+      const task = await tasksService.getById(id, ["type"]);
       expect(task?.type).toBe("note");
     });
 
@@ -99,9 +111,9 @@ describe("TasksService", () => {
         name: "Time Task",
         type: "by time",
         section_id: sectionId,
-      });
+      } as any);
 
-      const task = await tasksService.getById(id);
+      const task = await tasksService.getById(id, ["type"]);
       expect(task?.type).toBe("by time");
     });
 
@@ -109,7 +121,7 @@ describe("TasksService", () => {
       await expect(
         tasksService.create({
           name: "Invalid Type Task",
-          type: "invalid" as "by executions",
+          type: "invalid" as any,
           section_id: sectionId,
         }),
       ).rejects.toThrow("Invalid option");
@@ -121,9 +133,9 @@ describe("TasksService", () => {
         name: "Fixed Due Task",
         due_rule: fixedDate,
         section_id: sectionId,
-      });
+      } as any);
 
-      const task = await tasksService.getById(id);
+      const task = await tasksService.getById(id, ["due_rule"]);
       expect(task?.due_rule).toContain("2026-12-31");
     });
 
@@ -138,9 +150,9 @@ describe("TasksService", () => {
         name: "Relative Due Task",
         due_rule: "+1d 00:00:00",
         section_id: sectionId,
-      });
+      } as any);
 
-      const task = await tasksService.getById(id);
+      const task = await tasksService.getById(id, ["due_rule"]);
       expect(task?.due_rule).toContain(expectedDateStr);
     });
   });
