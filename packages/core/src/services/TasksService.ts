@@ -20,6 +20,8 @@ import {
 } from "../utils/dueRuleParser.js";
 import BaseService from "./BaseService.js";
 import type { QueryCriteria } from "../database/repositories/BaseRepository.js";
+import { insertTaskSchema } from "../schemas/tasks.js";
+import { validate } from "../utils/zodValidator.js";
 
 type RecurrentScope = "all" | "current" | "following";
 
@@ -90,7 +92,8 @@ export default class TasksService extends BaseService<
   }
 
   public async create(data: InsertTask): Promise<string> {
-    const preparedData = this.prepareTaskData(data);
+    const validatedData = validate(insertTaskSchema, data);
+    const preparedData = this.prepareTaskData(validatedData);
     return await super.create(preparedData);
   }
 

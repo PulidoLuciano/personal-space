@@ -6,7 +6,7 @@ export const insertTaskSchema = z.object({
   body: z.string().nullable().default(null),
   location: z.string().nullable().default(null),
   due_rule: z.string().nullable().default(null),
-  type: z.enum(["by time", "by executions", "note"]),
+  type: z.enum(["by time", "by executions", "note"]).default("by executions"),
   objective: z.number().int().min(1).default(1),
   recurrency: z.string().nullable().default(null),
   section_id: z.uuid(),
