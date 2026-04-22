@@ -169,9 +169,9 @@ describe("ListsService", () => {
     });
 
     it("should throw error when deleting non-existent list", async () => {
-      await expect(
-        listsService.delete("non-existent-id"),
-      ).rejects.toThrow("List not found");
+      await expect(listsService.delete("non-existent-id")).rejects.toThrow(
+        "List not found",
+      );
     });
 
     it("should throw error for immutable list", async () => {
@@ -196,9 +196,9 @@ describe("ListsService", () => {
     });
 
     it("should throw error when archiving non-existent list", async () => {
-      await expect(
-        listsService.archive("non-existent-id"),
-      ).rejects.toThrow("List not found");
+      await expect(listsService.archive("non-existent-id")).rejects.toThrow(
+        "List not found",
+      );
     });
 
     it("should throw error for immutable list", async () => {
@@ -224,9 +224,9 @@ describe("ListsService", () => {
     });
 
     it("should throw error when unarchiving non-existent list", async () => {
-      await expect(
-        listsService.unarchive("non-existent-id"),
-      ).rejects.toThrow("List not found");
+      await expect(listsService.unarchive("non-existent-id")).rejects.toThrow(
+        "List not found",
+      );
     });
 
     it("should throw error for immutable list", async () => {
@@ -259,7 +259,7 @@ describe("ListsService", () => {
       await expect(
         listsService.toggleShowCompleted("non-existent-id"),
       ).rejects.toThrow("List not found");
-});
+    });
   });
 });
 
@@ -312,6 +312,67 @@ describe("SectionsService", () => {
       await expect(
         service.create({ name: "My Section", list_id: "non-existent-list-id" }),
       ).rejects.toThrow("List does not exist");
+    });
+  });
+
+  describe("update", () => {
+    it("should update section name", async () => {
+      const listsRepo = new ListsRepository(db);
+      const listId = await listsRepo.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const id = await service.create({ name: "Original", list_id: listId });
+
+      await service.update(id, { name: "Updated" });
+
+      const result = await service.getById(id, ["name"]);
+      expect(result?.name).toBe("Updated");
+    });
+
+    it("should throw error when updating with empty name", async () => {
+      const listsRepo = new ListsRepository(db);
+      const listId = await listsRepo.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const id = await service.create({ name: "Original", list_id: listId });
+
+      await expect(service.update(id, { name: "" })).rejects.toThrow(
+        "cannot be empty",
+      );
+    });
+
+    it("should ignore list_id on update", async () => {
+      const listsRepo = new ListsRepository(db);
+      const listId = await listsRepo.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const id = await service.create({ name: "Original", list_id: listId });
+      const newListId = await listsRepo.create({
+        name: "New List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      await service.update(id, { name: "Updated", list_id: newListId });
+
+      const result = await service.getById(id, ["name", "list_id"]);
+      expect(result?.name).toBe("Updated");
+      expect(result?.list_id).not.toBe(newListId);
+    });
+
+    it("should throw error for non-existent section", async () => {
+      await expect(
+        service.update("non-existent-id", { name: "Try Update" }),
+      ).rejects.toThrow("Section not found");
     });
   });
 });

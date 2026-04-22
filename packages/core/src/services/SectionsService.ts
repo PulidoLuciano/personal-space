@@ -1,7 +1,14 @@
 import BaseService from "./BaseService.js";
-import type { Section, InsertSection } from "../schemas/sections.js";
-import { insertSectionSchema } from "../schemas/sections.js";
-import { validate } from "../utils/zodValidator.js";
+import type {
+  Section,
+  InsertSection,
+  UpdateSection,
+} from "../schemas/sections.js";
+import {
+  insertSectionSchema,
+  updateSectionSchema,
+} from "../schemas/sections.js";
+import { validate, validatePartial } from "../utils/zodValidator.js";
 import SectionsRepository from "../database/repositories/SectionsRepository.js";
 
 export default class SectionsService extends BaseService<
@@ -14,7 +21,12 @@ export default class SectionsService extends BaseService<
   }
 
   public async getAll() {
-    return await this.repository.getAll(["id", "name", "list_id", "updated_at"]);
+    return await this.repository.getAll([
+      "id",
+      "name",
+      "list_id",
+      "updated_at",
+    ]);
   }
 
   public async getByListId(listId: string) {
@@ -28,6 +40,19 @@ export default class SectionsService extends BaseService<
       throw new Error("List does not exist");
     }
     return await super.create(data);
+  }
+
+  public async update(id: string, data: UpdateSection): Promise<void> {
+    const section = await this.getById(id, ["id", "mutable"]);
+    if (!section) {
+      throw new Error("Section not found");
+    }
+    if (!section.mutable) {
+      throw new Error("Cannot update a immutable section");
+    }
+    const validData = validatePartial(updateSectionSchema, data);
+    const { list_id, ...updateData } = validData;
+    return await this.repository.update(id, updateData);
   }
 
   public async delete(id: string): Promise<void> {
@@ -44,3 +69,4 @@ export default class SectionsService extends BaseService<
     return await this.repository.delete(id);
   }
 }
+
