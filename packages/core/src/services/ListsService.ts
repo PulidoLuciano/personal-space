@@ -35,7 +35,12 @@ export default class ListsService extends BaseService<
   }
 
   public async create(data: InsertList) {
-    const list_id = await super.create(data);
+    const dataWithDefaults = {
+      ...data,
+      color_id: data.color_id ?? "#777777",
+      icon_id: data.icon_id ?? "circle",
+    };
+    const list_id = await super.create(dataWithDefaults);
     this._sectionsService.create({ name: "Not sectioned", list_id: list_id });
     return list_id;
   }
