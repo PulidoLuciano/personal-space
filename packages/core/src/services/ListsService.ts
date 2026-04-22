@@ -72,7 +72,7 @@ export default class ListsService extends BaseService<
   }
 
   public async getById(id: string) {
-    return await this.repository.getById(id, [
+    const list = await this.repository.getById(id, [
       "id",
       "name",
       "color_id",
@@ -82,6 +82,10 @@ export default class ListsService extends BaseService<
       "mutable",
       "updated_at",
     ]);
+    if (!list) {
+      throw new Error("List not found");
+    }
+    return list;
   }
 
   private checkMutable(list: List | null) {

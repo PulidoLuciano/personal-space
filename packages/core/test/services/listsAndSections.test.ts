@@ -164,8 +164,9 @@ describe("ListsService", () => {
 
       await listsService.delete(id);
 
-      const result = await listsService.getById(id);
-      expect(result).toBeNull();
+      await expect(listsService.getById(id)).rejects.toThrow(
+        "List not found",
+      );
     });
 
     it("should throw error when deleting non-existent list", async () => {
@@ -259,6 +260,105 @@ describe("ListsService", () => {
       await expect(
         listsService.toggleShowCompleted("non-existent-id"),
       ).rejects.toThrow("List not found");
+    });
+  });
+
+  describe("getById", () => {
+    it("should return a list by id", async () => {
+      const id = await listsService.create({
+        name: "Get Test",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const result = await listsService.getById(id);
+
+      expect(result).toBeDefined();
+      expect(result?.name).toBe("Get Test");
+    });
+
+    it("should throw error for non-existent list", async () => {
+      await expect(listsService.getById("non-existent-id")).rejects.toThrow(
+        "List not found",
+      );
+    });
+
+    it("should throw error for a deleted list", async () => {
+      const id = await listsService.create({
+        name: "To Delete",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      await listsService.delete(id);
+
+      await expect(listsService.getById(id)).rejects.toThrow("List not found");
+    });
+  });
+
+  describe("getAllPaginated", () => {
+    it("should return paginated non-archived lists", async () => {
+      await listsService.create({
+        name: "List A",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+      await listsService.create({
+        name: "List B",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const result = await listsService.getAllPaginated(1, 10);
+
+      expect(result.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("should exclude archived lists when archived is false", async () => {
+      const id = await listsService.create({
+        name: "To Archive",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+      await listsService.archive(id);
+
+      const result = await listsService.getAllPaginated(1, 10, null, false);
+
+      expect(
+        result.some((l) => l.id === id),
+      ).toBe(false);
+    });
+
+    it("should return only archived lists when archived is true", async () => {
+      const id = await listsService.create({
+        name: "Archived List X",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+      await listsService.archive(id);
+
+      const result = await listsService.getAllPaginated(1, 10, null, true);
+
+      expect(result.length).toBeGreaterThanOrEqual(1);
+      expect(result.some((l) => l.id === id)).toBe(true);
+    });
+
+    it("should search lists by text", async () => {
+      await listsService.create({
+        name: "Unique Search Term",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+      await listsService.create({
+        name: "Other List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const result = await listsService.getAllPaginated(1, 10, "Unique");
+
+      expect(result.length).toBe(1);
+      expect(result[0]?.name).toBe("Unique Search Term");
     });
   });
 });
@@ -395,8 +495,9 @@ describe("SectionsService", () => {
 
       await service.delete(sectionId);
 
-      const result = await service.getById(sectionId, ["name"]);
-      expect(result).toBeNull();
+      await expect(service.getById(sectionId, ["name"])).rejects.toThrow(
+        "Section not found",
+      );
     });
 
     it("should throw error when deleting the only section", async () => {
@@ -422,6 +523,141 @@ describe("SectionsService", () => {
 
     it("should throw error for immutable section", async () => {
       await expect(service.delete("0")).rejects.toThrow();
+    });
+  });
+
+  describe("getById", () => {
+    it("should return a section by id", async () => {
+      const listId = await listsService.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const sectionId = await service.create({
+        name: "My Section",
+        list_id: listId,
+      });
+
+      const result = await service.getById(sectionId, ["name", "list_id"]);
+
+      expect(result).toBeDefined();
+      expect(result?.name).toBe("My Section");
+    });
+
+    it("should throw error for non-existent section", async () => {
+      await expect(
+        service.getById("non-existent-id", ["name"]),
+      ).rejects.toThrow("Section not found");
+    });
+
+    it("should throw error for a deleted section", async () => {
+      const listId = await listsService.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const sectionId = await service.create({
+        name: "To Delete",
+        list_id: listId,
+      });
+
+      await service.delete(sectionId);
+
+      await expect(service.getById(sectionId, ["name"])).rejects.toThrow(
+        "Section not found",
+      );
+    });
+  });
+
+  describe("getAll", () => {
+    it("should return all non-deleted sections", async () => {
+      const listId = await listsService.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      await service.create({
+        name: "Section 1",
+        list_id: listId,
+      });
+
+      const result = await service.getAll();
+
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it("should not return deleted sections", async () => {
+      const listId = await listsService.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const sectionId = await service.create({
+        name: "To Delete",
+        list_id: listId,
+      });
+
+      await service.delete(sectionId);
+
+      const result = await service.getAll();
+
+      expect(
+        result.some((s) => s.id === sectionId),
+      ).toBe(false);
+    });
+  });
+
+  describe("getByListId", () => {
+    it("should return sections for a list", async () => {
+      const listId = await listsService.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      await service.create({
+        name: "Section 1",
+        list_id: listId,
+      });
+      await service.create({
+        name: "Section 2",
+        list_id: listId,
+      });
+
+      const result = await service.getByListId(listId);
+
+      expect(result.length).toBeGreaterThan(1);
+    });
+
+    it("should throw error for non-existent list", async () => {
+      await expect(
+        service.getByListId("non-existent-list-id"),
+      ).rejects.toThrow("List not found");
+    });
+
+    it("should not return deleted sections", async () => {
+      const listId = await listsService.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const sectionId = await service.create({
+        name: "To Delete",
+        list_id: listId,
+      });
+
+      await service.delete(sectionId);
+
+      const result = await service.getByListId(listId);
+
+      expect(
+        result.some((s) => s.id === sectionId),
+      ).toBe(false);
     });
   });
 });

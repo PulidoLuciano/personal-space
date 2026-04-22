@@ -29,7 +29,19 @@ export default class SectionsService extends BaseService<
     ]);
   }
 
+  public async getById(id: string, columns: (keyof Section)[] = []) {
+    const section = await this.repository.getById(id, columns);
+    if (!section) {
+      throw new Error("Section not found");
+    }
+    return section;
+  }
+
   public async getByListId(listId: string) {
+    const list = await this.repository.findListById(listId);
+    if (!list) {
+      throw new Error("List not found");
+    }
     return await this.repository.findByListId(listId);
   }
 
