@@ -55,7 +55,7 @@ describe("ListsService", () => {
           color_id: "#9C27B1",
           icon_id: "circle",
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow("Color is not valid");
     });
 
     it("should throw error when creating list with invalid icon", async () => {
@@ -65,7 +65,7 @@ describe("ListsService", () => {
           color_id: "#FF9800",
           icon_id: "test",
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow("Icon is not valid");
     });
 
     it("should create a default section when list is created", async () => {
