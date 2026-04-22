@@ -267,11 +267,15 @@ describe("SectionsService", () => {
   let db: DBClient;
   let repo: SectionsRepository;
   let service: SectionsService;
+  let listsService: ListsService;
+  let listsRepo: ListsRepository;
 
   beforeEach(async () => {
     db = await createTestDatabase();
     repo = new SectionsRepository(db);
+    listsRepo = new ListsRepository(db);
     service = new SectionsService(repo);
+    listsService = new ListsService(listsRepo, service);
   });
 
   describe("create", () => {
@@ -373,6 +377,51 @@ describe("SectionsService", () => {
       await expect(
         service.update("non-existent-id", { name: "Try Update" }),
       ).rejects.toThrow("Section not found");
+    });
+  });
+
+  describe("delete", () => {
+    it("should soft delete a section", async () => {
+      const listId = await listsService.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const sectionId = await service.create({
+        name: "Additional",
+        list_id: listId,
+      });
+
+      await service.delete(sectionId);
+
+      const result = await service.getById(sectionId, ["name"]);
+      expect(result).toBeNull();
+    });
+
+    it("should throw error when deleting the only section", async () => {
+      const listId = await listsService.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      const sections = await service.getByListId(listId);
+      const onlySectionId = sections[0]?.id;
+
+      await expect(service.delete(onlySectionId!)).rejects.toThrow(
+        "Cannot delete the only section in a list",
+      );
+    });
+
+    it("should throw error when deleting non-existent section", async () => {
+      await expect(service.delete("non-existent-id")).rejects.toThrow(
+        "Section not found",
+      );
+    });
+
+    it("should throw error for immutable section", async () => {
+      await expect(service.delete("0")).rejects.toThrow();
     });
   });
 });
