@@ -79,5 +79,78 @@ describe("ListsService", () => {
       expect(sections.length).toBe(1);
       expect(sections[0]?.name).toBe("Not sectioned");
     });
+
+    it("should throw error when creating with empty name", async () => {
+      await expect(
+        listsService.create({
+          name: "",
+          color_id: "#1565C0",
+          icon_id: "star",
+        }),
+      ).rejects.toThrow("can not be empty.");
+    });
+  });
+
+  describe("update", () => {
+    it("should update name, icon and color at once", async () => {
+      const id = await listsService.create({
+        name: "Original",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      await listsService.update(id, {
+        name: "Updated All",
+        color_id: "#FF9800",
+        icon_id: "apple",
+      });
+
+      const result = await listsService.getById(id);
+      expect(result?.name).toBe("Updated All");
+      expect(result?.color_id).toBe("#FF9800");
+      expect(result?.icon_id).toBe("apple");
+    });
+
+    it("should throw error when updating with invalid color", async () => {
+      const id = await listsService.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      await expect(
+        listsService.update(id, { color_id: "#145354" }),
+      ).rejects.toThrow("Color is not valid");
+    });
+
+    it("should throw error when updating with invalid icon", async () => {
+      const id = await listsService.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      await expect(
+        listsService.update(id, { icon_id: "invalid_icon" }),
+      ).rejects.toThrow("Icon is not valid");
+    });
+
+    it("should throw error when updating with empty name", async () => {
+      const id = await listsService.create({
+        name: "Test List",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      await expect(listsService.update(id, { name: "" })).rejects.toThrow(
+        "can not be empty.",
+      );
+    });
+
+    it("should throw error for immutable list", async () => {
+      await expect(
+        listsService.update("0", { name: "Try Update" }),
+      ).rejects.toThrow("Cannot modify an immutable list");
+    });
   });
 });
