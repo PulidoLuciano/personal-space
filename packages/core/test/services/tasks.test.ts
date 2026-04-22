@@ -202,5 +202,70 @@ describe("TasksService", () => {
       ).rejects.toThrow("Section not found");
     });
   });
-});
 
+  describe("delete", () => {
+    it("should soft delete a non-recurrent task", async () => {
+      const id = await tasksService.create({
+        name: "Task To Delete",
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.delete(id);
+
+      await expect(tasksService.getById(id)).rejects.toThrow("Task not found");
+    });
+
+    it("should throw error when deleting non-existent task", async () => {
+      await expect(tasksService.delete("non-existent-id")).rejects.toThrow(
+        "Task not found",
+      );
+    });
+
+    it("should soft delete a recurrent task with scope all", async () => {
+      const id = await tasksService.create({
+        name: "Recurrent Task To Delete",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.delete(id, undefined, "all");
+
+      await expect(tasksService.getById(id)).rejects.toThrow("Task not found");
+    });
+
+    it("should create task exception for current occurrence delete", async () => {
+      const id = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.delete(id, occurrenceDate, "current");
+
+      const task = await tasksService.getById(id);
+      expect(task).toBeDefined();
+
+      const exceptions = await taskExceptionsRepo.findByTaskAndOccurrence(
+        id,
+        occurrenceDate,
+      );
+      expect(exceptions).toBeDefined();
+      expect(exceptions?.is_deleted).toBe(1);
+    });
+
+    it("should update recurrency for following occurrences delete", async () => {
+      const id = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.delete(id, occurrenceDate, "following");
+
+      const task = await tasksService.getById(id, ["recurrency"]);
+      expect(task?.recurrency).toContain("UNTIL=20261230");
+    });
+  });
+});

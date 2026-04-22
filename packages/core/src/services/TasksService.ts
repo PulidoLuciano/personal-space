@@ -105,6 +105,14 @@ export default class TasksService extends BaseService<
     return await super.create(preparedData);
   }
 
+  public async getById(id: string, columns: (keyof Task)[] = []) {
+    const task = await this.repository.getById(id, columns);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+    return task;
+  }
+
   public async update(
     id: string,
     data: Partial<InsertTask>,
