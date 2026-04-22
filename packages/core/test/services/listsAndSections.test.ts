@@ -153,4 +153,86 @@ describe("ListsService", () => {
       ).rejects.toThrow("Cannot modify an immutable list");
     });
   });
+
+  describe("delete", () => {
+    it("should soft delete a list", async () => {
+      const id = await listsService.create({
+        name: "To Delete",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      await listsService.delete(id);
+
+      const result = await listsService.getById(id);
+      expect(result).toBeNull();
+    });
+
+    it("should throw error when deleting non-existent list", async () => {
+      await expect(
+        listsService.delete("non-existent-id"),
+      ).rejects.toThrow("List not found");
+    });
+
+    it("should throw error for immutable list", async () => {
+      await expect(listsService.delete("0")).rejects.toThrow(
+        "Cannot modify an immutable list",
+      );
+    });
+  });
+
+  describe("archive", () => {
+    it("should archive a list", async () => {
+      const id = await listsService.create({
+        name: "To Archive",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+
+      await listsService.archive(id);
+
+      const result = await listsService.getById(id);
+      expect(result?.is_archived).toBe(1);
+    });
+
+    it("should throw error when archiving non-existent list", async () => {
+      await expect(
+        listsService.archive("non-existent-id"),
+      ).rejects.toThrow("List not found");
+    });
+
+    it("should throw error for immutable list", async () => {
+      await expect(listsService.archive("0")).rejects.toThrow(
+        "Cannot modify an immutable list",
+      );
+    });
+  });
+
+  describe("unarchive", () => {
+    it("should unarchive a list", async () => {
+      const id = await listsService.create({
+        name: "To Unarchive",
+        color_id: "#1565C0",
+        icon_id: "star",
+      });
+      await listsService.archive(id);
+
+      await listsService.unarchive(id);
+
+      const result = await listsService.getById(id);
+      expect(result?.is_archived).toBe(0);
+    });
+
+    it("should throw error when unarchiving non-existent list", async () => {
+      await expect(
+        listsService.unarchive("non-existent-id"),
+      ).rejects.toThrow("List not found");
+    });
+
+    it("should throw error for immutable list", async () => {
+      await expect(listsService.unarchive("0")).rejects.toThrow(
+        "Cannot modify an immutable list",
+      );
+    });
+  });
 });
