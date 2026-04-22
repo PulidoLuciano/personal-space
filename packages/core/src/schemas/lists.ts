@@ -16,7 +16,7 @@ export const listSchema = z.object({
   ...baseSchema.shape,
   ...insertListSchema.shape,
   is_archived: z.boolean().default(false),
-  show_complete: z.boolean().default(true),
+  show_completed: z.boolean().default(true),
   mutable: z.boolean().default(true),
   can_delete: z.boolean().default(true),
 });

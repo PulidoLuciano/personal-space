@@ -78,6 +78,7 @@ export default class ListsService extends BaseService<
       "color_id",
       "icon_id",
       "is_archived",
+      "show_completed",
       "mutable",
       "updated_at",
     ]);
@@ -117,5 +118,12 @@ export default class ListsService extends BaseService<
     const list = await this.getById(id);
     this.checkMutable(list);
     return await this.repository.unarchive(id);
+  }
+
+  public async toggleShowCompleted(id: string): Promise<void> {
+    const list = await this.getById(id);
+    this.checkMutable(list);
+    const newValue = list?.show_completed ? false : true;
+    return await this.repository.update(id, { show_completed: newValue });
   }
 }
