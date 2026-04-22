@@ -37,6 +37,7 @@ describe("TasksService", () => {
       tasksRepo,
       taskExecutionsRepo,
       taskExceptionsRepo,
+      sectionsRepo,
     );
 
     const listId = await listsService.create({
@@ -123,7 +124,7 @@ describe("TasksService", () => {
           name: "Invalid Type Task",
           type: "invalid" as any,
           section_id: sectionId,
-        }),
+        } as any),
       ).rejects.toThrow("Invalid option");
     });
 
@@ -155,5 +156,51 @@ describe("TasksService", () => {
       const task = await tasksService.getById(id, ["due_rule"]);
       expect(task?.due_rule).toContain(expectedDateStr);
     });
+
+    it("should create a recurrent task without due_rule", async () => {
+      const id = await tasksService.create({
+        name: "Daily Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const task = await tasksService.getById(id, ["recurrency", "due_rule"]);
+      expect(task?.recurrency).toContain("DAILY");
+      expect(task?.due_rule).toBeNull();
+    });
+
+    it("should create a recurrent task with relative due_rule", async () => {
+      const id = await tasksService.create({
+        name: "Daily Recurrent With Due",
+        recurrency: "FREQ=DAILY",
+        due_rule: "+1d 03:00:00",
+        section_id: sectionId,
+      } as any);
+
+      const task = await tasksService.getById(id, ["recurrency", "due_rule"]);
+      expect(task?.recurrency).toContain("DAILY");
+      expect(task?.due_rule).toContain("+1d");
+    });
+
+    it("should throw error when creating recurrent task with fixed due_rule", async () => {
+      await expect(
+        tasksService.create({
+          name: "Invalid Recurrent Task",
+          recurrency: "FREQ=DAILY",
+          due_rule: "2026-12-31",
+          section_id: sectionId,
+        } as any),
+      ).rejects.toThrow("Recurrent tasks cannot have fixed due_rule");
+    });
+
+    it("should throw error when creating task with non-existent section", async () => {
+      await expect(
+        tasksService.create({
+          name: "Task in Invalid Section",
+          section_id: "00000000-0000-0000-0000-000000000000",
+        } as any),
+      ).rejects.toThrow("Section not found");
+    });
   });
 });
+

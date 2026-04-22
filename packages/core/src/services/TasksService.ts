@@ -3,6 +3,7 @@ import type {
   TaskExceptionsRepository,
   TasksRepository,
 } from "../database/repositories/TasksRepository.js";
+import type SectionsRepository from "../database/repositories/SectionsRepository.js";
 import type {
   InsertTask,
   Task,
@@ -32,15 +33,18 @@ export default class TasksService extends BaseService<
 > {
   private taskExecutionsRepository: TaskExecutionsRepository;
   private taskExceptionsRepository: TaskExceptionsRepository;
+  private sectionsRepository: SectionsRepository;
 
   public constructor(
     tasksRepository: TasksRepository,
     taskExecutionsRepository: TaskExecutionsRepository,
     taskExceptionsRepository: TaskExceptionsRepository,
+    sectionsRepository: SectionsRepository,
   ) {
     super(tasksRepository);
     this.taskExecutionsRepository = taskExecutionsRepository;
     this.taskExceptionsRepository = taskExceptionsRepository;
+    this.sectionsRepository = sectionsRepository;
   }
 
   public isRecurrent(task: Partial<InsertTask>): boolean {
@@ -93,6 +97,10 @@ export default class TasksService extends BaseService<
 
   public async create(data: InsertTask): Promise<string> {
     const validatedData = validate(insertTaskSchema, data);
+    const sectionExists = await this.sectionsRepository.findById(validatedData.section_id);
+    if (!sectionExists) {
+      throw new Error("Section not found");
+    }
     const preparedData = this.prepareTaskData(validatedData);
     return await super.create(preparedData);
   }

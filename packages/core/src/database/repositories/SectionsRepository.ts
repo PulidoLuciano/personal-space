@@ -24,6 +24,14 @@ export default class SectionsRepository extends BaseRepository<Section> {
     return result?.count ?? 0;
   }
 
+  public async findById(sectionId: string): Promise<boolean> {
+    const result = await this.db.queryOne<{ id: string }>(
+      "SELECT id FROM sections WHERE id = ? AND is_deleted = FALSE",
+      [sectionId],
+    );
+    return !!result;
+  }
+
   public async findListById(listId: string): Promise<boolean> {
     const result = await this.db.queryOne<{ id: string }>(
       "SELECT id FROM lists WHERE id = ? AND is_deleted = 0",
