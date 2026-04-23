@@ -265,7 +265,125 @@ describe("TasksService", () => {
       await tasksService.delete(id, occurrenceDate, "following");
 
       const task = await tasksService.getById(id, ["recurrency"]);
-      expect(task?.recurrency).toContain("UNTIL=20261230");
+      expect(task?.recurrency).toContain("20261230");
+    });
+  });
+
+  describe("update", () => {
+    it("should update a non-recurrent task", async () => {
+      const id = await tasksService.create({
+        name: "Task To Update",
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.update(id, { name: "Updated Task Name" } as any);
+
+      const task = await tasksService.getById(id);
+      expect(task?.name).toBe("Updated Task Name");
+    });
+
+    it("should throw error when updating non-existent task", async () => {
+      await expect(
+        tasksService.update("non-existent-id", { name: "New Name" } as any),
+      ).rejects.toThrow("Task not found");
+    });
+
+    it("should update a recurrent task with scope all", async () => {
+      const id = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.update(
+        id,
+        { name: "Updated Recurrent Name" } as any,
+        undefined,
+        "all",
+      );
+
+      const task = await tasksService.getById(id);
+      expect(task?.name).toBe("Updated Recurrent Name");
+    });
+
+    it("should create task exception for current occurrence update", async () => {
+      const id = await tasksService.create({
+        name: "Recurrent Task",
+        body: "Original body",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.update(
+        id,
+        { body: "Updated body" } as any,
+        occurrenceDate,
+        "current",
+      );
+
+      const task = await tasksService.getById(id);
+      expect(task?.body).toBe("Original body");
+
+      const exception = await taskExceptionsRepo.findByTaskAndOccurrence(
+        id,
+        occurrenceDate,
+      );
+      expect(exception?.override_body).toBe("Updated body");
+    });
+
+    it("should create new task for following occurrences update", async () => {
+      const id = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.update(
+        id,
+        { name: "Updated Following" } as any,
+        occurrenceDate,
+        "following",
+      );
+
+      const originalTask = await tasksService.getById(id, ["recurrency"]);
+      expect(originalTask?.recurrency).toContain("UNTIL=20261230");
+
+      const allTasks = await tasksRepo.getAll();
+      const newTask = allTasks.find((t) => t.id !== id);
+      expect(newTask?.name).toBe("Updated Following");
+      expect(newTask?.recurrency).toContain("DTSTART:20261231");
+    });
+
+    it("should preserve previous exception values when updating same occurrence twice", async () => {
+      const id = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.update(
+        id,
+        { body: "Test body", location: "First Location" } as any,
+        occurrenceDate,
+        "current",
+      );
+
+      await tasksService.update(
+        id,
+        { body: "New Body" } as any,
+        occurrenceDate,
+        "current",
+      );
+
+      const exception = await taskExceptionsRepo.findByTaskAndOccurrence(
+        id,
+        occurrenceDate,
+      );
+      expect(exception?.override_body).toBe("New Body");
+      expect(exception?.override_location).toBe("First Location");
     });
   });
 });

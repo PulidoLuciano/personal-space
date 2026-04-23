@@ -177,12 +177,17 @@ export default class TasksService extends BaseService<
       throw new Error("occurrenceDate is required for current scope update");
     }
 
+    const existingException = await this.taskExceptionsRepository.findByTaskAndOccurrence(
+      taskId,
+      occurrenceDate,
+    );
+
     await this.taskExceptionsRepository.upsert(taskId, occurrenceDate, {
-      rescheduled_due: null,
-      override_body: overrides.body ?? null,
-      override_location: overrides.location ?? null,
-      override_type: overrides.type ?? null,
-      override_objective: overrides.objective ?? null,
+      rescheduled_due: existingException?.rescheduled_due ?? null,
+      override_body: overrides.body ?? existingException?.override_body ?? null,
+      override_location: overrides.location ?? existingException?.override_location ?? null,
+      override_type: overrides.type ?? existingException?.override_type ?? null,
+      override_objective: overrides.objective ?? existingException?.override_objective ?? null,
     });
   }
 
