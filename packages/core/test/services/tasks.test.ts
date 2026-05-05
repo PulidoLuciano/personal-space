@@ -386,4 +386,261 @@ describe("TasksService", () => {
       expect(exception?.override_location).toBe("First Location");
     });
   });
+
+  describe("startExecution", () => {
+    it("should start execution for non-recurrent task with instant=true", async () => {
+      const taskId = await tasksService.create({
+        name: "Task For Execution",
+        section_id: sectionId,
+      } as any);
+
+      const executionId = await tasksService.startExecution(taskId);
+      expect(executionId).toBeDefined();
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(taskId);
+      expect(executions.length).toBe(1);
+      expect(executions[0]?.task_id).toBe(taskId);
+      expect(executions[0]?.end_time).not.toBeNull();
+    });
+
+    it("should start execution for non-recurrent task with instant=false", async () => {
+      const taskId = await tasksService.create({
+        name: "Task For Execution",
+        section_id: sectionId,
+      } as any);
+
+      const executionId = await tasksService.startExecution(
+        taskId,
+        null,
+        false,
+      );
+      expect(executionId).toBeDefined();
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(taskId);
+      expect(executions[0]?.end_time).toBeNull();
+    });
+
+    it("should start execution for recurrent task with occurrence_date", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      const executionId = await tasksService.startExecution(
+        taskId,
+        occurrenceDate,
+      );
+      expect(executionId).toBeDefined();
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(
+        taskId,
+        occurrenceDate,
+      );
+      expect(executions.length).toBe(1);
+      expect(executions[0]?.task_id).toBe(taskId);
+    });
+
+    it("should throw error when starting execution for non-existent task", async () => {
+      await expect(
+        tasksService.startExecution("non-existent-id"),
+      ).rejects.toThrow("Task not found");
+    });
+
+    it("should throw error when starting execution for recurrent task without occurrence_date", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      await expect(
+        tasksService.startExecution(taskId),
+      ).rejects.toThrow("An occurrence date is necessary");
+    });
+  });
+
+  describe("stopExecution", () => {
+    it("should stop a running execution", async () => {
+      const taskId = await tasksService.create({
+        name: "Task For Stop",
+        section_id: sectionId,
+      } as any);
+
+      const executionId = await tasksService.startExecution(
+        taskId,
+        null,
+        false,
+      );
+
+      await tasksService.stopExecution(executionId);
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(taskId);
+      expect(executions[0]?.end_time).not.toBeNull();
+    });
+  });
+
+  describe("getExecutionsByTaskAndDate", () => {
+    it("should get executions for non-recurrent task", async () => {
+      const taskId = await tasksService.create({
+        name: "Task For Get Executions",
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.startExecution(taskId);
+      await tasksService.startExecution(taskId);
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(taskId);
+      expect(executions.length).toBe(2);
+    });
+
+    it("should get executions for recurrent task with occurrence_date", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.startExecution(taskId, occurrenceDate);
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(
+        taskId,
+        occurrenceDate,
+      );
+      expect(executions.length).toBe(1);
+    });
+
+    it("should throw error for recurrent task without occurrence_date", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      await expect(
+        tasksService.getExecutionsByTaskAndDate(taskId),
+      ).rejects.toThrow("An occurrence date is necessary");
+    });
+
+    it("should throw error for non-existent task", async () => {
+      await expect(
+        tasksService.getExecutionsByTaskAndDate("non-existent-id"),
+      ).rejects.toThrow("Task not found");
+    });
+
+    it("should return empty array when no executions exist", async () => {
+      const taskId = await tasksService.create({
+        name: "Task No Executions",
+        section_id: sectionId,
+      } as any);
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(taskId);
+      expect(executions.length).toBe(0);
+    });
+  });
+
+  describe("updateExecution", () => {
+    it("should update execution start_time and end_time", async () => {
+      const taskId = await tasksService.create({
+        name: "Task For Update",
+        section_id: sectionId,
+      } as any);
+
+      const executionId = await tasksService.startExecution(taskId);
+
+      const newStartTime = new Date("2026-01-01T10:00:00");
+      const newEndTime = new Date("2026-01-01T11:00:00");
+
+      await tasksService.updateExecution(executionId, {
+        start_time: newStartTime,
+        end_time: newEndTime,
+      } as any);
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(taskId);
+      expect(executions[0]?.start_time).toBeDefined();
+      expect(executions[0]?.end_time).toBeDefined();
+    });
+
+    it("should throw error when end_time is less than start_time", async () => {
+      const taskId = await tasksService.create({
+        name: "Task For Invalid Update",
+        section_id: sectionId,
+      } as any);
+
+      const executionId = await tasksService.startExecution(taskId);
+
+      const lateStartTime = new Date("2026-01-01T12:00:00");
+      const earlyEndTime = new Date("2026-01-01T10:00:00");
+
+      await expect(
+        tasksService.updateExecution(executionId, {
+          start_time: lateStartTime,
+          end_time: earlyEndTime,
+        } as any),
+      ).rejects.toThrow("end_time must be greater than or equal to start_time");
+    });
+
+    it("should throw error for non-existent execution", async () => {
+      await expect(
+        tasksService.updateExecution("non-existent-id", {
+          end_time: new Date(),
+        } as any),
+      ).rejects.toThrow("Execution not found");
+    });
+
+    it("should update only end_time", async () => {
+      const taskId = await tasksService.create({
+        name: "Task Partial Update",
+        section_id: sectionId,
+      } as any);
+
+      const executionId = await tasksService.startExecution(
+        taskId,
+        null,
+        false,
+      );
+
+      const newEndTime = new Date(Date.now() + 3600000); // 1 hour from now
+      await tasksService.updateExecution(executionId, {
+        end_time: newEndTime,
+      } as any);
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(taskId);
+      expect(executions[0]?.end_time).toBeDefined();
+    });
+
+    it("should update only start_time", async () => {
+      const taskId = await tasksService.create({
+        name: "Task Update Start",
+        section_id: sectionId,
+      } as any);
+
+      const executionId = await tasksService.startExecution(taskId);
+
+      const newStartTime = new Date("2026-01-01T09:00:00");
+      await tasksService.updateExecution(executionId, {
+        start_time: newStartTime,
+      } as any);
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(taskId);
+      expect(executions[0]?.start_time).toBeDefined();
+    });
+  });
+
+  describe("deleteExecution", () => {
+    it("should delete an execution", async () => {
+      const taskId = await tasksService.create({
+        name: "Task For Delete Execution",
+        section_id: sectionId,
+      } as any);
+
+      const executionId = await tasksService.startExecution(taskId);
+      await tasksService.deleteExecution(executionId);
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(taskId);
+      expect(executions.length).toBe(0);
+    });
+  });
 });

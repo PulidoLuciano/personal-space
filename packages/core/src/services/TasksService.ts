@@ -329,6 +329,10 @@ export default class TasksService extends BaseService<
       throw new Error("Task not found");
     }
 
+    if (this.isRecurrent(task) && !ocurrence_date) {
+      throw new Error("An occurrence date is necessary for recurrent tasks");
+    }
+
     const executionData = {
       task_id: id_task,
       ocurrence_date,
