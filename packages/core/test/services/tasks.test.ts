@@ -643,4 +643,448 @@ describe("TasksService", () => {
       expect(executions.length).toBe(0);
     });
   });
+
+  describe("getTaskOccurrence", () => {
+    it("should get non-recurrent task detail", async () => {
+      const taskId = await tasksService.create({
+        name: "Test Task",
+        body: "Test body",
+        location: "Test location",
+        due_rule: "2026-12-31",
+        type: "by executions",
+        objective: 2,
+        section_id: sectionId,
+      } as any);
+
+      const result = await tasksService.getTaskOccurrence(taskId);
+
+      expect(result.name).toBe("Test Task");
+      expect(result.body).toBe("Test body");
+      expect(result.location).toBe("Test location");
+      expect(result.type).toBe("by executions");
+      expect(result.objective).toBe(2);
+      expect(result.progress).toBe(0);
+    });
+
+    it("should throw error for non-existent task", async () => {
+      await expect(
+        tasksService.getTaskOccurrence("non-existent-id"),
+      ).rejects.toThrow("Task not found");
+    });
+
+    it("should throw error for recurrent task without occurrenceDate", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      await expect(
+        tasksService.getTaskOccurrence(taskId),
+      ).rejects.toThrow("You need to specify a ocurrence date for recurrent task");
+    });
+
+    it("should get recurrent task with occurrenceDate", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        body: "Original body",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      const result = await tasksService.getTaskOccurrence(taskId, occurrenceDate);
+
+      expect(result.name).toBe("Recurrent Task");
+      expect(result.occurrence_date).toEqual(occurrenceDate);
+    });
+
+    it("should apply exception override_body", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        body: "Original body",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.update(
+        taskId,
+        { body: "Changed body" } as any,
+        occurrenceDate,
+        "current",
+      );
+
+      const result = await tasksService.getTaskOccurrence(taskId, occurrenceDate);
+      expect(result.body).toBe("Changed body");
+    });
+
+    it("should apply exception override_location", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        location: "Original location",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.update(
+        taskId,
+        { location: "New location" } as any,
+        occurrenceDate,
+        "current",
+      );
+
+      const result = await tasksService.getTaskOccurrence(taskId, occurrenceDate);
+      expect(result.location).toBe("New location");
+    });
+
+    it("should apply exception override_type", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        type: "by executions",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.update(
+        taskId,
+        { type: "note" as any } as any,
+        occurrenceDate,
+        "current",
+      );
+
+      const result = await tasksService.getTaskOccurrence(taskId, occurrenceDate);
+      expect(result.type).toBe("note");
+    });
+
+    it("should apply exception override_objective", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        objective: 5,
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.update(
+        taskId,
+        { objective: 1 } as any,
+        occurrenceDate,
+        "current",
+      );
+
+      const result = await tasksService.getTaskOccurrence(taskId, occurrenceDate);
+      expect(result.objective).toBe(1);
+    });
+
+    it("should apply exception rescheduled_due to due_date", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        due_rule: "+1d 00:00:00",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      const rescheduledDue = new Date("2026-12-25");
+
+      await taskExceptionsRepo.upsert(taskId, occurrenceDate, {
+        rescheduled_due: rescheduledDue,
+        override_body: null,
+        override_location: null,
+        override_type: null,
+        override_objective: null,
+      });
+
+      const result = await tasksService.getTaskOccurrence(taskId, occurrenceDate);
+      expect(result.due_date).toContain("2026-12-25");
+    });
+
+    it("should throw error for deleted occurrence", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.delete(taskId, occurrenceDate, "current");
+
+      await expect(
+        tasksService.getTaskOccurrence(taskId, occurrenceDate),
+      ).rejects.toThrow("Occurrence has been deleted");
+    });
+
+    it("should calculate progress for by time type", async () => {
+      const taskId = await tasksService.create({
+        name: "Time Task",
+        type: "by time",
+        section_id: sectionId,
+      } as any);
+
+      const execId = await tasksService.startExecution(taskId, null, false);
+      await tasksService.stopExecution(execId);
+
+      const result = await tasksService.getTaskOccurrence(taskId);
+      expect(result.progress).toBeGreaterThanOrEqual(0);
+    });
+
+    it("should calculate progress for by executions type", async () => {
+      const taskId = await tasksService.create({
+        name: "Execution Task",
+        type: "by executions",
+        objective: 2,
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.startExecution(taskId);
+
+      const result = await tasksService.getTaskOccurrence(taskId);
+      expect(result.progress).toBe(1);
+    });
+  });
+
+  describe("getTasksBySection", () => {
+    it("should get non-recurrent tasks with progress", async () => {
+      const taskId = await tasksService.create({
+        name: "Incomplete Task",
+        type: "by executions",
+        objective: 2,
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.startExecution(taskId);
+
+      const results = await tasksService.getTasksBySection(sectionId);
+      expect(results.length).toBe(1);
+      expect(results[0]?.name).toBe("Incomplete Task");
+      expect(results[0]?.progress).toBe(1);
+    });
+
+    it("should filter only completed when onlyCompleted=true", async () => {
+      const taskId = await tasksService.create({
+        name: "Incomplete Task",
+        type: "by executions",
+        objective: 2,
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.startExecution(taskId);
+
+      const results = await tasksService.getTasksBySection(sectionId, true);
+      expect(results.length).toBe(0);
+    });
+
+    it("should return completed tasks when onlyCompleted=true", async () => {
+      const taskId = await tasksService.create({
+        name: "Complete Task",
+        type: "by executions",
+        objective: 1,
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.startExecution(taskId);
+
+      const results = await tasksService.getTasksBySection(sectionId, true);
+      expect(results.length).toBe(1);
+      expect(results[0]?.name).toBe("Complete Task");
+    });
+
+    it("should get all occurrences for recurrent task", async () => {
+      const taskId = await tasksService.create({
+        name: "Daily Task",
+        type: "by executions",
+        objective: 1,
+        recurrency: "FREQ=DAILY;COUNT=10",
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.startExecution(taskId, new Date("2025-01-01"));
+
+      const results = await tasksService.getTasksBySection(sectionId);
+      expect(results.length).toBeGreaterThan(0);
+      expect(results[0]?.name).toBe("Daily Task");
+    });
+
+    it("should exclude deleted occurrences", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        type: "by executions",
+        objective: 1,
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.delete(taskId, occurrenceDate, "current");
+
+      const results = await tasksService.getTasksBySection(sectionId);
+      const hasDeletedOccurrence = results.some(
+        (r) => r.occurrence_date && r.occurrence_date.getTime() === occurrenceDate.getTime(),
+      );
+      expect(hasDeletedOccurrence).toBe(false);
+    });
+
+    it("should apply exception override_objective for completion", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        type: "by executions",
+        objective: 5,
+        recurrency: "FREQ=DAILY;COUNT=100",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date();
+      await tasksService.startExecution(taskId, occurrenceDate);
+      await tasksService.update(
+        taskId,
+        { objective: 1 } as any,
+        occurrenceDate,
+        "current",
+      );
+
+      const results = await tasksService.getTasksBySection(sectionId);
+      expect(results.length).toBeGreaterThan(0);
+    });
+
+    it("should apply exception override_type", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        type: "by executions",
+        recurrency: "FREQ=DAILY;COUNT=100",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date();
+      await tasksService.update(
+        taskId,
+        { type: "note" as any } as any,
+        occurrenceDate,
+        "current",
+      );
+
+      const results = await tasksService.getTasksBySection(sectionId);
+      expect(results.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("getTasksByDateRange", () => {
+    it("should get non-recurrent task in range", async () => {
+      const taskId = await tasksService.create({
+        name: "Task in Range",
+        due_rule: "2026-06-15",
+        section_id: sectionId,
+      } as any);
+
+      const results = await tasksService.getTasksByDateRange(
+        new Date("2026-06-01"),
+        new Date("2026-06-30"),
+      );
+
+      expect(results.length).toBe(1);
+      expect(results[0]?.name).toBe("Task in Range");
+      expect(results[0]?.is_complete).toBe(false);
+    });
+
+    it("should get completed task in range", async () => {
+      const taskId = await tasksService.create({
+        name: "Completed Task",
+        due_rule: "2026-06-15",
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.startExecution(taskId);
+
+      const results = await tasksService.getTasksByDateRange(
+        new Date("2026-06-01"),
+        new Date("2026-06-30"),
+      );
+
+      expect(results[0]?.is_complete).toBe(true);
+    });
+
+    it("should get recurrent task occurrences in range", async () => {
+      const taskId = await tasksService.create({
+        name: "Daily Recurrent",
+        type: "by executions",
+        objective: 1,
+        recurrency: "FREQ=DAILY;COUNT=100",
+        section_id: sectionId,
+      } as any);
+
+      const today = new Date();
+      const nextWeek = new Date(today);
+      nextWeek.setDate(nextWeek.getDate() + 7);
+
+      const results = await tasksService.getTasksByDateRange(today, nextWeek);
+      expect(results.length).toBeGreaterThanOrEqual(1);
+      expect(results[0]?.name).toBe("Daily Recurrent");
+    });
+
+    it("should exclude recurrent task outside range", async () => {
+      const taskId = await tasksService.create({
+        name: "Future Recurrent",
+        type: "by executions",
+        objective: 1,
+        recurrency: "FREQ=DAILY;COUNT=5;UNTIL=20250701T000000Z",
+        section_id: sectionId,
+      } as any);
+
+      const results = await tasksService.getTasksByDateRange(
+        new Date("2025-06-01"),
+        new Date("2025-06-30"),
+      );
+
+      expect(results.length).toBe(0);
+    });
+
+    it("should exclude deleted occurrences in range", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent to Delete",
+        type: "by executions",
+        objective: 1,
+        recurrency: "FREQ=DAILY;COUNT=30",
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.delete(taskId, new Date("2025-01-15"), "current");
+
+      const results = await tasksService.getTasksByDateRange(
+        new Date("2025-01-01"),
+        new Date("2025-01-31"),
+      );
+
+      const hasDeletedDate = results.some(
+        (r) => r.occurrence_date && r.occurrence_date.getDate() === 15,
+      );
+      expect(hasDeletedDate).toBe(false);
+    });
+
+    it("should use exception override_objective for completion", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Override",
+        type: "by executions",
+        objective: 10,
+        recurrency: "FREQ=DAILY;COUNT=100",
+        section_id: sectionId,
+      } as any);
+
+      const today = new Date();
+      await tasksService.startExecution(taskId, today);
+      await tasksService.update(
+        taskId,
+        { objective: 1 } as any,
+        today,
+        "current",
+      );
+
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const results = await tasksService.getTasksByDateRange(today, tomorrow);
+      expect(results.length).toBeGreaterThanOrEqual(1);
+    });
+  });
 });
