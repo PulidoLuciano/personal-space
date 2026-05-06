@@ -1,0 +1,21 @@
+circle
+star / sun / earth / sprout / leaf
+backpack / footprints / dumbbell / heart
+pill / syringe / test-tube-diagonal
+book / library-big / notepad-text / brain / graduation-cap / languages
+megaphone / presentation
+mic-vocal / music / headphones
+camera / clapperboard / gamepad-2
+chess-knight / puzzle
+palette / paintbrush
+shovel / wrench
+car / motorbike / bike / truck / plane
+sailboat / fish
+apple / hamburger / beer / coffee / chef-hat
+award / trophy
+badge-dollar-sign / shopping-cart / briefcase-business
+chart-no-axes-combined / laptop-minimal / code-xml
+scale
+lightbulb
+balloon / baby
+cat / dog / paw-print

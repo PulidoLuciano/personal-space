@@ -14,6 +14,8 @@ import type { InsertSection, Section } from "./schemas/sections.js";
 export type { InsertSection, Section };
 import type { InsertTask, Task } from "./schemas/tasks.js";
 export type { InsertTask, Task };
+import type { TaskWithProgress, TaskOccurrenceDetail, TaskInRange } from "./schemas/tasks.js";
+export type { TaskWithProgress, TaskOccurrenceDetail, TaskInRange };
 
 export {
   isDueRuleRelative,
@@ -27,6 +29,7 @@ class PersonalCore {
   private _listsService: ListsService | null;
   private _sectionsService: SectionsService | null;
   private _tasksService: TasksService | null;
+  private _listsRepo: ListsRepository | null;
 
   public get listsService() {
     if (!this._listsService) {
@@ -55,11 +58,27 @@ class PersonalCore {
     return this._tasksService;
   }
 
+  private get listsRepository() {
+    if (!this._listsRepo) {
+      this._listsRepo = new ListsRepository(this.db);
+    }
+    return this._listsRepo;
+  }
+
+  public async getAllColors(): Promise<string[]> {
+    return this.listsRepository.getAllColors();
+  }
+
+  public async getAllIcons(): Promise<string[]> {
+    return this.listsRepository.getAllIcons();
+  }
+
   private constructor(db: DBClient) {
     this.db = db;
     this._listsService = null;
     this._sectionsService = null;
     this._tasksService = null;
+    this._listsRepo = null;
   }
 
   static async initialize(db: DBClient): Promise<PersonalCore> {

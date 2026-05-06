@@ -7,11 +7,8 @@ import {
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
-import { testDatabase, sumSql } from "personal-space-core";
-import { db } from "@/lib/db";
-
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useEffect } from "react";
+import { CoreProvider } from "@/lib/core-context";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -20,22 +17,18 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
-  useEffect(() => {
-    (async () => {
-      console.log(await testDatabase(db));
-      console.log(await sumSql(db));
-    })();
-  }, []);
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="modal"
-          options={{ presentation: "modal", title: "Modal" }}
-        />
-      </Stack>
-      <StatusBar style="auto" />
+      <CoreProvider>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="modal"
+            options={{ presentation: "modal", title: "Modal" }}
+          />
+        </Stack>
+        <StatusBar style="auto" />
+      </CoreProvider>
     </ThemeProvider>
   );
 }

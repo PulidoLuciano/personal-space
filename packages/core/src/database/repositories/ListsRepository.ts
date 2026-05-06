@@ -92,4 +92,18 @@ export default class ListsRepository extends BaseRepository<List> {
     );
     return !!result;
   }
+
+  public async getAllColors(): Promise<string[]> {
+    const result = await this.db.query<{ rgb: string }>(
+      "SELECT rgb FROM colors WHERE is_deleted = 0 ORDER BY rgb",
+    );
+    return result.map((r) => r.rgb);
+  }
+
+  public async getAllIcons(): Promise<string[]> {
+    const result = await this.db.query<{ name: string }>(
+      "SELECT name FROM icons WHERE is_deleted = 0 ORDER BY name",
+    );
+    return result.map((r) => r.name);
+  }
 }
