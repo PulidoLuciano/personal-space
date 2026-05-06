@@ -21,6 +21,7 @@ const MAPPING = {
   'checklist': 'checklist',
   'list.bullet': 'format-list-bulleted',
   'checkmark': 'check',
+  'plus': 'add',
 } as IconMapping;
 
 /**
