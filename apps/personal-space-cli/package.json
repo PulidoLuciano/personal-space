@@ -71,6 +71,9 @@
       },
       "task": {
         "description": "Manage tasks"
+      },
+      "occurrence": {
+        "description": "Manage task occurrences"
       }
     }
   },

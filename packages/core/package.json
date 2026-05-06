@@ -2,7 +2,8 @@
   "name": "personal-space-core",
   "version": "0.0.0",
   "description": "This is the core functionality for personal-space apps.",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "type": "module",
   "scripts": {
     "test": "vitest",

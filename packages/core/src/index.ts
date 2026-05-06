@@ -49,7 +49,8 @@ class PersonalCore {
       const tasksRepo = new TasksRepository(this.db);
       const taskExecutionsRepo = new TaskExecutionsRepository(this.db);
       const taskExceptionsRepo = new TaskExceptionsRepository(this.db);
-      this._tasksService = new TasksService(tasksRepo, taskExecutionsRepo, taskExceptionsRepo);
+      const sectionsRepo = new SectionsRepository(this.db);
+      this._tasksService = new TasksService(tasksRepo, taskExecutionsRepo, taskExceptionsRepo, sectionsRepo);
     }
     return this._tasksService;
   }
