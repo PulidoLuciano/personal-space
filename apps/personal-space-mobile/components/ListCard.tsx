@@ -1,6 +1,5 @@
 import { StyleSheet, TouchableOpacity, View, Alert, Modal, useColorScheme } from "react-native";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
 import { ThemedText } from "./themed-text";
 import { IconSymbol } from "./ui/icon-symbol";
 import { ProjectIcon } from "./ui/ProjectIcon";

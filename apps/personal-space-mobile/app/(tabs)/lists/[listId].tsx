@@ -4,7 +4,6 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Modal,
   Alert,
 } from "react-native";
@@ -15,6 +14,10 @@ import { ThemedView } from "@/components/themed-view";
 import { useCore } from "@/lib/core-context";
 import { SectionContainer } from "@/components/SectionContainer";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ModalHeader } from "@/components/ui/ModalHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ThemedTextInput } from "@/components/ui/ThemedTextInput";
+import { Spacing } from "@/constants/spacing";
 import type { Section, List, TaskWithProgress } from "personal-space-core";
 
 interface TaskWithSection extends TaskWithProgress {
@@ -342,10 +345,10 @@ export default function SectionsScreen() {
             </View>
           ))}
           {sectionsWithTasks.length === 0 && !isLoading && (
-            <View style={styles.emptyContainer}>
-              <ThemedText type="subtitle">No sections yet</ThemedText>
-              <ThemedText>Create your first section to organize tasks</ThemedText>
-            </View>
+            <EmptyState
+              title="No sections yet"
+              description="Create your first section to organize tasks"
+            />
           )}
         </ScrollView>
 
@@ -356,19 +359,15 @@ export default function SectionsScreen() {
           onRequestClose={() => setShowCreateSectionModal(false)}
         >
           <ThemedView style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setShowCreateSectionModal(false)}>
-                <ThemedText type="link">Cancel</ThemedText>
-              </TouchableOpacity>
-              <ThemedText type="defaultSemiBold">New Section</ThemedText>
-              <TouchableOpacity onPress={handleCreateSection}>
-                <ThemedText type="link">Create</ThemedText>
-              </TouchableOpacity>
-            </View>
+            <ModalHeader
+              title="New Section"
+              onLeftPress={() => setShowCreateSectionModal(false)}
+              rightLabel="Create"
+              onRightPress={handleCreateSection}
+            />
             <View style={styles.modalContent}>
               <ThemedText type="subtitle">Name</ThemedText>
-              <TextInput
-                style={styles.input}
+              <ThemedTextInput
                 placeholder="Section name"
                 value={newSectionName}
                 onChangeText={setNewSectionName}
@@ -385,19 +384,15 @@ export default function SectionsScreen() {
           onRequestClose={() => setShowEditSectionModal(false)}
         >
           <ThemedView style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setShowEditSectionModal(false)}>
-                <ThemedText type="link">Cancel</ThemedText>
-              </TouchableOpacity>
-              <ThemedText type="defaultSemiBold">Edit Section</ThemedText>
-              <TouchableOpacity onPress={handleEditSection}>
-                <ThemedText type="link">Save</ThemedText>
-              </TouchableOpacity>
-            </View>
+            <ModalHeader
+              title="Edit Section"
+              onLeftPress={() => setShowEditSectionModal(false)}
+              rightLabel="Save"
+              onRightPress={handleEditSection}
+            />
             <View style={styles.modalContent}>
               <ThemedText type="subtitle">Name</ThemedText>
-              <TextInput
-                style={styles.input}
+              <ThemedTextInput
                 placeholder="Section name"
                 value={editSectionName}
                 onChangeText={setEditSectionName}
@@ -414,19 +409,15 @@ export default function SectionsScreen() {
           onRequestClose={() => setShowCreateTaskModal(false)}
         >
           <ThemedView style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setShowCreateTaskModal(false)}>
-                <ThemedText type="link">Cancel</ThemedText>
-              </TouchableOpacity>
-              <ThemedText type="defaultSemiBold">New Task</ThemedText>
-              <TouchableOpacity onPress={handleCreateTask}>
-                <ThemedText type="link">Create</ThemedText>
-              </TouchableOpacity>
-            </View>
+            <ModalHeader
+              title="New Task"
+              onLeftPress={() => setShowCreateTaskModal(false)}
+              rightLabel="Create"
+              onRightPress={handleCreateTask}
+            />
             <View style={styles.modalContent}>
               <ThemedText type="subtitle">Name</ThemedText>
-              <TextInput
-                style={styles.input}
+              <ThemedTextInput
                 placeholder="Task name"
                 value={newTaskName}
                 onChangeText={setNewTaskName}
@@ -445,10 +436,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
+    padding: Spacing.lg,
     paddingTop: 60,
   },
-  backButton: { marginRight: 12 },
+  backButton: { marginRight: Spacing.md },
   headerContent: { flex: 1 },
   headerButtons: {
     flexDirection: "row",
@@ -456,33 +447,33 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   headerButton: {
-    padding: 8,
+    padding: Spacing.sm,
   },
   createButton: {
     flexDirection: "row",
     alignItems: "center",
   },
   content: { flex: 1 },
-  contentContainer: { padding: 16, paddingTop: 0 },
-  emptyContainer: { alignItems: "center", paddingTop: 40 },
+  contentContainer: { padding: Spacing.lg, paddingTop: 0 },
+  emptyContainer: { alignItems: "center", paddingTop: Spacing.xl * 2 },
   modalContainer: { flex: 1 },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
+    padding: Spacing.lg,
     paddingTop: 50,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(0,0,0,0.1)",
   },
-  modalContent: { padding: 16 },
+  modalContent: { padding: Spacing.lg },
   input: {
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.2)",
     borderRadius: 8,
-    padding: 12,
-    marginTop: 8,
-    marginBottom: 24,
+    padding: Spacing.md,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xl,
     fontSize: 16,
   },
 });

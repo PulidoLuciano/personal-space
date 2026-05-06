@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { StyleSheet, View, FlatList, TouchableOpacity, TextInput, Modal, Alert, ScrollView, useColorScheme } from "react-native";
+import { StyleSheet, View, FlatList, TouchableOpacity, Modal, Alert, ScrollView, useColorScheme } from "react-native";
 import { useRouter } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -7,6 +7,10 @@ import { useCore } from "@/lib/core-context";
 import { ListCard } from "@/components/ListCard";
 import { ProjectIcon } from "@/components/ui/ProjectIcon";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ModalHeader } from "@/components/ui/ModalHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ThemedTextInput } from "@/components/ui/ThemedTextInput";
+import { Spacing, BorderRadius } from "@/constants/spacing";
 import type { List } from "personal-space-core";
 
 const PAGE_SIZE = 50;
@@ -48,26 +52,12 @@ const COLOR_ORDER = [
 ];
 
 export default function ListsScreen() {
-  const { core, isLoading: isCoreLoading, error: coreError } = useCore();
-  
-  if (isCoreLoading) {
-    return (
-      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ThemedText>Loading...</ThemedText>
-      </ThemedView>
-    );
-  }
-  
-  if (coreError || !core) {
-    return (
-      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ThemedText type="defaultSemiBold">Failed to initialize</ThemedText>
-        <ThemedText>{coreError?.message || "Unknown error"}</ThemedText>
-      </ThemedView>
-    );
-  }
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  
+  const { core, isLoading: isCoreLoading, error: coreError } = useCore();
+  
   const [lists, setLists] = useState<List[]>([]);
   const [colors, setColors] = useState<string[]>([]);
   const [icons, setIcons] = useState<string[]>([]);
@@ -80,11 +70,8 @@ export default function ListsScreen() {
   const [archivedLists, setArchivedLists] = useState<List[]>([]);
   const [showArchivedModal, setShowArchivedModal] = useState(false);
 
-  const isDark = colorScheme === "dark";
-  const inputTextColor = isDark ? "#fff" : "#000";
-  const inputBgColor = isDark ? "#1a1a1a" : "#fff";
-
   const loadLists = useCallback(async () => {
+    if (!core) return;
     try {
       const result = await core.listsService.getAllPaginated(1, PAGE_SIZE, undefined, false);
       setLists(result);
@@ -96,6 +83,7 @@ export default function ListsScreen() {
   }, [core]);
 
   const loadArchivedLists = useCallback(async () => {
+    if (!core) return;
     try {
       const result = await core.listsService.getAllPaginated(1, PAGE_SIZE, undefined, true);
       setArchivedLists(result);
@@ -104,7 +92,8 @@ export default function ListsScreen() {
     }
   }, [core]);
 
-  const handleUnarchiveList = async (listId: string) => {
+  const handleUnarchiveList = useCallback(async (listId: string) => {
+    if (!core) return;
     try {
       await core.listsService.unarchive(listId);
       loadArchivedLists();
@@ -112,9 +101,10 @@ export default function ListsScreen() {
     } catch (error) {
       console.error("Error unarchiving list:", error);
     }
-  };
+  }, [core, loadArchivedLists, loadLists]);
 
   const loadColorsAndIcons = useCallback(async () => {
+    if (!core) return;
     try {
       const [dbColors, dbIcons] = await Promise.all([
         core.getAllColors(),
@@ -139,7 +129,7 @@ export default function ListsScreen() {
   }, [loadLists, loadColorsAndIcons]);
 
   const handleCreateList = async () => {
-    if (!newListName.trim()) {
+    if (!newListName.trim() || !core) {
       Alert.alert("Error", "Please enter a list name");
       return;
     }
@@ -176,6 +166,7 @@ export default function ListsScreen() {
   };
 
   const handleArchiveList = async (listId: string) => {
+    if (!core) return;
     try {
       await core.listsService.archive(listId);
       loadLists();
@@ -185,6 +176,7 @@ export default function ListsScreen() {
   };
 
   const handleDeleteList = async (listId: string) => {
+    if (!core) return;
     try {
       await core.listsService.delete(listId);
       loadLists();
@@ -209,6 +201,23 @@ export default function ListsScreen() {
       />
     );
   };
+
+  if (isCoreLoading) {
+    return (
+      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ThemedText>Loading...</ThemedText>
+      </ThemedView>
+    );
+  }
+  
+  if (coreError || !core) {
+    return (
+      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ThemedText type="defaultSemiBold">Failed to initialize</ThemedText>
+        <ThemedText>{coreError?.message || "Unknown error"}</ThemedText>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -241,10 +250,10 @@ export default function ListsScreen() {
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           !isLoading ? (
-            <View style={styles.emptyContainer}>
-              <ThemedText type="subtitle">No lists yet</ThemedText>
-              <ThemedText>Create your first list to get started</ThemedText>
-            </View>
+            <EmptyState
+              title="No lists yet"
+              description="Create your first list to get started"
+            />
           ) : null
         }
       />
@@ -260,25 +269,20 @@ export default function ListsScreen() {
           }}
       >
         <ThemedView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => {
+          <ModalHeader
+            title={editingListId ? "Edit List" : "New List"}
+            onLeftPress={() => {
               setShowCreateModal(false);
               setEditingListId(null);
               setNewListName("");
-            }}>
-              <ThemedText type="link">Cancel</ThemedText>
-            </TouchableOpacity>
-            <ThemedText type="defaultSemiBold">{editingListId ? "Edit List" : "New List"}</ThemedText>
-            <TouchableOpacity onPress={handleCreateList}>
-              <ThemedText type="link">{editingListId ? "Save" : "Create"}</ThemedText>
-            </TouchableOpacity>
-          </View>
+            }}
+            rightLabel={editingListId ? "Save" : "Create"}
+            onRightPress={handleCreateList}
+          />
           <ScrollView style={styles.modalContent}>
             <ThemedText type="subtitle">Name</ThemedText>
-            <TextInput
-              style={[styles.input, { color: inputTextColor, backgroundColor: inputBgColor }]}
+            <ThemedTextInput
               placeholder="List name"
-              placeholderTextColor="#999"
               value={newListName}
               onChangeText={setNewListName}
               autoFocus
@@ -327,18 +331,16 @@ export default function ListsScreen() {
         onRequestClose={() => setShowArchivedModal(false)}
       >
         <ThemedView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowArchivedModal(false)}>
-              <ThemedText type="link">Close</ThemedText>
-            </TouchableOpacity>
-            <ThemedText type="defaultSemiBold">Archived Lists</ThemedText>
-            <View style={{ width: 60 }} />
-          </View>
+          <ModalHeader
+            title="Archived Lists"
+            leftLabel="Close"
+            onLeftPress={() => setShowArchivedModal(false)}
+          />
           <ScrollView style={styles.modalContent}>
             {archivedLists.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <ThemedText type="subtitle">No archived lists</ThemedText>
-              </View>
+              <EmptyState
+                title="No archived lists"
+              />
             ) : (
               archivedLists.map((list) => (
                 <TouchableOpacity key={list.id} style={styles.archivedItem}>
@@ -370,7 +372,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
+    padding: Spacing.lg,
     paddingTop: 60,
   },
   headerButtons: {
@@ -387,16 +389,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   list: {
-    padding: 16,
+    padding: Spacing.lg,
     paddingTop: 0,
   },
   emptyContainer: {
     alignItems: "center",
-    paddingTop: 40,
+    paddingTop: Spacing.xl * 2,
   },
   fab: {
     position: "absolute",
-    right: 16,
+    right: Spacing.lg,
     bottom: 24,
     width: 56,
     height: 56,
@@ -417,37 +419,37 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
+    padding: Spacing.lg,
     paddingTop: 50,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(0,0,0,0.1)",
   },
   modalContent: {
-    padding: 16,
+    padding: Spacing.lg,
   },
   input: {
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.2)",
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 8,
-    marginBottom: 24,
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.md,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xl,
     fontSize: 16,
   },
   sectionLabel: {
-    marginTop: 16,
-    marginBottom: 12,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   iconPicker: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: 8,
+    gap: Spacing.sm,
   },
   iconOption: {
     width: 44,
     height: 44,
-    borderRadius: 8,
+    borderRadius: BorderRadius.sm,
     backgroundColor: "rgba(0,0,0,0.1)",
     alignItems: "center",
     justifyContent: "center",
@@ -462,8 +464,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: 8,
-    marginBottom: 24,
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
   },
   colorOption: {
     width: 44,
@@ -477,24 +479,24 @@ const styles = StyleSheet.create({
   archivedItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
+    padding: Spacing.md,
     backgroundColor: "rgba(0,0,0,0.05)",
-    borderRadius: 8,
-    marginBottom: 8,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.sm,
   },
   iconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 8,
+    borderRadius: BorderRadius.sm,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
+    marginRight: Spacing.md,
   },
   archivedName: {
     flex: 1,
   },
   unarchiveButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
   },
 });
