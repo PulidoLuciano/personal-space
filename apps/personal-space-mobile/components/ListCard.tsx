@@ -5,6 +5,8 @@ import { ThemedText } from "./themed-text";
 import { IconSymbol } from "./ui/icon-symbol";
 import { ProjectIcon } from "./ui/ProjectIcon";
 
+import React from "react";
+
 interface ListCardProps {
   id: string;
   name: string;
@@ -110,8 +112,6 @@ export function ListCard({
     </>
   );
 }
-
-import React from "react";
 
 const styles = StyleSheet.create({
   container: {

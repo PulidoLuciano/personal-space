@@ -6,7 +6,7 @@ import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
 type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
-type IconSymbolName = SymbolViewProps['name'] | 'checklist' | 'list.bullet' | 'checkmark';
+type IconSymbolName = SymbolViewProps['name'] | 'checklist' | 'list.bullet' | 'checkmark' | 'pencil' | 'trash';
 
 /**
  * Add your SF Symbols to Material Icons mappings here.
@@ -22,6 +22,8 @@ const MAPPING = {
   'list.bullet': 'format-list-bulleted',
   'checkmark': 'check',
   'plus': 'add',
+  'pencil': 'edit',
+  'trash': 'delete',
 } as IconMapping;
 
 /**
