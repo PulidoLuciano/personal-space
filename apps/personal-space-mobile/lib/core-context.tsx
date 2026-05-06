@@ -16,11 +16,7 @@ const CoreContext = createContext<CoreContextType>({
 });
 
 export function useCore() {
-  const context = useContext(CoreContext);
-  if (!context.core) {
-    throw new Error("Core not initialized. Make sure CoreProvider is mounted.");
-  }
-  return context.core;
+  return useContext(CoreContext);
 }
 
 export function CoreProvider({ children }: { children: ReactNode }) {

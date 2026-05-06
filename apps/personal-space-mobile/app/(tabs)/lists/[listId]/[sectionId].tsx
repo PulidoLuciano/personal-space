@@ -11,7 +11,25 @@ import type { TaskWithProgress } from "personal-space-core";
 
 export default function TasksScreen() {
   const { listId, sectionId } = useLocalSearchParams<{ listId: string; sectionId: string }>();
-  const core = useCore();
+  const { core, isLoading: isCoreLoading, error: coreError } = useCore();
+  
+  if (isCoreLoading) {
+    return (
+      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ThemedText>Loading...</ThemedText>
+      </ThemedView>
+    );
+  }
+  
+  if (coreError || !core) {
+    return (
+      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ThemedText type="defaultSemiBold">Failed to initialize</ThemedText>
+        <ThemedText>{coreError?.message || "Unknown error"}</ThemedText>
+      </ThemedView>
+    );
+  }
+  
   const router = useRouter();
   const [section, setSection] = useState<Section | null>(null);
   const [tasks, setTasks] = useState<TaskWithProgress[]>([]);

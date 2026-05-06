@@ -48,7 +48,24 @@ const COLOR_ORDER = [
 ];
 
 export default function ListsScreen() {
-  const core = useCore();
+  const { core, isLoading: isCoreLoading, error: coreError } = useCore();
+  
+  if (isCoreLoading) {
+    return (
+      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ThemedText>Loading...</ThemedText>
+      </ThemedView>
+    );
+  }
+  
+  if (coreError || !core) {
+    return (
+      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ThemedText type="defaultSemiBold">Failed to initialize</ThemedText>
+        <ThemedText>{coreError?.message || "Unknown error"}</ThemedText>
+      </ThemedView>
+    );
+  }
   const router = useRouter();
   const colorScheme = useColorScheme();
   const [lists, setLists] = useState<List[]>([]);
