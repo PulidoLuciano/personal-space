@@ -1,6 +1,7 @@
-import { StyleSheet, View, TouchableOpacity } from "react-native";
+import { StyleSheet, View, TouchableOpacity, useColorScheme } from "react-native";
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/spacing";
+import { Colors } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/spacing";
 
 export interface ModalHeaderProps {
   title: string;
@@ -17,14 +18,30 @@ export function ModalHeader({
   rightLabel,
   onRightPress,
 }: ModalHeaderProps) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const colors = Colors[isDark ? "dark" : "light"];
+
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={onLeftPress} disabled={!onLeftPress}>
-        <ThemedText type="link">{leftLabel}</ThemedText>
+    <View style={[styles.container, { borderBottomColor: colors.border }]}>
+      <TouchableOpacity 
+        onPress={onLeftPress} 
+        disabled={!onLeftPress}
+        style={[styles.button, !onLeftPress && styles.buttonDisabled]}
+      >
+        <ThemedText type="default" style={{ color: colors.icon }}>{leftLabel}</ThemedText>
       </TouchableOpacity>
-      <ThemedText type="defaultSemiBold">{title}</ThemedText>
-      <TouchableOpacity onPress={onRightPress} disabled={!onRightPress}>
-        <ThemedText type="link">{rightLabel}</ThemedText>
+      <ThemedText type="defaultSemiBold" style={{ color: colors.text, fontSize: 17 }}>
+        {title}
+      </ThemedText>
+      <TouchableOpacity 
+        onPress={onRightPress} 
+        disabled={!onRightPress}
+        style={[styles.button, styles.buttonPrimary, !onRightPress && styles.buttonDisabled]}
+      >
+        <ThemedText type="defaultSemiBold" style={{ color: rightLabel ? colors.tint : colors.iconSecondary }}>
+          {rightLabel}
+        </ThemedText>
       </TouchableOpacity>
     </View>
   );
@@ -35,9 +52,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
     paddingTop: 50,
+    paddingBottom: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.1)",
+  },
+  button: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    minWidth: 60,
+  },
+  buttonDisabled: {
+    opacity: 0.3,
+  },
+  buttonPrimary: {
+    alignItems: "flex-end",
   },
 });

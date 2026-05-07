@@ -5,8 +5,8 @@ import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
 import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
-type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
-type IconSymbolName = SymbolViewProps['name'] | 'checklist' | 'list.bullet' | 'checkmark' | 'pencil' | 'trash';
+type IconMapping = Partial<Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>> & Record<string, ComponentProps<typeof MaterialIcons>['name']>;
+type IconSymbolName = SymbolViewProps['name'] | 'checklist' | 'list.bullet' | 'checkmark' | 'pencil' | 'trash' | 'archive' | 'eye' | 'eye.slash';
 
 /**
  * Add your SF Symbols to Material Icons mappings here.
@@ -18,12 +18,16 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  'chevron.down': 'keyboard-arrow-down',
   'checklist': 'checklist',
   'list.bullet': 'format-list-bulleted',
   'checkmark': 'check',
   'plus': 'add',
   'pencil': 'edit',
   'trash': 'delete',
+  'archive': 'archive',
+  'eye': 'visibility',
+  'eye.slash': 'visibility-off',
 } as IconMapping;
 
 /**

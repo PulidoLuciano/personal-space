@@ -17,7 +17,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ThemedTextInput } from "@/components/ui/ThemedTextInput";
-import { Spacing } from "@/constants/spacing";
+import { Spacing, BorderRadius } from "@/constants/spacing";
 import type { Section, List, TaskWithProgress } from "personal-space-core";
 
 interface TaskWithSection extends TaskWithProgress {
@@ -296,7 +296,7 @@ export default function SectionsScreen() {
       <ThemedView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <IconSymbol size={24} name="chevron.right" color="#0a7ea4" />
+            <IconSymbol size={20} name="chevron.right" color="#2563eb" />
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <ThemedText type="title">{list.name}</ThemedText>
@@ -307,17 +307,17 @@ export default function SectionsScreen() {
               style={styles.headerButton}
             >
               <IconSymbol
-                size={20}
+                size={18}
                 name={list.show_completed ? "eye" : "eye.slash"}
-                color={list.show_completed ? "#0a7ea4" : "#999"}
+                color={list.show_completed ? "#2563eb" : "#999"}
               />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.createButton}
               onPress={() => setShowCreateSectionModal(true)}
             >
-              <ThemedText type="link">Create</ThemedText>
-              <IconSymbol size={20} name="plus" color="#0a7ea4" style={{ marginLeft: 4 }} />
+              <ThemedText type="defaultSemiBold" style={{ color: "#fff", fontSize: 14 }}>Add</ThemedText>
+              <IconSymbol size={16} name="plus" color="#fff" style={{ marginLeft: 4 }} />
             </TouchableOpacity>
           </View>
         </View>
@@ -439,19 +439,36 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     paddingTop: 60,
   },
-  backButton: { marginRight: Spacing.md },
+  backButton: { 
+    marginRight: Spacing.md,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0,0,0,0.05)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   headerContent: { flex: 1 },
   headerButtons: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: Spacing.sm,
   },
   headerButton: {
-    padding: Spacing.sm,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0,0,0,0.05)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   createButton: {
     flexDirection: "row",
     alignItems: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: "#2563eb",
+    borderRadius: BorderRadius.md,
   },
   content: { flex: 1 },
   contentContainer: { padding: Spacing.lg, paddingTop: 0 },
@@ -470,7 +487,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.2)",
-    borderRadius: 8,
+    borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginTop: Spacing.sm,
     marginBottom: Spacing.xl,

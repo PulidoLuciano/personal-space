@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { StyleSheet, View, useColorScheme } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import circle from "@/assets/project-icons/circle.svg";
 import star from "@/assets/project-icons/star.svg";
@@ -134,8 +134,7 @@ const ICON_ASSETS: Record<string, any> = {
 export function ProjectIcon({ name, size = 24, color }: ProjectIconProps) {
   const iconKey = name.toLowerCase().replace(/[^a-z0-9-]/g, "-");
   const source = ICON_ASSETS[iconKey] || circle;
-  const colorScheme = useColorScheme();
-  const iconColor = color || (colorScheme === "dark" ? "#fff" : "#fff");
+  const iconColor = color || "#fff";
   
   return (
     <View style={[styles.container, { width: size, height: size }]}>

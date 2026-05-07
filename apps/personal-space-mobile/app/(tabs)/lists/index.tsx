@@ -225,21 +225,21 @@ export default function ListsScreen() {
         <ThemedText type="title">Lists</ThemedText>
         <View style={styles.headerButtons}>
           <TouchableOpacity
-            style={styles.archiveButton}
+            style={[styles.archiveButton, isDark && { backgroundColor: "rgba(255,255,255,0.1)" }]}
             onPress={() => {
               loadArchivedLists();
               setShowArchivedModal(true);
             }}
           >
-            <IconSymbol size={20} name="chevron.right" color={isDark ? "#fff" : "#666"} />
-            <ThemedText type="link" style={[isDark && { color: "#fff" }]}>Archived</ThemedText>
+            <ThemedText type="default" style={{ color: isDark ? "#fff" : "#666" }}>Archived</ThemedText>
+            <IconSymbol size={16} name="chevron.right" color={isDark ? "#fff" : "#666"} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.createButton}
             onPress={() => setShowCreateModal(true)}
           >
-            <ThemedText type="link" style={[isDark && { color: "#fff" }]}>Create</ThemedText>
-            <IconSymbol size={20} name="plus" color={isDark ? "#fff" : "#0a7ea4"} style={{ marginLeft: 4 }} />
+            <ThemedText type="link" style={{ color: "#fff" }}>Create</ThemedText>
+            <IconSymbol size={20} name="plus" color="#fff" style={{ marginLeft: 4 }} />
           </TouchableOpacity>
         </View>
       </View>
@@ -378,15 +378,23 @@ const styles = StyleSheet.create({
   headerButtons: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: Spacing.md,
   },
   archiveButton: {
     flexDirection: "row",
     alignItems: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    backgroundColor: "rgba(0,0,0,0.05)",
   },
   createButton: {
     flexDirection: "row",
     alignItems: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    backgroundColor: "#2563eb",
   },
   list: {
     padding: Spacing.lg,
@@ -394,7 +402,7 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     alignItems: "center",
-    paddingTop: Spacing.xl * 2,
+    paddingTop: Spacing.xxl,
   },
   fab: {
     position: "absolute",
@@ -403,7 +411,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#0a7ea4",
+    backgroundColor: "#2563eb",
     alignItems: "center",
     justifyContent: "center",
     elevation: 4,
@@ -458,7 +466,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.25)",
   },
   iconSelected: {
-    backgroundColor: "#0a7ea4",
+    backgroundColor: "#2563eb",
   },
   colorPicker: {
     flexDirection: "row",

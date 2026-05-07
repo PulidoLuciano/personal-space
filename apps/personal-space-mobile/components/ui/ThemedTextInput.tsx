@@ -1,5 +1,5 @@
 import { useColorScheme } from "react-native";
-import { TextInput, type TextInputProps, StyleSheet } from "react-native";
+import { TextInput, type TextInputProps, StyleSheet, View } from "react-native";
 import { Colors } from "@/constants/theme";
 import { Spacing, BorderRadius } from "@/constants/spacing";
 
@@ -14,26 +14,34 @@ export function ThemedTextInput({
   const colors = isDark ? Colors.dark : Colors.light;
 
   return (
-    <TextInput
-      style={[
-        styles.input,
-        { color: colors.text, backgroundColor: colors.background },
-        style,
-      ]}
-      placeholderTextColor="#999"
-      {...props}
-    />
+    <View style={[styles.wrapper]}>
+      <TextInput
+        style={[
+          styles.input,
+          { 
+            color: colors.text, 
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+          style,
+        ]}
+        placeholderTextColor={colors.textTertiary}
+        {...props}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    marginBottom: Spacing.xl,
+  },
   input: {
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.2)",
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginTop: Spacing.sm,
-    marginBottom: Spacing.xl,
     fontSize: 16,
+    lineHeight: 22,
   },
 });

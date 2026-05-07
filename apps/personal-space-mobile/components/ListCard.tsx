@@ -3,6 +3,8 @@ import * as Haptics from "expo-haptics";
 import { ThemedText } from "./themed-text";
 import { IconSymbol } from "./ui/icon-symbol";
 import { ProjectIcon } from "./ui/ProjectIcon";
+import { Colors } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/spacing";
 
 import React from "react";
 
@@ -32,6 +34,7 @@ export function ListCard({
   const [showMenu, setShowMenu] = React.useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const colors = Colors[isDark ? "dark" : "light"];
 
   const handleLongPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -63,22 +66,32 @@ export function ListCard({
   return (
     <>
       <TouchableOpacity 
-        style={styles.container} 
+        style={[
+          styles.container, 
+          { backgroundColor: colors.surface }
+        ]} 
         onPress={onPress}
         onLongPress={handleLongPress}
+        activeOpacity={0.7}
       >
-        <View style={[styles.iconContainer, { backgroundColor: color }]}>
-          <ProjectIcon name={icon} size={24} color="#fff" />
+        <View style={[styles.iconWrapper, { backgroundColor: color + '20' }]}>
+          <View style={[styles.iconContainer, { backgroundColor: color }]}>
+            <ProjectIcon name={icon} size={20} color="#fff" />
+          </View>
         </View>
         <View style={styles.content}>
-          <ThemedText type="default" numberOfLines={1}>{name}</ThemedText>
+          <ThemedText type="defaultSemiBold" style={{ color: colors.text }} numberOfLines={1}>
+            {name}
+          </ThemedText>
           {taskCount !== undefined && (
-            <ThemedText type="subtitle" style={styles.count}>
+            <ThemedText type="subtitle" style={[styles.count, { color: colors.textSecondary }]}>
               {taskCount} {taskCount === 1 ? "task" : "tasks"}
             </ThemedText>
           )}
         </View>
-        <IconSymbol size={20} name="chevron.right" color="#999" />
+        <View style={[styles.chevron, { backgroundColor: colors.borderLight }]}>
+          <IconSymbol size={16} name="chevron.right" color={colors.iconSecondary} />
+        </View>
       </TouchableOpacity>
 
       <Modal
@@ -88,22 +101,27 @@ export function ListCard({
         onRequestClose={() => setShowMenu(false)}
       >
         <TouchableOpacity 
-          style={styles.menuOverlay} 
+          style={[styles.menuOverlay, { backgroundColor: colors.overlay }]} 
           activeOpacity={1}
           onPress={() => setShowMenu(false)}
         >
-          <View style={[styles.menuContainer, isDark && styles.menuContainerDark]}>
+          <View style={[styles.menuContainer, { backgroundColor: colors.surfaceElevated }]}>
+            <ThemedText type="defaultSemiBold" style={[styles.menuTitle, { color: colors.text }]}>
+              {name}
+            </ThemedText>
+            <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
             <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
-              <IconSymbol size={20} name="chevron.right" color={isDark ? "#fff" : "#333"} />
-              <ThemedText style={[styles.menuText, isDark && styles.menuTextDark]}>Edit</ThemedText>
+              <IconSymbol size={18} name="pencil" color={colors.icon} />
+              <ThemedText style={[styles.menuText, { color: colors.text }]}>Edit</ThemedText>
             </TouchableOpacity>
             <TouchableOpacity style={styles.menuItem} onPress={handleArchive}>
-              <IconSymbol size={20} name="chevron.right" color={isDark ? "#fff" : "#333"} />
-              <ThemedText style={[styles.menuText, isDark && styles.menuTextDark]}>Archive</ThemedText>
+              <IconSymbol size={18} name="archive" color={colors.icon} />
+              <ThemedText style={[styles.menuText, { color: colors.text }]}>Archive</ThemedText>
             </TouchableOpacity>
+            <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
             <TouchableOpacity style={[styles.menuItem, styles.menuItemDelete]} onPress={handleDelete}>
-              <IconSymbol size={20} name="chevron.right" color="#D32F2F" />
-              <ThemedText style={[styles.menuText, styles.menuTextDelete, isDark && styles.menuTextDeleteDark]}>Delete</ThemedText>
+              <IconSymbol size={18} name="trash" color={colors.error} />
+              <ThemedText style={[styles.menuText, { color: colors.error }]}>Delete</ThemedText>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -116,64 +134,75 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: "rgba(0,0,0,0.05)",
-    marginBottom: 8,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.sm,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  iconWrapper: {
+    borderRadius: BorderRadius.md,
+    padding: Spacing.xxs,
   },
   iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
   },
   content: {
     flex: 1,
+    marginLeft: Spacing.md,
   },
   count: {
-    fontSize: 12,
-    opacity: 0.7,
+    fontSize: 13,
     marginTop: 2,
+  },
+  chevron: {
+    width: 28,
+    height: 28,
+    borderRadius: BorderRadius.full,
+    alignItems: "center",
+    justifyContent: "center",
   },
   menuOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
+    padding: Spacing.xxl,
   },
   menuContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 8,
-    width: 200,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    width: "100%",
+    maxWidth: 320,
+  },
+  menuTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: Spacing.md,
+  },
+  menuDivider: {
+    height: 1,
+    marginVertical: Spacing.sm,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
-    borderRadius: 8,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.sm,
   },
   menuItemDelete: {
-    borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.1)",
+    marginTop: Spacing.xs,
   },
   menuText: {
-    marginLeft: 12,
+    marginLeft: Spacing.md,
     fontSize: 16,
-    color: "#333",
-  },
-  menuTextDelete: {
-    color: "#D32F2F",
-  },
-  menuContainerDark: {
-    backgroundColor: "#1a1a1a",
-  },
-  menuTextDark: {
-    color: "#fff",
-  },
-  menuTextDeleteDark: {
-    color: "#FF6B6B",
   },
 });

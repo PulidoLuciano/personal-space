@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
+import { StyleSheet, View, TouchableOpacity, useColorScheme } from "react-native";
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { ThemedText } from "./themed-text";
 import { IconSymbol } from "./ui/icon-symbol";
 import { TaskItem } from "./TaskItem";
+import { Colors } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/spacing";
 import type { Section, TaskWithProgress } from "personal-space-core";
 
 interface TaskWithSection extends TaskWithProgress {
@@ -36,6 +38,9 @@ export function SectionContainer({
   onSectionPress,
 }: SectionContainerProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const colors = Colors[isDark ? "dark" : "light"];
 
   const completedCount = tasks.filter(t => t.progress >= t.objective).length;
   const totalCount = tasks.length;
@@ -43,73 +48,77 @@ export function SectionContainer({
 
   const containerStyle = useAnimatedStyle(() => ({
     backgroundColor: withTiming(
-      isReceivingDrop ? "rgba(10, 126, 164, 0.15)" : "rgba(0,0,0,0.05)",
+      isReceivingDrop ? colors.tintLight : colors.surface,
       { duration: 200 }
     ),
-    borderWidth: withTiming(isReceivingDrop ? 2 : 0, { duration: 200 }),
-    borderColor: withTiming(isReceivingDrop ? "#0a7ea4" : "transparent", { duration: 200 }),
+    borderWidth: withTiming(isReceivingDrop ? 1 : 0, { duration: 200 }),
+    borderColor: withTiming(isReceivingDrop ? colors.tint : "transparent", { duration: 200 }),
   }));
 
   return (
     <Animated.View style={[styles.container, containerStyle]}>
       <TouchableOpacity
-        style={styles.header}
+        style={[styles.header, { backgroundColor: colors.surface }]}
         onPress={() => setIsExpanded(!isExpanded)}
         activeOpacity={0.7}
       >
         <View style={styles.headerContent}>
-          <ThemedText type="defaultSemiBold" numberOfLines={1}>{section.name}</ThemedText>
+          <ThemedText type="defaultSemiBold" style={{ color: colors.text }} numberOfLines={1}>
+            {section.name}
+          </ThemedText>
           {totalCount > 0 && (
-            <ThemedText type="subtitle" style={styles.count}>
-              {completedCount > 0
-                ? `${completedCount}/${totalCount} completed`
-                : `${totalCount} ${totalCount === 1 ? "task" : "tasks"}`}
-            </ThemedText>
+            <View style={styles.countBadge}>
+              <ThemedText type="subtitle" style={[styles.count, { color: colors.textSecondary }]}>
+                {completedCount > 0
+                  ? `${completedCount}/${totalCount}`
+                  : `${totalCount}`}
+              </ThemedText>
+            </View>
           )}
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: colors.borderLight }]}
             onPress={(e) => {
               e.stopPropagation();
               onEditSection();
             }}
           >
-            <IconSymbol size={18} name="pencil" color="#666" />
+            <IconSymbol size={16} name="pencil" color={colors.iconSecondary} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: colors.errorLight }]}
             onPress={(e) => {
               e.stopPropagation();
               onDeleteSection();
             }}
           >
-            <IconSymbol size={18} name="trash" color="#d32f2f" />
+            <IconSymbol size={16} name="trash" color={colors.error} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, styles.addButton, { backgroundColor: colors.tint }]}
             onPress={(e) => {
               e.stopPropagation();
               onAddTask();
             }}
           >
-            <IconSymbol size={20} name="plus" color="#0a7ea4" />
+            <IconSymbol size={16} name="plus" color="#fff" />
           </TouchableOpacity>
           {movingTaskId !== null && (
             <TouchableOpacity
-              style={styles.receiveButton}
+              style={[styles.receiveButton, { backgroundColor: colors.tintLight }]}
               onPress={(e) => {
                 e.stopPropagation();
                 onSectionPress();
               }}
             >
-              <IconSymbol size={18} name="arrow.down.doc" color="#0a7ea4" />
+              <IconSymbol size={16} name="plus" color={colors.tint} />
             </TouchableOpacity>
           )}
           <IconSymbol
-            size={20}
+            size={18}
             name={isExpanded ? "chevron.down" : "chevron.right"}
-            color="#999"
+            color={colors.iconSecondary}
           />
         </View>
       </TouchableOpacity>
@@ -118,9 +127,11 @@ export function SectionContainer({
         <View style={styles.tasksContainer}>
           {tasks.length === 0 ? (
             <View style={styles.emptyState}>
-              <ThemedText type="subtitle" style={styles.emptyText}>No tasks yet</ThemedText>
+              <ThemedText type="subtitle" style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No tasks yet
+              </ThemedText>
               <TouchableOpacity onPress={onAddTask}>
-                <ThemedText type="link">Add a task</ThemedText>
+                <ThemedText type="link" style={{ color: colors.tint }}>Add a task</ThemedText>
               </TouchableOpacity>
             </View>
           ) : (
@@ -145,44 +156,68 @@ export function SectionContainer({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
-    marginBottom: 12,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
+    padding: Spacing.md,
   },
   headerContent: {
     flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  countBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xxs,
+    backgroundColor: "rgba(0,0,0,0.05)",
+    borderRadius: BorderRadius.full,
   },
   count: {
     fontSize: 12,
-    opacity: 0.7,
-    marginTop: 2,
+    fontWeight: "500",
   },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
+    gap: Spacing.xs,
   },
   actionButton: {
-    padding: 4,
-    marginRight: 4,
+    width: 28,
+    height: 28,
+    borderRadius: BorderRadius.full,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addButton: {
+    marginRight: Spacing.xs,
   },
   receiveButton: {
-    padding: 4,
-    marginRight: 8,
+    width: 28,
+    height: 28,
+    borderRadius: BorderRadius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.xs,
   },
   tasksContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   emptyState: {
     alignItems: "center",
-    paddingVertical: 16,
+    paddingVertical: Spacing.lg,
   },
   emptyText: {
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
 });
