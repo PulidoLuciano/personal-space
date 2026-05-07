@@ -469,12 +469,15 @@ export default function SectionsScreen() {
                 onDeleteSection={() =>
                   handleDeleteSection(swt.section.id, swt.section.name)
                 }
-                onTaskPress={(task) =>
-                  router.push(`/lists/${listId}/${swt.section.id}`)
-                }
+                onTaskPress={(task) => {
+                  const params = task.occurrence_date 
+                    ? `?occurrenceDate=${task.occurrence_date.toISOString()}`
+                    : "";
+                  router.push(`/lists/${listId}/${swt.section.id}/${task.id}${params}`);
+                }}
                 onToggleTaskComplete={handleToggleTaskComplete}
                 onTaskLongPress={handleTaskLongPress}
-                onSectionPress={() => handleSectionDrop(swt.section.id)}
+                onSectionPress={() => {}}
                 onAddToStopwatch={handleAddToStopwatch}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
