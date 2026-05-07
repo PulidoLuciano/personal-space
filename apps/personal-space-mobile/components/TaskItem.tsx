@@ -15,6 +15,7 @@ interface TaskItemProps {
   onPress: () => void;
   onLongPress: () => void;
   onToggleComplete: () => void;
+  onAddToStopwatch?: () => void;
 }
 
 export function TaskItem({
@@ -28,6 +29,7 @@ export function TaskItem({
   onPress,
   onLongPress,
   onToggleComplete,
+  onAddToStopwatch,
 }: TaskItemProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -84,7 +86,15 @@ export function TaskItem({
       delayLongPress={500}
       activeOpacity={0.7}
     >
-      {taskType === "note" ? (
+      {taskType === "by time" && onAddToStopwatch ? (
+        <TouchableOpacity
+          style={[styles.timerButton, { backgroundColor: colors.tintLight }]}
+          onPress={onAddToStopwatch}
+          activeOpacity={0.7}
+        >
+          <IconSymbol size={14} name="timer" color={colors.tint} />
+        </TouchableOpacity>
+      ) : taskType === "note" ? (
         <View style={[styles.noteIcon, { backgroundColor: colors.borderLight }]}>
           <IconSymbol size={14} name="note.text" color={colors.textSecondary} />
         </View>
@@ -178,6 +188,14 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: BorderRadius.full,
     borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.md,
+  },
+  timerButton: {
+    width: 22,
+    height: 22,
+    borderRadius: BorderRadius.full,
     alignItems: "center",
     justifyContent: "center",
     marginRight: Spacing.md,

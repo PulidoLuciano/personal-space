@@ -6,7 +6,7 @@ import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
 type IconMapping = Partial<Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>> & Record<string, ComponentProps<typeof MaterialIcons>['name']>;
-type IconSymbolName = SymbolViewProps['name'] | 'checklist' | 'list.bullet' | 'checkmark' | 'pencil' | 'trash' | 'archive' | 'eye' | 'eye.slash' | 'note.text';
+type IconSymbolName = SymbolViewProps['name'] | 'checklist' | 'list.bullet' | 'checkmark' | 'pencil' | 'trash' | 'archive' | 'eye' | 'eye.slash' | 'note.text' | 'timer' | 'play.fill' | 'stop.fill' | 'magnifyingglass' | 'xmark' | 'xmark.circle.fill' | 'waveform' | 'plus.circle' | 'exclamationmark.triangle' | 'arrow.2.circlepath' | 'checkmark.circle';
 
 /**
  * Add your SF Symbols to Material Icons mappings here.
@@ -29,6 +29,17 @@ const MAPPING = {
   'eye': 'visibility',
   'eye.slash': 'visibility-off',
   'note.text': 'note',
+  'timer': 'timer',
+  'play.fill': 'play-arrow',
+  'stop.fill': 'stop',
+  'magnifyingglass': 'search',
+  'xmark': 'close',
+  'xmark.circle.fill': 'cancel',
+  'waveform': 'show-chart',
+  'plus.circle': 'add-circle',
+  'exclamationmark.triangle': 'warning',
+  'arrow.2.circlepath': 'refresh',
+  'checkmark.circle': 'check-circle',
 } as IconMapping;
 
 /**

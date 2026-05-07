@@ -18,6 +18,7 @@ import { ModalHeader } from "@/components/ui/ModalHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ThemedTextInput } from "@/components/ui/ThemedTextInput";
 import { TaskForm } from "@/components/TaskForm";
+import { GlobalStopwatchSheet } from "@/components/GlobalStopwatchSheet";
 import { Spacing, BorderRadius } from "@/constants/spacing";
 import type { Section, List, TaskWithProgress } from "personal-space-core";
 
@@ -46,6 +47,7 @@ export default function SectionsScreen() {
   const [showEditSectionModal, setShowEditSectionModal] = useState(false);
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editSectionName, setEditSectionName] = useState("");
+  const [showStopwatchSheet, setShowStopwatchSheet] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!listId || !core) return;
@@ -332,6 +334,16 @@ export default function SectionsScreen() {
           </View>
           <View style={styles.headerButtons}>
             <TouchableOpacity
+              onPress={() => setShowStopwatchSheet(true)}
+              style={styles.headerButton}
+            >
+              <IconSymbol
+                size={18}
+                name="timer"
+                color="#2563eb"
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={handleToggleShowCompleted}
               style={styles.headerButton}
             >
@@ -448,6 +460,11 @@ export default function SectionsScreen() {
             />
           </ThemedView>
         </Modal>
+
+        <GlobalStopwatchSheet
+          visible={showStopwatchSheet}
+          onClose={() => setShowStopwatchSheet(false)}
+        />
       </ThemedView>
     </GestureHandlerRootView>
   );
