@@ -18,7 +18,6 @@ type TaskType = "by time" | "by executions" | "note";
 
 interface TaskFormData {
   name: string;
-  body: string;
   location: string;
   dueRule: string;
   type: TaskType;
@@ -31,7 +30,6 @@ interface TaskFormData {
 interface TaskFormProps {
   onSubmit: (data: {
     name: string;
-    body: string | null;
     location: string | null;
     due_rule: string | null;
     type: TaskType;
@@ -43,7 +41,6 @@ interface TaskFormProps {
   onCancel: () => void;
   initialData?: {
     name: string;
-    body: string | null;
     location: string | null;
     due_rule: string | null;
     type: TaskType;
@@ -76,7 +73,6 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
       }
       return {
         name: initialData.name,
-        body: initialData.body ?? "",
         location: initialData.location ?? "",
         dueRule: initialData.due_rule ?? "",
         type: initialData.type,
@@ -88,7 +84,6 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
     }
     return {
       name: "",
-      body: "",
       location: "",
       dueRule: "",
       type: "by executions",
@@ -142,7 +137,6 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
 
     onSubmit({
       name: formData.name.trim(),
-      body: formData.body.trim() || null,
       location: formData.location.trim() || null,
       due_rule: dueRule,
       type: formData.type,
@@ -208,27 +202,6 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
           value={formData.name}
           onChangeText={(text) => updateField("name", text)}
           autoFocus
-        />
-      </View>
-
-      <View style={styles.field}>
-        <ThemedText type="subtitle">Description</ThemedText>
-        <TextInput
-          style={[
-            styles.input,
-            styles.bodyInput,
-            {
-              color: colors.text,
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-            },
-          ]}
-          placeholder="Write a description..."
-          placeholderTextColor={colors.textTertiary}
-          value={formData.body}
-          onChangeText={(text) => updateField("body", text)}
-          multiline
-          textAlignVertical="top"
         />
       </View>
 
@@ -853,10 +826,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     fontSize: FontSize.md,
     lineHeight: 22,
-  },
-  bodyInput: {
-    minHeight: 100,
-    maxHeight: 200,
   },
   segmentedControl: {
     flexDirection: "row",

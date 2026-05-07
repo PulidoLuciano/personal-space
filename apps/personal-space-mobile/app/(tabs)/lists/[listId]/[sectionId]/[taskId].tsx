@@ -8,6 +8,7 @@ import {
   View,
   useColorScheme,
 } from "react-native";
+import Markdown from "react-native-markdown-display";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -17,6 +18,7 @@ import { IconSymbol, IconSymbolName } from "@/components/ui/icon-symbol";
 import { Spacing, BorderRadius, FontSize } from "@/constants/spacing";
 import { Colors } from "@/constants/theme";
 import { TaskForm } from "@/components/TaskForm";
+import { MarkdownEditor } from "@/components/MarkdownEditor";
 import { GlobalStopwatchSheet } from "@/components/GlobalStopwatchSheet";
 import { showErrorAlert } from "@/lib/errors";
 import {
@@ -137,6 +139,7 @@ function TaskDetailsScreenContent() {
     "description",
   );
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
   const [editingExecution, setEditingExecution] = useState<TaskExecution | null>(null);
   const [showStopwatchSheet, setShowStopwatchSheet] = useState(false);
 
@@ -281,7 +284,6 @@ function TaskDetailsScreenContent() {
 
   const handleEditSubmit = async (data: {
     name: string;
-    body: string | null;
     location: string | null;
     due_rule: string | null;
     type: "by time" | "by executions" | "note";
@@ -303,6 +305,18 @@ function TaskDetailsScreenContent() {
     } catch (error) {
       console.error("Error updating task:", error);
       showErrorAlert(error, "Failed to update task");
+    }
+  };
+
+  const handleSaveDescription = async (markdown: string) => {
+    if (!core || !task) return;
+    try {
+      await core.tasksService.update(task.id, { body: markdown || null });
+      setShowMarkdownEditor(false);
+      loadData();
+    } catch (error) {
+      console.error("Error saving description:", error);
+      showErrorAlert(error, "Failed to save description");
     }
   };
 
@@ -512,14 +526,148 @@ function TaskDetailsScreenContent() {
             {activeTab === "description" && (
               <View style={styles.descriptionSection}>
                 {task.body ? (
-                  <ThemedText type="default" style={[styles.bodyText, { color: colors.text }]}>
-                    {task.body}
-                  </ThemedText>
+                  <>
+                    <View style={styles.descriptionActions}>
+                      <TouchableOpacity
+                        style={[styles.descriptionEditBtn, { backgroundColor: colors.tintLight }]}
+                        onPress={() => setShowMarkdownEditor(true)}
+                      >
+                        <IconSymbol size={14} name="pencil" color={colors.tint} />
+                        <ThemedText type="defaultSemiBold" style={{ color: colors.tint, marginLeft: Spacing.xs }}>
+                          Edit
+                        </ThemedText>
+                      </TouchableOpacity>
+                    </View>
+                    <Markdown
+                      style={{
+                        body: { color: colors.text, lineHeight: 24 },
+                        heading1: {
+                          color: colors.text,
+                          borderBottomColor: colors.border,
+                          borderBottomWidth: 1,
+                          paddingBottom: Spacing.sm,
+                          marginTop: Spacing.xl,
+                          marginBottom: Spacing.sm,
+                          lineHeight: 40,
+                        },
+                        heading2: {
+                          color: colors.text,
+                          borderBottomColor: colors.border,
+                          borderBottomWidth: 1,
+                          paddingBottom: Spacing.sm,
+                          marginTop: Spacing.lg,
+                          marginBottom: Spacing.sm,
+                          lineHeight: 34,
+                        },
+                        heading3: {
+                          color: colors.text,
+                          marginTop: Spacing.lg,
+                          marginBottom: Spacing.xs,
+                          lineHeight: 30,
+                        },
+                        heading4: {
+                          color: colors.text,
+                          marginTop: Spacing.md,
+                          marginBottom: Spacing.xs,
+                          lineHeight: 26,
+                        },
+                        heading5: {
+                          color: colors.text,
+                          marginTop: Spacing.md,
+                          marginBottom: Spacing.xs,
+                          lineHeight: 24,
+                        },
+                        heading6: {
+                          color: colors.text,
+                          marginTop: Spacing.md,
+                          marginBottom: Spacing.xs,
+                          lineHeight: 24,
+                        },
+                        paragraph: {
+                          marginTop: 0,
+                          marginBottom: Spacing.sm,
+                        },
+                        link: { color: colors.tint },
+                        blockquote: {
+                          backgroundColor: colors.borderLight,
+                          borderLeftColor: colors.tint,
+                          borderLeftWidth: 4,
+                          paddingVertical: Spacing.sm,
+                          paddingHorizontal: Spacing.md,
+                          marginVertical: Spacing.sm,
+                          borderRadius: 4,
+                        },
+                        code_inline: {
+                          backgroundColor: colors.borderLight,
+                          color: colors.text,
+                          paddingHorizontal: Spacing.xs,
+                          borderRadius: 4,
+                        },
+                        code_block: {
+                          backgroundColor: colors.borderLight,
+                          color: colors.text,
+                          padding: Spacing.md,
+                          marginVertical: Spacing.sm,
+                          borderRadius: 8,
+                        },
+                        fence: {
+                          backgroundColor: colors.borderLight,
+                          color: colors.text,
+                          padding: Spacing.md,
+                          marginVertical: Spacing.sm,
+                          borderRadius: 8,
+                        },
+                        list_item: {
+                          marginBottom: Spacing.xs,
+                        },
+                        ordered_list_icon: {
+                          marginRight: Spacing.sm,
+                        },
+                        list_unordered_item_icon: {
+                          marginRight: Spacing.sm,
+                        },
+                        table: {
+                          borderColor: colors.border,
+                          borderWidth: 1,
+                          marginVertical: Spacing.sm,
+                          borderRadius: 8,
+                        },
+                        th: {
+                          borderColor: colors.border,
+                          borderWidth: 1,
+                          padding: Spacing.sm,
+                          backgroundColor: colors.borderLight,
+                        },
+                        td: {
+                          borderColor: colors.border,
+                          borderWidth: 1,
+                          padding: Spacing.sm,
+                        },
+                        hr: {
+                          backgroundColor: colors.border,
+                          marginVertical: Spacing.md,
+                          height: 1,
+                        },
+                        image: {},
+                      }}
+                    >
+                      {task.body}
+                    </Markdown>
+                  </>
                 ) : (
                   <View style={[styles.emptyState, { backgroundColor: colors.borderLight }]}>
-                    <ThemedText type="default" style={{ color: colors.textSecondary }}>
+                    <ThemedText type="default" style={{ color: colors.textSecondary, marginBottom: Spacing.md }}>
                       No description
                     </ThemedText>
+                    <TouchableOpacity
+                      style={[styles.descriptionEditBtn, { backgroundColor: colors.tintLight }]}
+                      onPress={() => setShowMarkdownEditor(true)}
+                    >
+                      <IconSymbol size={14} name="pencil" color={colors.tint} />
+                      <ThemedText type="defaultSemiBold" style={{ color: colors.tint, marginLeft: Spacing.xs }}>
+                        Add description
+                      </ThemedText>
+                    </TouchableOpacity>
                   </View>
                 )}
               </View>
@@ -573,7 +721,6 @@ function TaskDetailsScreenContent() {
             sectionId={sectionId ?? ""}
             initialData={{
               name: task.name,
-              body: task.body,
               location: task.location,
               due_rule: fullTask?.due_rule ?? null,
               type: task.type,
@@ -628,6 +775,13 @@ function TaskDetailsScreenContent() {
         visible={showStopwatchSheet}
         onClose={() => setShowStopwatchSheet(false)}
         initialTaskId={task.id}
+      />
+
+      <MarkdownEditor
+        visible={showMarkdownEditor}
+        initialValue={task.body ?? ""}
+        onSave={handleSaveDescription}
+        onCancel={() => setShowMarkdownEditor(false)}
       />
     </ThemedView>
   );
@@ -758,8 +912,17 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
   },
   descriptionSection: {},
-  bodyText: {
-    lineHeight: 24,
+  descriptionActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginBottom: Spacing.md,
+  },
+  descriptionEditBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.sm,
   },
   historySection: {
     gap: Spacing.md,

@@ -127,7 +127,6 @@ function SectionsScreenContent() {
 
   const handleCreateTask = async (taskData: {
     name: string;
-    body: string | null;
     location: string | null;
     due_rule: string | null;
     type: "by time" | "by executions" | "note";
@@ -140,7 +139,7 @@ function SectionsScreenContent() {
       return;
     }
     try {
-      await core.tasksService.create(taskData);
+      await core.tasksService.create({ ...taskData, body: null });
       setShowCreateTaskModal(false);
       setSelectedSectionId(null);
       loadData();
