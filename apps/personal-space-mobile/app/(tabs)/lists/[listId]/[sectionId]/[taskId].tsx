@@ -16,6 +16,7 @@ import { IconSymbol, IconSymbolName } from "@/components/ui/icon-symbol";
 import { Spacing, BorderRadius, FontSize } from "@/constants/spacing";
 import { Colors } from "@/constants/theme";
 import { TaskForm } from "@/components/TaskForm";
+import { GlobalStopwatchSheet } from "@/components/GlobalStopwatchSheet";
 import { RRule } from "rrule";
 import type { Task, TaskOccurrenceDetail } from "personal-space-core";
 
@@ -213,6 +214,7 @@ export default function TaskDetailsScreen() {
   );
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingExecution, setEditingExecution] = useState<TaskExecution | null>(null);
+  const [showStopwatchSheet, setShowStopwatchSheet] = useState(false);
 
   const occDate = occurrenceDate ? new Date(occurrenceDate) : null;
 
@@ -248,23 +250,21 @@ export default function TaskDetailsScreen() {
     const isCompleted = task.progress >= task.objective;
     try {
       if (isCompleted) {
-        await core.tasksService.startExecution(
-          task.id,
-          task.occurrence_date,
-          true,
-        );
-      } else {
         const taskExecutions =
           await core.tasksService.getExecutionsByTaskAndDate(
             task.id,
             task.occurrence_date,
           );
-        const incompleteExecution = taskExecutions.find(
-          (e: TaskExecution) => !e.end_time,
-        );
-        if (incompleteExecution) {
-          await core.tasksService.stopExecution(incompleteExecution.id);
+        const lastExecution = taskExecutions[taskExecutions.length - 1];
+        if (lastExecution) {
+          await core.tasksService.deleteExecution(lastExecution.id);
         }
+      } else {
+        await core.tasksService.startExecution(
+          task.id,
+          task.occurrence_date,
+          true,
+        );
       }
       loadData();
     } catch (error) {
@@ -546,11 +546,12 @@ export default function TaskDetailsScreen() {
                   </ThemedText>
                 </View>
                 <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: colors.tint }]}
-                  onPress={handleInstantExecution}
+                  style={[styles.actionButton, { backgroundColor: colors.tintLight, marginTop: Spacing.sm }]}
+                  onPress={() => setShowStopwatchSheet(true)}
                 >
-                  <ThemedText type="defaultSemiBold" style={{ color: "#fff" }}>
-                    +1 {formatSeconds(task.objective)}
+                  <IconSymbol size={16} name="timer" color={colors.tint} />
+                  <ThemedText type="defaultSemiBold" style={{ color: colors.tint, marginLeft: Spacing.xs }}>
+                    Start Stopwatch
                   </ThemedText>
                 </TouchableOpacity>
               </>
@@ -709,6 +710,12 @@ export default function TaskDetailsScreen() {
           </View>
         </View>
       </Modal>
+
+      <GlobalStopwatchSheet
+        visible={showStopwatchSheet}
+        onClose={() => setShowStopwatchSheet(false)}
+        initialTaskId={task.id}
+      />
     </ThemedView>
   );
 }
