@@ -18,6 +18,7 @@ type TaskType = "by time" | "by executions" | "note";
 
 interface TaskFormData {
   name: string;
+  body: string;
   location: string;
   dueRule: string;
   type: TaskType;
@@ -40,22 +41,62 @@ interface TaskFormProps {
   }) => void;
   sectionId: string;
   onCancel: () => void;
+  initialData?: {
+    name: string;
+    body: string | null;
+    location: string | null;
+    due_rule: string | null;
+    type: TaskType;
+    objective: number;
+    recurrency: string | null;
+  };
 }
 
-export function TaskForm({ onSubmit, sectionId, onCancel }: TaskFormProps) {
+export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFormProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const colors = isDark ? Colors.dark : Colors.light;
 
-  const [formData, setFormData] = useState<TaskFormData>({
-    name: "",
-    location: "",
-    dueRule: "",
-    type: "by executions",
-    objective: "1",
-    objectiveUnit: "minutes",
-    recurrency: "",
-    isRecurrent: false,
+  const [formData, setFormData] = useState<TaskFormData>(() => {
+    if (initialData) {
+      let objectiveUnit: TaskFormData["objectiveUnit"] = "minutes";
+      let objectiveValue = String(initialData.objective);
+      if (initialData.type === "by time" && initialData.objective > 0) {
+        const seconds = initialData.objective;
+        if (seconds >= 3600 && seconds % 3600 === 0) {
+          objectiveUnit = "hours";
+          objectiveValue = String(seconds / 3600);
+        } else if (seconds >= 60 && seconds % 60 === 0) {
+          objectiveUnit = "minutes";
+          objectiveValue = String(seconds / 60);
+        } else {
+          objectiveUnit = "seconds";
+          objectiveValue = String(seconds);
+        }
+      }
+      return {
+        name: initialData.name,
+        body: initialData.body ?? "",
+        location: initialData.location ?? "",
+        dueRule: initialData.due_rule ?? "",
+        type: initialData.type,
+        objective: objectiveValue,
+        objectiveUnit,
+        recurrency: initialData.recurrency ?? "",
+        isRecurrent: !!initialData.recurrency,
+      };
+    }
+    return {
+      name: "",
+      body: "",
+      location: "",
+      dueRule: "",
+      type: "by executions",
+      objective: "1",
+      objectiveUnit: "minutes",
+      recurrency: "",
+      isRecurrent: false,
+    };
   });
 
   const [showRecurrenceBuilder, setShowRecurrenceBuilder] = useState(false);
@@ -101,7 +142,7 @@ export function TaskForm({ onSubmit, sectionId, onCancel }: TaskFormProps) {
 
     onSubmit({
       name: formData.name.trim(),
-      body: null,
+      body: formData.body.trim() || null,
       location: formData.location.trim() || null,
       due_rule: dueRule,
       type: formData.type,
@@ -167,6 +208,27 @@ export function TaskForm({ onSubmit, sectionId, onCancel }: TaskFormProps) {
           value={formData.name}
           onChangeText={(text) => updateField("name", text)}
           autoFocus
+        />
+      </View>
+
+      <View style={styles.field}>
+        <ThemedText type="subtitle">Description</ThemedText>
+        <TextInput
+          style={[
+            styles.input,
+            styles.bodyInput,
+            {
+              color: colors.text,
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+          ]}
+          placeholder="Write a description..."
+          placeholderTextColor={colors.textTertiary}
+          value={formData.body}
+          onChangeText={(text) => updateField("body", text)}
+          multiline
+          textAlignVertical="top"
         />
       </View>
 
@@ -418,7 +480,7 @@ export function TaskForm({ onSubmit, sectionId, onCancel }: TaskFormProps) {
             type="defaultSemiBold"
             style={{ color: formData.name.trim() ? "#fff" : colors.textTertiary }}
           >
-            Create
+            {initialData ? "Save" : "Create"}
           </ThemedText>
         </TouchableOpacity>
       </View>
@@ -785,6 +847,10 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     fontSize: FontSize.md,
     lineHeight: 22,
+  },
+  bodyInput: {
+    minHeight: 100,
+    maxHeight: 200,
   },
   segmentedControl: {
     flexDirection: "row",
