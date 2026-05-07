@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Platform } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -25,12 +25,12 @@ export default function TabLayout() {
           borderTopColor: colors.border,
           borderTopWidth: 1,
           paddingTop: Spacing.xs,
-          height: 84,
+          height: Platform.OS === "ios" ? 88 : 64,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "500",
-          marginBottom: Spacing.sm,
+          marginBottom: Platform.OS === "ios" ? Spacing.md : Spacing.sm,
         },
       }}
     >
@@ -38,6 +38,7 @@ export default function TabLayout() {
         name="lists"
         options={{
           title: "Lists",
+          tabBarAccessibilityLabel: "Lists tab",
           tabBarIcon: ({ color }) => (
             <View style={styles.iconContainer}>
               <IconSymbol size={24} name="checklist" color={color} />

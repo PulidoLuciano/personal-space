@@ -362,7 +362,11 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
             <TouchableOpacity
               style={[
                 styles.toggle,
-                formData.isRecurrent && { backgroundColor: colors.tint },
+                {
+                  backgroundColor: formData.isRecurrent
+                    ? colors.tint
+                    : colors.borderLight,
+                },
               ]}
               onPress={() => updateField("isRecurrent", !formData.isRecurrent)}
             >
@@ -409,7 +413,7 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
           <View style={styles.dueDateRow}>
             <ThemedText type="subtitle">Due date</ThemedText>
             <TouchableOpacity
-              style={[styles.toggle]}
+              style={[styles.toggle, { backgroundColor: colors.borderLight }]}
               onPress={() => formData.isRecurrent ? setShowDueRuleBuilder(true) : setShowDatePicker(true)}
             >
               <ThemedText type="default" style={{ color: colors.textSecondary }}>
@@ -470,8 +474,10 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
         <TouchableOpacity
           style={[
             styles.button,
-            styles.submitButton,
             !formData.name.trim() && styles.buttonDisabled,
+            {
+              backgroundColor: formData.name.trim() ? colors.tint : colors.borderLight,
+            },
           ]}
           onPress={handleSubmit}
           disabled={!formData.name.trim()}
@@ -724,7 +730,7 @@ function DueRuleBuilder({ value, onChange, onClose }: DueRuleBuilderProps) {
 
   return (
     <View style={[styles.dueRuleBuilderContainer, { backgroundColor: colors.background }]}>
-      <View style={styles.dueRuleBuilderHeader}>
+      <View style={[styles.dueRuleBuilderHeader, { borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={onClose}>
           <ThemedText type="defaultSemiBold" style={{ color: colors.tint }}>
             Cancel
@@ -900,7 +906,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 28,
     borderRadius: BorderRadius.full,
-    backgroundColor: "#e5e7eb",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -944,10 +949,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   submitButton: {
-    backgroundColor: "#2563eb",
+    alignItems: "center",
   },
   buttonDisabled: {
-    backgroundColor: "#9ca3af",
+    opacity: 0.5,
   },
   builderWrapper: {
     flex: 1,
@@ -962,7 +967,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
   },
   dueRuleBuilderContent: {
     flex: 1,

@@ -90,7 +90,7 @@ export const SectionContainer = React.memo(function SectionContainer({
             {section.name}
           </ThemedText>
           {totalCount > 0 && (
-            <View style={styles.countBadge}>
+            <View style={[styles.countBadge, { backgroundColor: colors.borderLight }]}>
               <ThemedText type="subtitle" style={[styles.count, { color: colors.textSecondary }]}>
                 {completedCount > 0
                   ? `${completedCount}/${totalCount}`
@@ -211,7 +211,6 @@ const styles = StyleSheet.create({
   countBadge: {
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xxs,
-    backgroundColor: "rgba(0,0,0,0.05)",
     borderRadius: BorderRadius.full,
   },
   count: {

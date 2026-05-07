@@ -274,7 +274,7 @@ export function GlobalStopwatchSheet({
         onPress={onClose}
       />
       <View style={[styles.sheet, { backgroundColor: colors.surface }]}>
-        <View style={styles.handle} />
+        <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
         <View style={styles.header}>
           <View style={styles.headerTitle}>
@@ -526,7 +526,6 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: "#d1d5db",
     borderRadius: 2,
     alignSelf: "center",
     marginBottom: Spacing.lg,
