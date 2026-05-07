@@ -442,6 +442,66 @@ describe("TasksService", () => {
       expect(executions[0]?.task_id).toBe(taskId);
     });
 
+    it("should start execution using occurrence date from getTaskOccurrence", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrence = await tasksService.getTaskOccurrence(
+        taskId,
+        new Date("2026-12-31"),
+      );
+
+      const executionId = await tasksService.startExecution(
+        taskId,
+        occurrence.occurrence_date,
+      );
+      expect(executionId).toBeDefined();
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(
+        taskId,
+        occurrence.occurrence_date,
+      );
+      expect(executions.length).toBe(1);
+      expect(executions[0]?.task_id).toBe(taskId);
+    });
+
+    it("should start execution using occurrence date from getTasksBySection and update progress", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        type: "by executions",
+        objective: 2,
+        recurrency: "FREQ=DAILY;COUNT=5",
+        section_id: sectionId,
+      } as any);
+
+      const tasks = await tasksService.getTasksBySection(sectionId);
+      expect(tasks.length).toBeGreaterThan(0);
+
+      const occurrenceDate = tasks[0]!.occurrence_date;
+      expect(occurrenceDate).toBeDefined();
+
+      const executionId = await tasksService.startExecution(
+        taskId,
+        occurrenceDate!,
+      );
+      expect(executionId).toBeDefined();
+
+      const executions = await tasksService.getExecutionsByTaskAndDate(
+        taskId,
+        occurrenceDate!,
+      );
+      expect(executions.length).toBe(1);
+
+      const updated = await tasksService.getTaskOccurrence(
+        taskId,
+        occurrenceDate!,
+      );
+      expect(updated.progress).toBe(1);
+    });
+
     it("should throw error when starting execution for non-existent task", async () => {
       await expect(
         tasksService.startExecution("non-existent-id"),
