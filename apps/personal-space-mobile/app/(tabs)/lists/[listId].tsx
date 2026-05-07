@@ -54,6 +54,7 @@ export default function SectionsScreen() {
   const [showStopwatchSheet, setShowStopwatchSheet] = useState(false);
   const [stopwatchInitialTask, setStopwatchInitialTask] =
     useState<TaskWithSection | null>(null);
+  const [sectionPositions, setSectionPositions] = useState<Record<string, { y: number; height: number }>>({});
 
   const loadData = useCallback(async () => {
     if (!listId || !core) return;
@@ -221,6 +222,66 @@ export default function SectionsScreen() {
 
   const handleTaskLongPress = (task: TaskWithSection) => {
     setMovingTaskId(task.id);
+  };
+
+  const handleDragStart = (taskId: string) => {
+    setMovingTaskId(taskId);
+  };
+
+  const handleDragEnd = async (taskId: string, absoluteY: number) => {
+    if (!core) return;
+
+    const taskToMove = sectionsWithTasks
+      .flatMap((swt) => swt.tasks)
+      .find((t) => t.id === taskId);
+    if (!taskToMove) {
+      setMovingTaskId(null);
+      return;
+    }
+
+    let targetSectionId: string | null = null;
+    for (const [sectionId, pos] of Object.entries(sectionPositions)) {
+      if (absoluteY >= pos.y && absoluteY <= pos.y + pos.height) {
+        targetSectionId = sectionId;
+        break;
+      }
+    }
+
+    if (!targetSectionId) {
+      setMovingTaskId(null);
+      return;
+    }
+
+    if (taskToMove.section_id === targetSectionId) {
+      setMovingTaskId(null);
+      return;
+    }
+
+    const newSectionsWithTasks = sectionsWithTasks.map((swt) => ({
+      ...swt,
+      tasks:
+        swt.section.id === targetSectionId
+          ? [...swt.tasks, { ...taskToMove, section_id: targetSectionId }]
+          : swt.tasks.filter((t) => t.id !== taskId),
+    }));
+    setSectionsWithTasks(newSectionsWithTasks);
+    setMovingTaskId(null);
+
+    try {
+      await core.tasksService.update(taskId, {
+        section_id: targetSectionId,
+      });
+    } catch (error) {
+      console.error("Error moving task:", error);
+      loadData();
+    }
+  };
+
+  const handleSectionLayout = (sectionId: string, y: number, height: number) => {
+    setSectionPositions((prev) => ({
+      ...prev,
+      [sectionId]: { y, height },
+    }));
   };
 
   const handleSectionDrop = async (targetSectionId: string) => {
@@ -415,6 +476,9 @@ export default function SectionsScreen() {
                 onTaskLongPress={handleTaskLongPress}
                 onSectionPress={() => handleSectionDrop(swt.section.id)}
                 onAddToStopwatch={handleAddToStopwatch}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onLayout={handleSectionLayout}
               />
             </View>
           ))}

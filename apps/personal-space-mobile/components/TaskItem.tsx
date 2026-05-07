@@ -1,4 +1,11 @@
 import { StyleSheet, TouchableOpacity, View, useColorScheme } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  runOnJS,
+} from "react-native-reanimated";
 import { ThemedText } from "./themed-text";
 import { Colors } from "@/constants/theme";
 import { Spacing, BorderRadius } from "@/constants/spacing";
@@ -16,6 +23,8 @@ interface TaskItemProps {
   onLongPress: () => void;
   onToggleComplete: () => void;
   onAddToStopwatch?: () => void;
+  onDragStart?: () => void;
+  onDragEnd?: (translationY: number) => void;
 }
 
 export function TaskItem({
@@ -30,10 +39,74 @@ export function TaskItem({
   onLongPress,
   onToggleComplete,
   onAddToStopwatch,
+  onDragStart,
+  onDragEnd,
 }: TaskItemProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const colors = Colors[isDark ? "dark" : "light"];
+
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const scale = useSharedValue(1);
+  const zIndex = useSharedValue(0);
+  const isDragging = useSharedValue(false);
+
+  const triggerDragStart = () => {
+    onDragStart?.();
+  };
+
+  const triggerDragEnd = (translationY: number) => {
+    onDragEnd?.(translationY);
+  };
+
+  const longPressGesture = Gesture.LongPress()
+    .minDuration(300)
+    .onStart(() => {
+      isDragging.value = true;
+      scale.value = withSpring(1.05);
+      zIndex.value = 100;
+      runOnJS(triggerDragStart)();
+    });
+
+  const panGesture = Gesture.Pan()
+    .manualActivation(true)
+    .onTouchesMove((_, state) => {
+      if (isDragging.value) {
+        state.activate();
+      } else {
+        state.fail();
+      }
+    })
+    .onUpdate((event) => {
+      if (isDragging.value) {
+        translateX.value = event.translationX;
+        translateY.value = event.translationY;
+      }
+    })
+    .onEnd((event) => {
+      if (isDragging.value) {
+        const targetY = event.absoluteY;
+        runOnJS(triggerDragEnd)(targetY);
+      }
+      translateX.value = withSpring(0);
+      translateY.value = withSpring(0);
+      scale.value = withSpring(1);
+      zIndex.value = 0;
+      isDragging.value = false;
+    });
+
+  const composedGesture = Gesture.Simultaneous(longPressGesture, panGesture);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+    zIndex: zIndex.value,
+    shadowOpacity: isDragging.value ? 0.3 : 0.05,
+  }));
 
   const formatDueDate = (dueDate: Date | null) => {
     if (!dueDate) return null;
@@ -86,17 +159,20 @@ export function TaskItem({
   const formattedProgress = formatTimeProgress(progress, objective);
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.container, 
-        { backgroundColor: colors.surface },
-        isMoving && { borderColor: colors.tint, borderWidth: 1.5 }
-      ]}
-      onPress={onPress}
-      onLongPress={onLongPress}
-      delayLongPress={500}
-      activeOpacity={0.7}
-    >
+    <GestureDetector gesture={composedGesture}>
+      <Animated.View
+        style={[
+          styles.container, 
+          { backgroundColor: colors.surface },
+          isMoving && { borderColor: colors.tint, borderWidth: 1.5 },
+          animatedStyle,
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.touchableInside}
+          onPress={onPress}
+          activeOpacity={1}
+        >
       {taskType === "by time" && onAddToStopwatch ? (
         <TouchableOpacity
           style={[styles.timerButton, { backgroundColor: colors.tintLight }]}
@@ -182,7 +258,9 @@ export function TaskItem({
           </View>
         )}
       </View>
-    </TouchableOpacity>
+        </TouchableOpacity>
+      </Animated.View>
+    </GestureDetector>
   );
 }
 
@@ -193,6 +271,11 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     marginBottom: Spacing.sm,
+  },
+  touchableInside: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
   },
   checkbox: {
     width: 22,

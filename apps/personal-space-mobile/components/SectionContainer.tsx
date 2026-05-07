@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { StyleSheet, View, TouchableOpacity, useColorScheme } from "react-native";
+import { useState, useRef } from "react";
+import { StyleSheet, View, TouchableOpacity, useColorScheme, LayoutChangeEvent } from "react-native";
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { ThemedText } from "./themed-text";
 import { IconSymbol } from "./ui/icon-symbol";
@@ -24,6 +24,11 @@ interface SectionContainerProps {
   onTaskLongPress: (task: TaskWithSection) => void;
   onSectionPress: () => void;
   onAddToStopwatch?: (task: TaskWithSection) => void;
+  onDragStart?: (taskId: string) => void;
+  onDragEnd?: (taskId: string, absoluteY: number) => void;
+  onLayout?: (sectionId: string, y: number, height: number) => void;
+  sectionY?: number;
+  sectionHeight?: number;
 }
 
 export function SectionContainer({
@@ -38,15 +43,28 @@ export function SectionContainer({
   onTaskLongPress,
   onSectionPress,
   onAddToStopwatch,
+  onDragStart,
+  onDragEnd,
+  onLayout,
+  sectionY = 0,
+  sectionHeight = 0,
 }: SectionContainerProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const colors = Colors[isDark ? "dark" : "light"];
+  const viewRef = useRef<View>(null);
+
+  const handleLayout = (event: LayoutChangeEvent) => {
+    event.target.measureInWindow((x, y, width, height) => {
+      onLayout?.(section.id, y, height);
+    });
+  };
 
   const completedCount = tasks.filter(t => t.progress >= t.objective).length;
   const totalCount = tasks.length;
   const isReceivingDrop = movingTaskId !== null && tasks.every(t => t.id !== movingTaskId);
+  const isDragging = movingTaskId !== null;
 
   const containerStyle = useAnimatedStyle(() => ({
     backgroundColor: withTiming(
@@ -58,7 +76,10 @@ export function SectionContainer({
   }));
 
   return (
-    <Animated.View style={[styles.container, containerStyle]}>
+    <Animated.View 
+      ref={viewRef}
+      onLayout={handleLayout}
+      style={[styles.container, containerStyle, isDragging && styles.containerDragging]}>
       <TouchableOpacity
         style={[styles.header, { backgroundColor: colors.surface }]}
         onPress={() => setIsExpanded(!isExpanded)}
@@ -151,6 +172,8 @@ export function SectionContainer({
                 onLongPress={() => onTaskLongPress(task)}
                 onToggleComplete={() => onToggleTaskComplete(task)}
                 onAddToStopwatch={task.type === "by time" && onAddToStopwatch ? () => onAddToStopwatch(task) : undefined}
+                onDragStart={() => onDragStart?.(task.id)}
+                onDragEnd={(absoluteY) => onDragEnd?.(task.id, absoluteY)}
               />
             ))
           )}
@@ -170,6 +193,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 1,
+  },
+  containerDragging: {
+    overflow: "visible",
   },
   header: {
     flexDirection: "row",
