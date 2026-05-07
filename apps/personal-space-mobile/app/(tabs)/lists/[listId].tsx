@@ -17,6 +17,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ThemedTextInput } from "@/components/ui/ThemedTextInput";
+import { TaskForm } from "@/components/TaskForm";
 import { Spacing, BorderRadius } from "@/constants/spacing";
 import type { Section, List, TaskWithProgress } from "personal-space-core";
 
@@ -41,7 +42,6 @@ export default function SectionsScreen() {
   const [newSectionName, setNewSectionName] = useState("");
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
-  const [newTaskName, setNewTaskName] = useState("");
   const [movingTaskId, setMovingTaskId] = useState<string | null>(null);
   const [showEditSectionModal, setShowEditSectionModal] = useState(false);
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
@@ -112,24 +112,23 @@ export default function SectionsScreen() {
     }
   };
 
-  const handleCreateTask = async () => {
-    if (!newTaskName.trim() || !selectedSectionId || !core) {
-      Alert.alert("Error", "Please enter a task name");
+  const handleCreateTask = async (taskData: {
+    name: string;
+    body: string | null;
+    location: string | null;
+    due_rule: string | null;
+    type: "by time" | "by executions" | "note";
+    objective: number;
+    recurrency: string | null;
+    section_id: string;
+  }) => {
+    if (!selectedSectionId || !core) {
+      Alert.alert("Error", "Please select a section");
       return;
     }
     try {
-      await core.tasksService.create({
-        name: newTaskName.trim(),
-        body: null,
-        location: null,
-        due_rule: null,
-        type: "by executions",
-        objective: 1,
-        recurrency: null,
-        section_id: selectedSectionId,
-      });
+      await core.tasksService.create(taskData);
       setShowCreateTaskModal(false);
-      setNewTaskName("");
       setSelectedSectionId(null);
       loadData();
     } catch (error) {
@@ -409,21 +408,14 @@ export default function SectionsScreen() {
           onRequestClose={() => setShowCreateTaskModal(false)}
         >
           <ThemedView style={styles.modalContainer}>
-            <ModalHeader
-              title="New Task"
-              onLeftPress={() => setShowCreateTaskModal(false)}
-              rightLabel="Create"
-              onRightPress={handleCreateTask}
+            <TaskForm
+              sectionId={selectedSectionId ?? ""}
+              onSubmit={handleCreateTask}
+              onCancel={() => {
+                setShowCreateTaskModal(false);
+                setSelectedSectionId(null);
+              }}
             />
-            <View style={styles.modalContent}>
-              <ThemedText type="subtitle">Name</ThemedText>
-              <ThemedTextInput
-                placeholder="Task name"
-                value={newTaskName}
-                onChangeText={setNewTaskName}
-                autoFocus
-              />
-            </View>
           </ThemedView>
         </Modal>
       </ThemedView>
