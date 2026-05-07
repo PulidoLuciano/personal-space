@@ -14,6 +14,7 @@ import { Spacing, BorderRadius } from "@/constants/spacing";
 import { ThemedText } from "./themed-text";
 import { IconSymbol } from "./ui/icon-symbol";
 import { useCore } from "@/lib/core-context";
+import { showErrorAlert } from "@/lib/errors";
 import type { TaskWithListInfo } from "personal-space-core";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -218,6 +219,7 @@ export function GlobalStopwatchSheet({
       setElapsedTime(0);
     } catch (error) {
       console.error("Error starting executions:", error);
+      showErrorAlert(error, "Failed to start stopwatch");
     }
   };
 
@@ -245,6 +247,7 @@ export function GlobalStopwatchSheet({
       }
     } catch (error) {
       console.error("Error stopping execution:", error);
+      showErrorAlert(error, "Failed to stop execution");
     }
   };
 

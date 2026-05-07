@@ -6,6 +6,7 @@ import Animated, {
   withSpring,
   runOnJS,
 } from "react-native-reanimated";
+import React from "react";
 import { ThemedText } from "./themed-text";
 import { Colors } from "@/constants/theme";
 import { Spacing, BorderRadius } from "@/constants/spacing";
@@ -27,7 +28,7 @@ interface TaskItemProps {
   onDragEnd?: (translationY: number) => void;
 }
 
-export function TaskItem({
+export const TaskItem = React.memo(function TaskItem({
   name,
   dueDate,
   isCompleted,
@@ -262,7 +263,7 @@ export function TaskItem({
       </Animated.View>
     </GestureDetector>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

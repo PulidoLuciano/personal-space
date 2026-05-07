@@ -11,13 +11,22 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { CoreGate } from "@/components/CoreGate";
 import { useCore } from "@/lib/core-context";
 import { IconSymbol, IconSymbolName } from "@/components/ui/icon-symbol";
 import { Spacing, BorderRadius, FontSize } from "@/constants/spacing";
 import { Colors } from "@/constants/theme";
 import { TaskForm } from "@/components/TaskForm";
 import { GlobalStopwatchSheet } from "@/components/GlobalStopwatchSheet";
-import { RRule } from "rrule";
+import { showErrorAlert } from "@/lib/errors";
+import {
+  formatRecurrency,
+  formatSeconds,
+  formatDueRule,
+  formatDate,
+  formatDateTime,
+  formatDuration,
+} from "@/lib/formatters";
 import type { Task, TaskOccurrenceDetail } from "personal-space-core";
 
 interface TaskExecution {
@@ -28,91 +37,6 @@ interface TaskExecution {
   start_time: Date;
   end_time: Date | null;
   task_id: string;
-}
-
-function formatRecurrency(rruleStr: string): string {
-  try {
-    const rrule = RRule.fromString(rruleStr);
-    return rrule.toText();
-  } catch {
-    return rruleStr;
-  }
-}
-
-function formatSeconds(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  if (hours > 0) {
-    return `${hours}h ${mins}m`;
-  }
-  return `${mins}m`;
-}
-
-function formatDueRule(dueRule: string): string {
-  const relativeMatch = dueRule.match(
-    /^\+(\d+)([dwmy])\s+(\d{2}:\d{2}):\d{2}$/,
-  );
-  if (relativeMatch) {
-    const count = relativeMatch[1];
-    const unitMap: Record<string, string> = {
-      d: "day",
-      w: "week",
-      m: "month",
-      y: "year",
-    };
-    const unit = unitMap[relativeMatch[2]] || "day";
-    const time = relativeMatch[3];
-    const plural = count === "1" ? "" : "s";
-    return `${count} ${unit}${plural} after at ${time}`;
-  }
-  const fixedMatch = dueRule.match(
-    /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}):\d{2}$/,
-  );
-  if (fixedMatch) {
-    const date = new Date(fixedMatch[1] + "T" + fixedMatch[2]);
-    return (
-      date.toLocaleDateString(undefined, {
-        weekday: "short",
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }) +
-      " at " +
-      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    );
-  }
-  return dueRule;
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString(undefined, {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatDateTime(date: Date): string {
-  return date.toLocaleString(undefined, {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatDuration(start: Date, end: Date): string {
-  const diffMs = end.getTime() - start.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const hours = Math.floor(diffMins / 60);
-  const mins = diffMins % 60;
-  if (hours > 0) {
-    return `${hours}h ${mins}m`;
-  }
-  return `${mins}m`;
 }
 
 interface DetailItemProps {
@@ -192,14 +116,14 @@ function ExecutionItem({ execution, colors, onDelete, onUpdate }: ExecutionItemP
   );
 }
 
-export default function TaskDetailsScreen() {
+function TaskDetailsScreenContent() {
   const { sectionId, taskId, occurrenceDate } = useLocalSearchParams<{
     listId: string;
     sectionId: string;
     taskId: string;
     occurrenceDate?: string;
   }>();
-  const { core, isLoading: isCoreLoading, error: coreError } = useCore();
+  const { core } = useCore();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -269,7 +193,7 @@ export default function TaskDetailsScreen() {
       loadData();
     } catch (error) {
       console.error("Error toggling task:", error);
-      Alert.alert("Error", "Failed to update task");
+      showErrorAlert(error, "Failed to update task");
     }
   };
 
@@ -284,7 +208,7 @@ export default function TaskDetailsScreen() {
       loadData();
     } catch (error) {
       console.error("Error executing task:", error);
-      Alert.alert("Error", "Failed to execute task");
+      showErrorAlert(error, "Failed to execute task");
     }
   };
 
@@ -304,7 +228,7 @@ export default function TaskDetailsScreen() {
               loadData();
             } catch (error) {
               console.error("Error deleting execution:", error);
-              Alert.alert("Error", "Failed to delete execution");
+              showErrorAlert(error, "Failed to delete execution");
             }
           },
         },
@@ -326,7 +250,7 @@ export default function TaskDetailsScreen() {
       loadData();
     } catch (error) {
       console.error("Error updating execution:", error);
-      Alert.alert("Error", "Failed to update execution");
+      showErrorAlert(error, "Failed to update execution");
     }
   };
 
@@ -347,7 +271,7 @@ export default function TaskDetailsScreen() {
               router.back();
             } catch (error) {
               console.error("Error deleting task:", error);
-              Alert.alert("Error", "Failed to delete task");
+              showErrorAlert(error, "Failed to delete task");
             }
           },
         },
@@ -378,27 +302,16 @@ export default function TaskDetailsScreen() {
       loadData();
     } catch (error) {
       console.error("Error updating task:", error);
-      Alert.alert("Error", "Failed to update task");
+      showErrorAlert(error, "Failed to update task");
     }
   };
 
-  if (isCoreLoading || pageLoading) {
+  if (pageLoading) {
     return (
       <ThemedView
         style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
       >
         <ThemedText>Loading...</ThemedText>
-      </ThemedView>
-    );
-  }
-
-  if (coreError || !core) {
-    return (
-      <ThemedView
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-      >
-        <ThemedText type="defaultSemiBold">Failed to initialize</ThemedText>
-        <ThemedText>{coreError?.message || "Unknown error"}</ThemedText>
       </ThemedView>
     );
   }
@@ -717,6 +630,14 @@ export default function TaskDetailsScreen() {
         initialTaskId={task.id}
       />
     </ThemedView>
+  );
+}
+
+export default function TaskDetailsScreen() {
+  return (
+    <CoreGate>
+      <TaskDetailsScreenContent />
+    </CoreGate>
   );
 }
 

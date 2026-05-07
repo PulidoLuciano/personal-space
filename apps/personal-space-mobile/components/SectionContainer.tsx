@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { StyleSheet, View, TouchableOpacity, useColorScheme, LayoutChangeEvent } from "react-native";
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { ThemedText } from "./themed-text";
@@ -31,7 +31,7 @@ interface SectionContainerProps {
   sectionHeight?: number;
 }
 
-export function SectionContainer({
+export const SectionContainer = React.memo(function SectionContainer({
   section,
   tasks,
   movingTaskId,
@@ -181,7 +181,7 @@ export function SectionContainer({
       )}
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

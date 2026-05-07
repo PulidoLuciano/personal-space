@@ -3,6 +3,7 @@ import { StyleSheet, View, FlatList, TouchableOpacity, Modal, Alert, ScrollView,
 import { useRouter } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { CoreGate } from "@/components/CoreGate";
 import { useCore } from "@/lib/core-context";
 import { ListCard } from "@/components/ListCard";
 import { ProjectIcon } from "@/components/ui/ProjectIcon";
@@ -10,6 +11,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ModalHeader } from "@/components/ui/ModalHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ThemedTextInput } from "@/components/ui/ThemedTextInput";
+import { showErrorAlert } from "@/lib/errors";
 import { Spacing, BorderRadius } from "@/constants/spacing";
 import type { List } from "personal-space-core";
 
@@ -51,12 +53,11 @@ const COLOR_ORDER = [
   "#00000000", "#777777",
 ];
 
-export default function ListsScreen() {
+function ListsScreenContent() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  
-  const { core, isLoading: isCoreLoading, error: coreError } = useCore();
+  const { core } = useCore();
   
   const [lists, setLists] = useState<List[]>([]);
   const [colors, setColors] = useState<string[]>([]);
@@ -153,7 +154,7 @@ export default function ListsScreen() {
       loadLists();
     } catch (error) {
       console.error("Error saving list:", error);
-      Alert.alert("Error", "Failed to save list");
+      showErrorAlert(error, "Failed to save list");
     }
   };
 
@@ -182,7 +183,7 @@ export default function ListsScreen() {
       loadLists();
     } catch (error) {
       console.error("Error deleting list:", error);
-      Alert.alert("Error", "Failed to delete list");
+      showErrorAlert(error, "Failed to delete list");
     }
   };
 
@@ -201,23 +202,6 @@ export default function ListsScreen() {
       />
     );
   };
-
-  if (isCoreLoading) {
-    return (
-      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ThemedText>Loading...</ThemedText>
-      </ThemedView>
-    );
-  }
-  
-  if (coreError || !core) {
-    return (
-      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ThemedText type="defaultSemiBold">Failed to initialize</ThemedText>
-        <ThemedText>{coreError?.message || "Unknown error"}</ThemedText>
-      </ThemedView>
-    );
-  }
 
   return (
     <ThemedView style={styles.container}>
@@ -361,6 +345,14 @@ export default function ListsScreen() {
         </ThemedView>
       </Modal>
     </ThemedView>
+  );
+}
+
+export default function ListsScreen() {
+  return (
+    <CoreGate>
+      <ListsScreenContent />
+    </CoreGate>
   );
 }
 

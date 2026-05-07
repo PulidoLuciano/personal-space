@@ -20,7 +20,7 @@ interface ListCardProps {
   onDelete: () => void;
 }
 
-export function ListCard({ 
+export const ListCard = React.memo(function ListCard({ 
   id, 
   name, 
   color, 
@@ -128,7 +128,7 @@ export function ListCard({
       </Modal>
     </>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

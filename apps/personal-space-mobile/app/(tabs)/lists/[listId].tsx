@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { CoreGate } from "@/components/CoreGate";
 import { useCore } from "@/lib/core-context";
 import { SectionContainer } from "@/components/SectionContainer";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -19,6 +20,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ThemedTextInput } from "@/components/ui/ThemedTextInput";
 import { TaskForm } from "@/components/TaskForm";
 import { GlobalStopwatchSheet } from "@/components/GlobalStopwatchSheet";
+import { showErrorAlert } from "@/lib/errors";
 import { Spacing, BorderRadius } from "@/constants/spacing";
 import type { Section, List, TaskWithProgress } from "personal-space-core";
 
@@ -31,9 +33,9 @@ interface SectionWithTasks {
   tasks: TaskWithSection[];
 }
 
-export default function SectionsScreen() {
+function SectionsScreenContent() {
   const { listId } = useLocalSearchParams<{ listId: string }>();
-  const { core, isLoading: isCoreLoading, error: coreError } = useCore();
+  const { core } = useCore();
   const router = useRouter();
 
   const [list, setList] = useState<List | null>(null);
@@ -100,7 +102,7 @@ export default function SectionsScreen() {
       loadData();
     } catch (error) {
       console.error("Error toggling show completed:", error);
-      Alert.alert("Error", "Failed to update settings");
+      showErrorAlert(error, "Failed to update settings");
     }
   };
 
@@ -119,7 +121,7 @@ export default function SectionsScreen() {
       loadData();
     } catch (error) {
       console.error("Error creating section:", error);
-      Alert.alert("Error", "Failed to create section");
+      showErrorAlert(error, "Failed to create section");
     }
   };
 
@@ -144,7 +146,7 @@ export default function SectionsScreen() {
       loadData();
     } catch (error) {
       console.error("Error creating task:", error);
-      Alert.alert("Error", "Failed to create task");
+      showErrorAlert(error, "Failed to create task");
     }
   };
 
@@ -348,7 +350,7 @@ export default function SectionsScreen() {
       loadData();
     } catch (error) {
       console.error("Error editing section:", error);
-      Alert.alert("Error", "Failed to edit section");
+      showErrorAlert(error, "Failed to edit section");
     }
   };
 
@@ -368,7 +370,7 @@ export default function SectionsScreen() {
               loadData();
             } catch (error) {
               console.error("Error deleting section:", error);
-              Alert.alert("Error", "Failed to delete section");
+              showErrorAlert(error, "Failed to delete section");
             }
           },
         },
@@ -380,27 +382,6 @@ export default function SectionsScreen() {
     setStopwatchInitialTask(task);
     setShowStopwatchSheet(true);
   };
-
-  if (isCoreLoading) {
-    return (
-      <ThemedView
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-      >
-        <ThemedText>Loading...</ThemedText>
-      </ThemedView>
-    );
-  }
-
-  if (coreError || !core) {
-    return (
-      <ThemedView
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-      >
-        <ThemedText type="defaultSemiBold">Failed to initialize</ThemedText>
-        <ThemedText>{coreError?.message || "Unknown error"}</ThemedText>
-      </ThemedView>
-    );
-  }
 
   if (!list) {
     return (
@@ -573,6 +554,14 @@ export default function SectionsScreen() {
         />
       </ThemedView>
     </GestureHandlerRootView>
+  );
+}
+
+export default function SectionsScreen() {
+  return (
+    <CoreGate>
+      <SectionsScreenContent />
+    </CoreGate>
   );
 }
 
