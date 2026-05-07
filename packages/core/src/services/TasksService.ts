@@ -14,7 +14,7 @@ import type {
   TaskOccurrenceDetail,
   TaskWithListInfo,
 } from "../schemas/tasks.js";
-import RRule from "rrule";
+import { RRule } from "rrule";
 import {
   calculateDueDate,
   isDueRuleRelative,
@@ -204,8 +204,8 @@ export default class TasksService extends BaseService<
     if (!occurrenceDate || !existingTask.recurrency) {
       throw new Error("Ocurrence date is necessary");
     }
-    const rrule = RRule.RRule.fromString(existingTask.recurrency);
-    const newRrule = new RRule.RRule({
+    const rrule = RRule.fromString(existingTask.recurrency);
+    const newRrule = new RRule({
       ...rrule.options,
       dtstart: occurrenceDate,
     });
@@ -237,8 +237,8 @@ export default class TasksService extends BaseService<
       throw new Error("Cannot add UNTIL to null RRule");
     }
 
-    const rule = RRule.RRule.fromString(rruleString);
-    const newRule = new RRule.RRule({
+    const rule = RRule.fromString(rruleString);
+    const newRule = new RRule({
       ...rule.options,
       until: untilDate,
     });
@@ -605,7 +605,7 @@ export default class TasksService extends BaseService<
 
   private getAllOccurrences(task: Task): Date[] {
     if (!task.recurrency) return [];
-    const rule = RRule.RRule.fromString(task.recurrency);
+    const rule = RRule.fromString(task.recurrency);
     return rule.between(new Date("2000-01-01"), new Date(), true);
   }
 
@@ -615,7 +615,7 @@ export default class TasksService extends BaseService<
     endDate: Date,
   ): Date[] {
     if (!task.recurrency) return [];
-    const rule = RRule.RRule.fromString(task.recurrency);
+    const rule = RRule.fromString(task.recurrency);
     return rule.between(startDate, endDate, true);
   }
 
