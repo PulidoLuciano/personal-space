@@ -35,20 +35,25 @@ export default function SectionsScreen() {
   const { listId } = useLocalSearchParams<{ listId: string }>();
   const { core, isLoading: isCoreLoading, error: coreError } = useCore();
   const router = useRouter();
-  
+
   const [list, setList] = useState<List | null>(null);
-  const [sectionsWithTasks, setSectionsWithTasks] = useState<SectionWithTasks[]>([]);
+  const [sectionsWithTasks, setSectionsWithTasks] = useState<
+    SectionWithTasks[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateSectionModal, setShowCreateSectionModal] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
-  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(
+    null,
+  );
   const [movingTaskId, setMovingTaskId] = useState<string | null>(null);
   const [showEditSectionModal, setShowEditSectionModal] = useState(false);
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editSectionName, setEditSectionName] = useState("");
   const [showStopwatchSheet, setShowStopwatchSheet] = useState(false);
-  const [stopwatchInitialTask, setStopwatchInitialTask] = useState<TaskWithSection | null>(null);
+  const [stopwatchInitialTask, setStopwatchInitialTask] =
+    useState<TaskWithSection | null>(null);
 
   const loadData = useCallback(async () => {
     if (!listId || !core) return;
@@ -63,14 +68,14 @@ export default function SectionsScreen() {
         sectionsData.map(async (section) => {
           const tasks = await core.tasksService.getTasksBySection(
             section.id,
-            !listData.show_completed
+            !listData.show_completed,
           );
           const tasksWithSection: TaskWithSection[] = tasks.map((task) => ({
             ...task,
             section_id: section.id,
           }));
           return { section, tasks: tasksWithSection };
-        })
+        }),
       );
       setSectionsWithTasks(sectionsWithTasksData);
     } catch (error) {
@@ -150,7 +155,7 @@ export default function SectionsScreen() {
         tasks: swt.tasks.map((t) =>
           t.id === task.id
             ? { ...t, progress: isCompleted ? t.progress - 1 : t.progress + 1 }
-            : t
+            : t,
         ),
       }));
       setSectionsWithTasks(newSectionsWithTasks);
@@ -159,14 +164,18 @@ export default function SectionsScreen() {
         if (isCompleted) {
           const executions = await core.tasksService.getExecutionsByTaskAndDate(
             task.id,
-            task.occurrence_date
+            task.occurrence_date,
           );
           const lastExecution = executions[executions.length - 1];
           if (lastExecution) {
             await core.tasksService.deleteExecution(lastExecution.id);
           }
         } else {
-          await core.tasksService.startExecution(task.id, task.occurrence_date, true);
+          await core.tasksService.startExecution(
+            task.id,
+            task.occurrence_date,
+            true,
+          );
         }
         loadData();
       } catch (error) {
@@ -181,18 +190,22 @@ export default function SectionsScreen() {
       tasks: swt.tasks.map((t) =>
         t.id === task.id
           ? { ...t, progress: isCompleted ? 0 : t.objective }
-          : t
+          : t,
       ),
     }));
     setSectionsWithTasks(newSectionsWithTasks);
 
     try {
       if (isCompleted) {
-        await core.tasksService.startExecution(task.id, task.occurrence_date, true);
+        await core.tasksService.startExecution(
+          task.id,
+          task.occurrence_date,
+          true,
+        );
       } else {
         const executions = await core.tasksService.getExecutionsByTaskAndDate(
           task.id,
-          task.occurrence_date
+          task.occurrence_date,
         );
         const incompleteExecution = executions.find((e) => !e.end_time);
         if (incompleteExecution) {
@@ -237,7 +250,9 @@ export default function SectionsScreen() {
     setMovingTaskId(null);
 
     try {
-      await core.tasksService.update(movingTaskId, { section_id: targetSectionId });
+      await core.tasksService.update(movingTaskId, {
+        section_id: targetSectionId,
+      });
     } catch (error) {
       console.error("Error moving task:", error);
       loadData();
@@ -294,7 +309,7 @@ export default function SectionsScreen() {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -305,7 +320,9 @@ export default function SectionsScreen() {
 
   if (isCoreLoading) {
     return (
-      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <ThemedView
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+      >
         <ThemedText>Loading...</ThemedText>
       </ThemedView>
     );
@@ -313,7 +330,9 @@ export default function SectionsScreen() {
 
   if (coreError || !core) {
     return (
-      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <ThemedView
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+      >
         <ThemedText type="defaultSemiBold">Failed to initialize</ThemedText>
         <ThemedText>{coreError?.message || "Unknown error"}</ThemedText>
       </ThemedView>
@@ -332,23 +351,16 @@ export default function SectionsScreen() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemedView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
             <IconSymbol size={20} name="chevron.right" color="#2563eb" />
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <ThemedText type="title">{list.name}</ThemedText>
           </View>
           <View style={styles.headerButtons}>
-            <TouchableOpacity
-              onPress={() => setShowStopwatchSheet(true)}
-              style={styles.headerButton}
-            >
-              <IconSymbol
-                size={18}
-                name="timer"
-                color="#2563eb"
-              />
-            </TouchableOpacity>
             <TouchableOpacity
               onPress={handleToggleShowCompleted}
               style={styles.headerButton}
@@ -363,8 +375,18 @@ export default function SectionsScreen() {
               style={styles.createButton}
               onPress={() => setShowCreateSectionModal(true)}
             >
-              <ThemedText type="defaultSemiBold" style={{ color: "#fff", fontSize: 14 }}>Add</ThemedText>
-              <IconSymbol size={16} name="plus" color="#fff" style={{ marginLeft: 4 }} />
+              <ThemedText
+                type="defaultSemiBold"
+                style={{ color: "#fff", fontSize: 14 }}
+              >
+                Add
+              </ThemedText>
+              <IconSymbol
+                size={16}
+                name="plus"
+                color="#fff"
+                style={{ marginLeft: 4 }}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -380,8 +402,12 @@ export default function SectionsScreen() {
                 tasks={swt.tasks}
                 movingTaskId={movingTaskId}
                 onAddTask={() => openCreateTaskModal(swt.section.id)}
-                onEditSection={() => openEditSectionModal(swt.section.id, swt.section.name)}
-                onDeleteSection={() => handleDeleteSection(swt.section.id, swt.section.name)}
+                onEditSection={() =>
+                  openEditSectionModal(swt.section.id, swt.section.name)
+                }
+                onDeleteSection={() =>
+                  handleDeleteSection(swt.section.id, swt.section.name)
+                }
                 onTaskPress={(task) =>
                   router.push(`/lists/${listId}/${swt.section.id}`)
                 }
@@ -489,7 +515,7 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     paddingTop: 60,
   },
-  backButton: { 
+  backButton: {
     marginRight: Spacing.md,
     width: 36,
     height: 36,
@@ -544,3 +570,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
