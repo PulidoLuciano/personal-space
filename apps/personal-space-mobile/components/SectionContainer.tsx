@@ -23,6 +23,7 @@ interface SectionContainerProps {
   onToggleTaskComplete: (task: TaskWithSection) => void;
   onTaskLongPress: (task: TaskWithSection) => void;
   onSectionPress: () => void;
+  onAddToStopwatch?: (task: TaskWithSection) => void;
 }
 
 export function SectionContainer({
@@ -36,6 +37,7 @@ export function SectionContainer({
   onToggleTaskComplete,
   onTaskLongPress,
   onSectionPress,
+  onAddToStopwatch,
 }: SectionContainerProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const colorScheme = useColorScheme();
@@ -148,6 +150,7 @@ export function SectionContainer({
                 onPress={() => onTaskPress(task)}
                 onLongPress={() => onTaskLongPress(task)}
                 onToggleComplete={() => onToggleTaskComplete(task)}
+                onAddToStopwatch={task.type === "by time" && onAddToStopwatch ? () => onAddToStopwatch(task) : undefined}
               />
             ))
           )}

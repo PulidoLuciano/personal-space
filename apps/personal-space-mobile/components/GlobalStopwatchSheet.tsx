@@ -30,6 +30,7 @@ interface RunningExecution {
 interface GlobalStopwatchSheetProps {
   visible: boolean;
   onClose: () => void;
+  initialTaskId?: string | null;
 }
 
 const getTaskTypeIcon = (type: "by time" | "by executions" | "note") => {
@@ -57,6 +58,7 @@ const getTaskTypeLabel = (type: "by time" | "by executions" | "note") => {
 export function GlobalStopwatchSheet({
   visible,
   onClose,
+  initialTaskId,
 }: GlobalStopwatchSheetProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -77,6 +79,37 @@ export function GlobalStopwatchSheet({
       loadRunningExecutions();
     }
   }, [visible, core]);
+
+  useEffect(() => {
+    const loadInitialTask = async () => {
+      if (!visible || !core || !initialTaskId) return;
+      
+      try {
+        const task = await core.tasksService.getById(initialTaskId, []);
+        if (task && !selectedTasks.some(t => t.id === task.id) && !runningExecutions.some(e => e.taskId === task.id)) {
+          const section = await core.sectionsService.getById(task.section_id);
+          const list = await core.listsService.getById(section.list_id);
+          
+          const taskWithListInfo: TaskWithListInfo = {
+            id: task.id,
+            name: task.name,
+            type: task.type,
+            objective: task.objective,
+            section_id: task.section_id,
+            section_name: section.name,
+            list_id: section.list_id,
+            list_name: list.name,
+            list_color: list.color_id,
+          };
+          setSelectedTasks([...selectedTasks, taskWithListInfo]);
+        }
+      } catch (error) {
+        console.error("Error loading initial task:", error);
+      }
+    };
+
+    loadInitialTask();
+  }, [visible, initialTaskId, core]);
 
   useEffect(() => {
     if (isRunning) {

@@ -48,6 +48,7 @@ export default function SectionsScreen() {
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [editSectionName, setEditSectionName] = useState("");
   const [showStopwatchSheet, setShowStopwatchSheet] = useState(false);
+  const [stopwatchInitialTask, setStopwatchInitialTask] = useState<TaskWithSection | null>(null);
 
   const loadData = useCallback(async () => {
     if (!listId || !core) return;
@@ -297,6 +298,11 @@ export default function SectionsScreen() {
     );
   };
 
+  const handleAddToStopwatch = (task: TaskWithSection) => {
+    setStopwatchInitialTask(task);
+    setShowStopwatchSheet(true);
+  };
+
   if (isCoreLoading) {
     return (
       <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -382,6 +388,7 @@ export default function SectionsScreen() {
                 onToggleTaskComplete={handleToggleTaskComplete}
                 onTaskLongPress={handleTaskLongPress}
                 onSectionPress={() => handleSectionDrop(swt.section.id)}
+                onAddToStopwatch={handleAddToStopwatch}
               />
             </View>
           ))}
@@ -463,7 +470,11 @@ export default function SectionsScreen() {
 
         <GlobalStopwatchSheet
           visible={showStopwatchSheet}
-          onClose={() => setShowStopwatchSheet(false)}
+          onClose={() => {
+            setShowStopwatchSheet(false);
+            setStopwatchInitialTask(null);
+          }}
+          initialTaskId={stopwatchInitialTask?.id ?? null}
         />
       </ThemedView>
     </GestureHandlerRootView>

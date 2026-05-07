@@ -55,18 +55,29 @@ export function TaskItem({
     if (taskType === "note") return "";
     
     if (taskType === "by time") {
-      const totalSeconds = Math.min(seconds, objective);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const secs = Math.floor(totalSeconds % 60);
+      const progressSeconds = Math.min(seconds, objective);
+      const hours = Math.floor(progressSeconds / 3600);
+      const minutes = Math.floor((progressSeconds % 3600) / 60);
+      const secs = Math.floor(progressSeconds % 60);
       
+      const formatObjective = (obj: number) => {
+        const h = Math.floor(obj / 3600);
+        const m = Math.floor((obj % 3600) / 60);
+        if (h > 0) return ` / ${h}h ${m}m`;
+        if (m > 0) return ` / ${m}m`;
+        return ` / ${obj}s`;
+      };
+      
+      let progressStr: string;
       if (hours > 0) {
-        return `${hours}h ${minutes}m`;
+        progressStr = `${hours}h ${minutes}m`;
       } else if (minutes > 0) {
-        return `${minutes}m ${secs}s`;
+        progressStr = `${minutes}m ${secs}s`;
       } else {
-        return `${secs}s`;
+        progressStr = `${secs}s`;
       }
+      
+      return `${progressStr}${formatObjective(objective)}`;
     }
     
     return `${Math.floor(seconds)}/${objective}`;
