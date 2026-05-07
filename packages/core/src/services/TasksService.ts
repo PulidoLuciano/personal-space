@@ -12,6 +12,7 @@ import type {
   TaskWithProgress,
   TaskInRange,
   TaskOccurrenceDetail,
+  TaskWithListInfo,
 } from "../schemas/tasks.js";
 import RRule from "rrule";
 import {
@@ -616,5 +617,51 @@ export default class TasksService extends BaseService<
     if (!task.recurrency) return [];
     const rule = RRule.RRule.fromString(task.recurrency);
     return rule.between(startDate, endDate, true);
+  }
+
+  public async searchTasksWithListInfo(
+    searchTerm: string,
+  ): Promise<TaskWithListInfo[]> {
+    return await this.repository.searchWithListInfo(searchTerm);
+  }
+
+  public async startMultipleExecutions(
+    taskIds: string[],
+  ): Promise<{ taskId: string; executionId: string }[]> {
+    const results: { taskId: string; executionId: string }[] = [];
+    const startTime = new Date();
+
+    for (const taskId of taskIds) {
+      const task = await this.repository.getById(taskId, []);
+      if (!task) continue;
+
+      const executionData = {
+        task_id: taskId,
+        ocurrence_date: null,
+        start_time: startTime,
+        end_time: null,
+      };
+
+      const executionId = await this.taskExecutionsRepository.create(executionData);
+      results.push({ taskId, executionId });
+    }
+
+    return results;
+  }
+
+  public async stopMultipleExecutions(
+    executionIds: string[],
+  ): Promise<void> {
+    const endTime = new Date();
+
+    for (const executionId of executionIds) {
+      await this.taskExecutionsRepository.update(executionId, {
+        end_time: endTime,
+      });
+    }
+  }
+
+  public async getRunningExecutions(): Promise<(TaskExecution & { taskName: string; taskType: string; taskObjective: number })[]> {
+    return await this.taskExecutionsRepository.findRunningWithTaskInfo();
   }
 }

@@ -14,8 +14,8 @@ import type { InsertSection, Section } from "./schemas/sections.js";
 export type { InsertSection, Section };
 import type { InsertTask, Task } from "./schemas/tasks.js";
 export type { InsertTask, Task };
-import type { TaskWithProgress, TaskOccurrenceDetail, TaskInRange } from "./schemas/tasks.js";
-export type { TaskWithProgress, TaskOccurrenceDetail, TaskInRange };
+import type { TaskWithProgress, TaskOccurrenceDetail, TaskInRange, TaskWithListInfo } from "./schemas/tasks.js";
+export type { TaskWithProgress, TaskOccurrenceDetail, TaskInRange, TaskWithListInfo };
 
 export {
   isDueRuleRelative,

@@ -84,3 +84,15 @@ export interface TaskOccurrenceDetail {
   objective: number;
   progress: number;
 }
+
+export interface TaskWithListInfo {
+  id: string;
+  name: string;
+  type: "by time" | "by executions" | "note";
+  objective: number;
+  section_id: string;
+  section_name: string;
+  list_id: string;
+  list_name: string;
+  list_color: string;
+}

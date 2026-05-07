@@ -4,6 +4,7 @@ import type {
   TaskExecution,
   TaskException,
   InsertTaskException,
+  TaskWithListInfo,
 } from "../../schemas/tasks.js";
 import type { DBClient } from "../index.js";
 
@@ -35,6 +36,26 @@ export class TasksRepository extends BaseRepository<Task> {
     `;
     return await this.db.query<Task>(query, [sectionId]);
   }
+
+  public async searchWithListInfo(searchTerm: string): Promise<TaskWithListInfo[]> {
+    const query = `
+      SELECT 
+        t.id, t.name, t.type, t.objective, t.section_id,
+        s.name as section_name,
+        s.list_id,
+        l.name as list_name,
+        l.color_id as list_color
+      FROM tasks t
+      JOIN sections s ON t.section_id = s.id
+      JOIN lists l ON s.list_id = l.id
+      WHERE t.is_deleted = FALSE 
+        AND t.name LIKE ?
+        AND l.is_archived = FALSE
+      ORDER BY t.name ASC
+      LIMIT 50;
+    `;
+    return await this.db.query<TaskWithListInfo>(query, [`%${searchTerm}%`]);
+  }
 }
 
 export class TaskExecutionsRepository extends BaseRepository<TaskExecution> {
@@ -50,6 +71,18 @@ export class TaskExecutionsRepository extends BaseRepository<TaskExecution> {
       WHERE task_id = ? AND (ocurrence_date IS NULL OR ocurrence_date = '') AND is_deleted = FALSE;
     `;
     return await this.db.query<TaskExecution>(query, [taskId]);
+  }
+
+  public async findRunningWithTaskInfo(): Promise<(TaskExecution & { taskName: string; taskType: string; taskObjective: number })[]> {
+    const query = `
+      SELECT 
+        te.*, t.name as taskName, t.type as taskType, t.objective as taskObjective
+      FROM task_executions te
+      JOIN tasks t ON te.task_id = t.id
+      WHERE te.end_time IS NULL AND te.is_deleted = FALSE
+      ORDER BY te.start_time DESC;
+    `;
+    return await this.db.query<TaskExecution & { taskName: string; taskType: string; taskObjective: number }>(query, []);
   }
 }
 
