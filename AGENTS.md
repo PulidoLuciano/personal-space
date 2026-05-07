@@ -27,6 +27,7 @@ npm run web         # Run on web
 
 # Linting
 npm run lint        # Run ESLint (uses expo lint)
+npx tsc --noEmit    # TypeScript type check
 
 # Build
 npx expo export      # Export for production
@@ -41,7 +42,7 @@ npm run test        # Run tests in watch mode
 npm run test:run   # Run tests once
 npm run build      # TypeScript build
 
-# Running a single test
+# Running a single test (from monorepo root)
 cd packages/core
 npx vitest run test/services/tasks.test.ts     # Run specific test file
 npx vitest run --testNamePattern="createTask"  # Run tests matching pattern
@@ -87,9 +88,9 @@ npx vitest run --testNamePattern="createTask"  # Run tests matching pattern
 ### Styling
 
 - Use `StyleSheet.create()` for React Native styles
-- Colors: Use hex codes (`#0a7ea4`) or rgba for transparency
-- Spacing: Use consistent values (8, 12, 16, etc.)
-- Use `StyleSheet.flatten()` or inline styles for dynamic styles
+- Colors: Use hex codes from constants/theme.ts
+- Spacing: Use constants from constants/spacing.ts
+- Use `gap` instead of margin for spacing between flex children
 
 ### Component Patterns
 
@@ -123,13 +124,48 @@ export function TaskItem({
 - Use Vitest with `describe`, `it`, `expect`, `beforeEach`
 - Use `createTestDatabase()` from `test/setup.js` for test fixtures
 
-### Key Configuration Files
+## Performance Guidelines
+
+### Core Rendering (CRITICAL)
+
+- Never use `{value && <Component />}` with potentially falsy values (0, "")
+- Always wrap strings in `<Text>` components
+- Use ternary with `null` or explicit boolean coercion: `{!!value && <Component />}`
+
+### List Performance (HIGH)
+
+- Use virtualized lists (FlatList, FlashList, LegendList) not ScrollView with map
+- Avoid inline objects in renderItem - pass item directly or primitives
+- Hoist callbacks outside renderItem, pass item ID instead of closures
+- Keep list items lightweight - no queries, minimal hooks, pass pre-computed values
+
+### Animation (HIGH)
+
+- Animate transform and opacity, never layout properties (width, height, margin)
+- Use `useDerivedValue` for deriving values, not `useAnimatedReaction`
+- Use GestureDetector for animated press states
+
+### State Management
+
+- Minimize state variables - derive values instead of storing
+- Use dispatch updaters (`setState(prev => ...)`) for state that depends on current value
+- State should represent ground truth, not derived visual values
+
+## Key Configuration Files
 
 - **tsconfig.json**: Strict mode, path aliases (`@/*`)
 - **eslint.config.js**: Expo ESLint config
 - **vitest.config.ts** (core): Test environment setup
 
-### Dependencies
+## Dependencies
 
 - **Mobile**: Expo 54, React Native 0.81, React Navigation 7, expo-router
 - **Core**: better-sqlite3, uuid, zod, rrule, vitest
+
+## Available Skills
+
+The project has loaded skills for React Native development:
+- `react-native-design` - Styling, navigation, and Reanimated patterns
+- `react-native-architecture` - Production patterns, offline sync
+- `vercel-react-native-skills` - 35+ performance optimization rules
+- `find-skills` - For discovering additional capabilities
