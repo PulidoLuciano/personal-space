@@ -142,6 +142,9 @@ export function SectionContainer({
                 dueDate={task.due_date}
                 isCompleted={task.progress >= task.objective}
                 isMoving={task.id === movingTaskId}
+                taskType={task.type}
+                objective={task.objective}
+                progress={task.progress}
                 onPress={() => onTaskPress(task)}
                 onLongPress={() => onTaskLongPress(task)}
                 onToggleComplete={() => onToggleTaskComplete(task)}

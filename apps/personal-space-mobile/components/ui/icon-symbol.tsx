@@ -6,7 +6,7 @@ import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
 type IconMapping = Partial<Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>> & Record<string, ComponentProps<typeof MaterialIcons>['name']>;
-type IconSymbolName = SymbolViewProps['name'] | 'checklist' | 'list.bullet' | 'checkmark' | 'pencil' | 'trash' | 'archive' | 'eye' | 'eye.slash';
+type IconSymbolName = SymbolViewProps['name'] | 'checklist' | 'list.bullet' | 'checkmark' | 'pencil' | 'trash' | 'archive' | 'eye' | 'eye.slash' | 'note.text';
 
 /**
  * Add your SF Symbols to Material Icons mappings here.
@@ -28,6 +28,7 @@ const MAPPING = {
   'archive': 'archive',
   'eye': 'visibility',
   'eye.slash': 'visibility-off',
+  'note.text': 'note',
 } as IconMapping;
 
 /**

@@ -140,14 +140,44 @@ export default function SectionsScreen() {
   const handleToggleTaskComplete = async (task: TaskWithSection) => {
     if (!core) return;
     const isCompleted = task.progress >= task.objective;
+
+    if (task.type === "by executions") {
+      const newSectionsWithTasks = sectionsWithTasks.map((swt) => ({
+        ...swt,
+        tasks: swt.tasks.map((t) =>
+          t.id === task.id
+            ? { ...t, progress: isCompleted ? t.progress - 1 : t.progress + 1 }
+            : t
+        ),
+      }));
+      setSectionsWithTasks(newSectionsWithTasks);
+
+      try {
+        if (isCompleted) {
+          const executions = await core.tasksService.getExecutionsByTaskAndDate(
+            task.id,
+            task.occurrence_date
+          );
+          const lastExecution = executions[executions.length - 1];
+          if (lastExecution) {
+            await core.tasksService.deleteExecution(lastExecution.id);
+          }
+        } else {
+          await core.tasksService.startExecution(task.id, task.occurrence_date, true);
+        }
+        loadData();
+      } catch (error) {
+        console.error("Error toggling task:", error);
+        loadData();
+      }
+      return;
+    }
+
     const newSectionsWithTasks = sectionsWithTasks.map((swt) => ({
       ...swt,
       tasks: swt.tasks.map((t) =>
         t.id === task.id
-          ? {
-              ...t,
-              progress: isCompleted ? 0 : t.objective,
-            }
+          ? { ...t, progress: isCompleted ? 0 : t.objective }
           : t
       ),
     }));
