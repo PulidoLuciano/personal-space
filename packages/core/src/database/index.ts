@@ -162,6 +162,7 @@ async function createTaskExceptionsTable(db: DBClient) {
       task_id TEXT NOT NULL,
       ocurrence_date TEXT,
       rescheduled_due TEXT,
+      override_name TEXT,
       override_body TEXT,
       override_location TEXT,
       override_type TEXT CHECK(override_type IN ('by time', 'by executions', 'note')),

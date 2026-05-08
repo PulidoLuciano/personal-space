@@ -185,6 +185,7 @@ export default class TasksService extends BaseService<
 
     await this.taskExceptionsRepository.upsert(taskId, occurrenceDate, {
       rescheduled_due: existingException?.rescheduled_due ?? null,
+      override_name: overrides.name ?? existingException?.override_name ?? null,
       override_body: overrides.body ?? existingException?.override_body ?? null,
       override_location: overrides.location ?? existingException?.override_location ?? null,
       override_type: overrides.type ?? existingException?.override_type ?? null,
@@ -284,6 +285,7 @@ export default class TasksService extends BaseService<
       occurrenceDate,
       {
         rescheduled_due: null,
+        override_name: null,
         override_body: null,
         override_location: null,
         override_type: null,
@@ -427,7 +429,7 @@ export default class TasksService extends BaseService<
               this.calculateDueDateForOccurrence(task.due_rule, occurrenceDate);
             results.push({
               id: task.id,
-              name: task.name,
+              name: exception?.override_name ?? task.name,
               body: exception?.override_body ?? task.body ?? null,
               due_date: dueDate,
               type: exception?.override_type ?? task.type,
@@ -483,7 +485,7 @@ export default class TasksService extends BaseService<
             progress >= (exception?.override_objective ?? task.objective);
           results.push({
             id: task.id,
-            name: task.name,
+            name: exception?.override_name ?? task.name,
             is_complete: isComplete,
             occurrence_date: occurrenceDate,
           });
@@ -537,7 +539,7 @@ export default class TasksService extends BaseService<
     const result: TaskOccurrenceDetail = {
       id: task.id,
       occurrence_date: occurrenceDate ?? null,
-      name: task.name,
+      name: exception?.override_name ?? task.name,
       location: exception?.override_location ?? task.location,
       body: exception?.override_body ?? task.body,
       due_date: exception?.rescheduled_due ?? dueDate,

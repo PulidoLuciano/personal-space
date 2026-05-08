@@ -800,6 +800,25 @@ describe("TasksService", () => {
       expect(result.body).toBe("Changed body");
     });
 
+    it("should apply exception override_name", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        recurrency: "FREQ=DAILY",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31");
+      await tasksService.update(
+        taskId,
+        { name: "Changed Name" } as any,
+        occurrenceDate,
+        "current",
+      );
+
+      const result = await tasksService.getTaskOccurrence(taskId, occurrenceDate);
+      expect(result.name).toBe("Changed Name");
+    });
+
     it("should apply exception override_location", async () => {
       const taskId = await tasksService.create({
         name: "Recurrent Task",

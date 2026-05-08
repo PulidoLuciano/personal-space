@@ -35,6 +35,7 @@ export const taskExecutionsSchema = z.object({
 export const insertTaskExceptionsSchema = z.object({
   ocurrence_date: z.date().nullable().default(null),
   rescheduled_due: z.date().nullable().default(null),
+  override_name: z.string().nullable().default(null),
   override_body: z.string().nullable().default(null),
   override_location: z.string().nullable().default(null),
   override_type: z
