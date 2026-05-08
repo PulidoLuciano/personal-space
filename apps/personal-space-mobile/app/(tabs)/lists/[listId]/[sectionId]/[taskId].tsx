@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  Linking,
   Modal,
   ScrollView,
   StyleSheet,
@@ -142,6 +143,14 @@ function TaskDetailsScreenContent() {
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
   const [editingExecution, setEditingExecution] = useState<TaskExecution | null>(null);
   const [showStopwatchSheet, setShowStopwatchSheet] = useState(false);
+
+  const handleOpenLocation = (location: string) => {
+    const encodedLocation = encodeURIComponent(location);
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+    Linking.openURL(googleMapsUrl).catch((err) =>
+      console.error("Failed to open Google Maps:", err)
+    );
+  };
 
   const occDate = occurrenceDate ? new Date(occurrenceDate) : null;
 
@@ -370,12 +379,14 @@ function TaskDetailsScreenContent() {
         {task.location || fullTask?.due_rule || fullTask?.recurrency || task.occurrence_date ? (
           <View style={[styles.detailsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             {task.location && (
-              <DetailItem
-                icon="mappin"
-                label="Location"
-                value={task.location}
-                colors={colors}
-              />
+              <TouchableOpacity onPress={() => handleOpenLocation(task.location!)}>
+                <DetailItem
+                  icon="mappin"
+                  label="Location"
+                  value={task.location}
+                  colors={colors}
+                />
+              </TouchableOpacity>
             )}
             {fullTask?.due_rule && (
               <DetailItem

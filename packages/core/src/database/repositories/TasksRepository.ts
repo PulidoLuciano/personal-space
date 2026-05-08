@@ -40,7 +40,7 @@ export class TasksRepository extends BaseRepository<Task> {
   public async searchWithListInfo(searchTerm: string): Promise<TaskWithListInfo[]> {
     const query = `
       SELECT 
-        t.id, t.name, t.type, t.objective, t.section_id,
+        t.id, t.name, t.type, t.objective, t.section_id, t.recurrency,
         s.name as section_name,
         s.list_id,
         l.name as list_name,

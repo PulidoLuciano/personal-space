@@ -1,6 +1,17 @@
 import React, { useState, useRef } from "react";
-import { StyleSheet, View, TouchableOpacity, useColorScheme, LayoutChangeEvent } from "react-native";
-import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated";
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  useColorScheme,
+  LayoutChangeEvent,
+} from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  withTiming,
+  runOnJS,
+} from "react-native-reanimated";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { ThemedText } from "./themed-text";
 import { IconSymbol } from "./ui/icon-symbol";
 import { TaskItem } from "./TaskItem";
@@ -27,6 +38,7 @@ interface SectionContainerProps {
   onDragStart?: (taskId: string) => void;
   onDragEnd?: (taskId: string, absoluteY: number) => void;
   onLayout?: (sectionId: string, y: number, height: number) => void;
+  onRandomTask?: () => void;
   sectionY?: number;
   sectionHeight?: number;
 }
@@ -46,6 +58,7 @@ export const SectionContainer = React.memo(function SectionContainer({
   onDragStart,
   onDragEnd,
   onLayout,
+  onRandomTask,
   sectionY = 0,
   sectionHeight = 0,
 }: SectionContainerProps) {
@@ -61,37 +74,65 @@ export const SectionContainer = React.memo(function SectionContainer({
     });
   };
 
-  const completedCount = tasks.filter(t => t.progress >= t.objective).length;
+  const completedCount = tasks.filter((t) => t.progress >= t.objective).length;
   const totalCount = tasks.length;
-  const isReceivingDrop = movingTaskId !== null && tasks.every(t => t.id !== movingTaskId);
+  const isReceivingDrop =
+    movingTaskId !== null && tasks.every((t) => t.id !== movingTaskId);
   const isDragging = movingTaskId !== null;
 
   const containerStyle = useAnimatedStyle(() => ({
     backgroundColor: withTiming(
       isReceivingDrop ? colors.tintLight : colors.surface,
-      { duration: 200 }
+      { duration: 200 },
     ),
     borderWidth: withTiming(isReceivingDrop ? 1 : 0, { duration: 200 }),
-    borderColor: withTiming(isReceivingDrop ? colors.tint : "transparent", { duration: 200 }),
+    borderColor: withTiming(isReceivingDrop ? colors.tint : "transparent", {
+      duration: 200,
+    }),
   }));
 
   return (
-    <Animated.View 
+    <Animated.View
       ref={viewRef}
       onLayout={handleLayout}
-      style={[styles.container, containerStyle, isDragging && styles.containerDragging]}>
+      style={[
+        styles.container,
+        containerStyle,
+        isDragging && styles.containerDragging,
+      ]}
+    >
       <TouchableOpacity
         style={[styles.header, { backgroundColor: colors.surface }]}
         onPress={() => setIsExpanded(!isExpanded)}
         activeOpacity={0.7}
       >
         <View style={styles.headerContent}>
-          <ThemedText type="defaultSemiBold" style={{ color: colors.text }} numberOfLines={1}>
-            {section.name}
-          </ThemedText>
+          <GestureDetector
+            gesture={Gesture.LongPress()
+              .minDuration(300)
+              .onEnd(() => onRandomTask && runOnJS(onRandomTask)())}
+          >
+            <View>
+              <ThemedText
+                type="defaultSemiBold"
+                style={{ color: colors.text }}
+                numberOfLines={1}
+              >
+                {section.name}
+              </ThemedText>
+            </View>
+          </GestureDetector>
           {totalCount > 0 && (
-            <View style={[styles.countBadge, { backgroundColor: colors.borderLight }]}>
-              <ThemedText type="subtitle" style={[styles.count, { color: colors.textSecondary }]}>
+            <View
+              style={[
+                styles.countBadge,
+                { backgroundColor: colors.borderLight },
+              ]}
+            >
+              <ThemedText
+                type="subtitle"
+                style={[styles.count, { color: colors.textSecondary }]}
+              >
                 {completedCount > 0
                   ? `${completedCount}/${totalCount}`
                   : `${totalCount}`}
@@ -101,7 +142,10 @@ export const SectionContainer = React.memo(function SectionContainer({
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: colors.borderLight }]}
+            style={[
+              styles.actionButton,
+              { backgroundColor: colors.borderLight },
+            ]}
             onPress={(e) => {
               e.stopPropagation();
               onEditSection();
@@ -110,7 +154,10 @@ export const SectionContainer = React.memo(function SectionContainer({
             <IconSymbol size={16} name="pencil" color={colors.iconSecondary} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: colors.errorLight }]}
+            style={[
+              styles.actionButton,
+              { backgroundColor: colors.errorLight },
+            ]}
             onPress={(e) => {
               e.stopPropagation();
               onDeleteSection();
@@ -119,7 +166,11 @@ export const SectionContainer = React.memo(function SectionContainer({
             <IconSymbol size={16} name="trash" color={colors.error} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.actionButton, styles.addButton, { backgroundColor: colors.tint }]}
+            style={[
+              styles.actionButton,
+              styles.addButton,
+              { backgroundColor: colors.tint },
+            ]}
             onPress={(e) => {
               e.stopPropagation();
               onAddTask();
@@ -129,7 +180,10 @@ export const SectionContainer = React.memo(function SectionContainer({
           </TouchableOpacity>
           {movingTaskId !== null && (
             <TouchableOpacity
-              style={[styles.receiveButton, { backgroundColor: colors.tintLight }]}
+              style={[
+                styles.receiveButton,
+                { backgroundColor: colors.tintLight },
+              ]}
               onPress={(e) => {
                 e.stopPropagation();
                 onSectionPress();
@@ -150,11 +204,16 @@ export const SectionContainer = React.memo(function SectionContainer({
         <View style={styles.tasksContainer}>
           {tasks.length === 0 ? (
             <View style={styles.emptyState}>
-              <ThemedText type="subtitle" style={[styles.emptyText, { color: colors.textSecondary }]}>
+              <ThemedText
+                type="subtitle"
+                style={[styles.emptyText, { color: colors.textSecondary }]}
+              >
                 No tasks yet
               </ThemedText>
               <TouchableOpacity onPress={onAddTask}>
-                <ThemedText type="link" style={{ color: colors.tint }}>Add a task</ThemedText>
+                <ThemedText type="link" style={{ color: colors.tint }}>
+                  Add a task
+                </ThemedText>
               </TouchableOpacity>
             </View>
           ) : (
@@ -171,7 +230,11 @@ export const SectionContainer = React.memo(function SectionContainer({
                 onPress={() => onTaskPress(task)}
                 onLongPress={() => onTaskLongPress(task)}
                 onToggleComplete={() => onToggleTaskComplete(task)}
-                onAddToStopwatch={task.type === "by time" && onAddToStopwatch ? () => onAddToStopwatch(task) : undefined}
+                onAddToStopwatch={
+                  task.type === "by time" && onAddToStopwatch
+                    ? () => onAddToStopwatch(task)
+                    : undefined
+                }
                 onDragStart={() => onDragStart?.(task.id)}
                 onDragEnd={(absoluteY) => onDragEnd?.(task.id, absoluteY)}
               />
@@ -252,3 +315,4 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
 });
+

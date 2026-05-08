@@ -382,6 +382,31 @@ function SectionsScreenContent() {
     setShowStopwatchSheet(true);
   };
 
+  const handleRandomTask = (sectionId: string) => {
+    const section = sectionsWithTasks.find((swt) => swt.section.id === sectionId);
+    if (!section || section.tasks.length === 0) return;
+
+    const randomIndex = Math.floor(Math.random() * section.tasks.length);
+    const randomTask = section.tasks[randomIndex];
+
+    Alert.alert(
+      "Random Task",
+      randomTask.name,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Go to task",
+          onPress: () => {
+            const params = randomTask.occurrence_date 
+              ? `?occurrenceDate=${randomTask.occurrence_date.toISOString()}`
+              : "";
+            router.push(`/lists/${listId}/${sectionId}/${randomTask.id}${params}`);
+          },
+        },
+      ],
+    );
+  };
+
   if (!list) {
     return (
       <ThemedView style={styles.container}>
@@ -464,6 +489,7 @@ function SectionsScreenContent() {
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 onLayout={handleSectionLayout}
+                onRandomTask={() => handleRandomTask(swt.section.id)}
               />
             </View>
           ))}

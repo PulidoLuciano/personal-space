@@ -626,24 +626,30 @@ export default class TasksService extends BaseService<
   }
 
   public async startMultipleExecutions(
-    taskIds: string[],
-  ): Promise<{ taskId: string; executionId: string }[]> {
-    const results: { taskId: string; executionId: string }[] = [];
+    tasks: { taskId: string; occurrenceDate: Date | null }[],
+  ): Promise<{ taskId: string; executionId: string; occurrenceDate: Date | null }[]> {
+    const results: { taskId: string; executionId: string; occurrenceDate: Date | null }[] = [];
     const startTime = new Date();
 
-    for (const taskId of taskIds) {
+    for (const { taskId, occurrenceDate } of tasks) {
       const task = await this.repository.getById(taskId, []);
       if (!task) continue;
 
+      const isRecurrentTask = this.isRecurrent(task);
+
+      if (isRecurrentTask && !occurrenceDate) {
+        throw new Error(`Occurrence date is required for recurrent task: ${taskId}`);
+      }
+
       const executionData = {
         task_id: taskId,
-        ocurrence_date: null,
+        ocurrence_date: isRecurrentTask ? occurrenceDate : null,
         start_time: startTime,
         end_time: null,
       };
 
       const executionId = await this.taskExecutionsRepository.create(executionData);
-      results.push({ taskId, executionId });
+      results.push({ taskId, executionId, occurrenceDate: isRecurrentTask ? occurrenceDate : null });
     }
 
     return results;

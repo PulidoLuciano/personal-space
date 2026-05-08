@@ -26,6 +26,7 @@ interface RunningExecution {
   taskType: "by time" | "by executions" | "note";
   taskObjective: number;
   startTime: Date;
+  occurrenceDate: Date | null;
 }
 
 interface GlobalStopwatchSheetProps {
@@ -101,6 +102,8 @@ export function GlobalStopwatchSheet({
             list_id: section.list_id,
             list_name: list.name,
             list_color: list.color_id,
+            recurrency: task.recurrency,
+            occurrence_date: null,
           };
           setSelectedTasks([...selectedTasks, taskWithListInfo]);
         }
@@ -141,6 +144,7 @@ export function GlobalStopwatchSheet({
           taskType: e.taskType as "by time" | "by executions" | "note",
           taskObjective: e.taskObjective,
           startTime: new Date(e.start_time),
+          occurrenceDate: e.ocurrence_date ? new Date(e.ocurrence_date) : null,
         }))
       );
       if (executions.length > 0) {
@@ -197,11 +201,18 @@ export function GlobalStopwatchSheet({
       return;
     }
 
-    const taskIds = selectedTasks.map((t) => t.id);
-    if (taskIds.length === 0) return;
+    if (selectedTasks.length === 0) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tasksWithOccurrences = selectedTasks.map((t) => ({
+      taskId: t.id,
+      occurrenceDate: t.recurrency ? today : null,
+    }));
 
     try {
-      const results = await core.tasksService.startMultipleExecutions(taskIds);
+      const results = await core.tasksService.startMultipleExecutions(tasksWithOccurrences);
       const newExecutions: RunningExecution[] = results.map((r) => {
         const task = selectedTasks.find((t) => t.id === r.taskId)!;
         return {
@@ -211,6 +222,7 @@ export function GlobalStopwatchSheet({
           taskType: task.type,
           taskObjective: task.objective,
           startTime: new Date(),
+          occurrenceDate: r.occurrenceDate,
         };
       });
       setRunningExecutions(newExecutions);

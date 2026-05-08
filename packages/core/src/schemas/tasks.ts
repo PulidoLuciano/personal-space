@@ -95,4 +95,6 @@ export interface TaskWithListInfo {
   list_id: string;
   list_name: string;
   list_color: string;
+  recurrency: string | null;
+  occurrence_date: Date | null;
 }
