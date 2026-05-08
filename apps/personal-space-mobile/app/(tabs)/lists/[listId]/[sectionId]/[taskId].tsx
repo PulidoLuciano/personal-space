@@ -3,12 +3,15 @@ import {
   Alert,
   Linking,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
+  TextInput,
   TouchableOpacity,
   View,
   useColorScheme,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import Markdown from "react-native-markdown-display";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
@@ -143,6 +146,14 @@ function TaskDetailsScreenContent() {
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
   const [editingExecution, setEditingExecution] = useState<TaskExecution | null>(null);
   const [showStopwatchSheet, setShowStopwatchSheet] = useState(false);
+  const [editStartTime, setEditStartTime] = useState<Date | null>(null);
+  const [editEndTime, setEditEndTime] = useState<Date | null>(null);
+  const [startSeconds, setStartSeconds] = useState("0");
+  const [endSeconds, setEndSeconds] = useState("0");
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
   const handleOpenLocation = (location: string) => {
     const encodedLocation = encodeURIComponent(location);
@@ -250,13 +261,24 @@ function TaskDetailsScreenContent() {
 
   const handleUpdateExecution = (execution: TaskExecution) => {
     setEditingExecution(execution);
+    const startTime = new Date(execution.start_time);
+    const endTime = execution.end_time ? new Date(execution.end_time) : new Date();
+    setEditStartTime(startTime);
+    setEditEndTime(endTime);
+    setStartSeconds(startTime.getSeconds().toString());
+    setEndSeconds(endTime.getSeconds().toString());
   };
 
-  const handleSaveExecution = async (newEndTime: Date) => {
-    if (!core || !editingExecution) return;
+  const handleSaveExecution = async () => {
+    if (!core || !editingExecution || !editEndTime || !editStartTime) return;
     try {
+      const startWithSeconds = new Date(editStartTime);
+      startWithSeconds.setSeconds(parseInt(startSeconds, 10) || 0);
+      const endWithSeconds = new Date(editEndTime);
+      endWithSeconds.setSeconds(parseInt(endSeconds, 10) || 0);
       await core.tasksService.updateExecution(editingExecution.id, {
-        end_time: newEndTime,
+        start_time: startWithSeconds,
+        end_time: endWithSeconds,
       });
       setEditingExecution(null);
       loadData();
@@ -746,40 +768,226 @@ function TaskDetailsScreenContent() {
 
       <Modal
         visible={!!editingExecution}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setEditingExecution(null)}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => {
+          setEditingExecution(null);
+          setShowStartDatePicker(false);
+          setShowStartTimePicker(false);
+          setShowEndDatePicker(false);
+          setShowEndTimePicker(false);
+        }}
       >
-        <View style={styles.editExecutionOverlay}>
-          <View style={[styles.editExecutionModal, { backgroundColor: colors.surface }]}>
-            <ThemedText type="title" style={{ color: colors.text, marginBottom: Spacing.lg }}>
-              Update Execution
-            </ThemedText>
-            <ThemedText type="default" style={{ color: colors.textSecondary, marginBottom: Spacing.md }}>
-              Set the end time for this execution
-            </ThemedText>
+        <ThemedView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={styles.executionEditHeader}>
             <TouchableOpacity
-              style={[styles.editExecutionSave, { backgroundColor: colors.tint }]}
               onPress={() => {
-                if (editingExecution) {
-                  handleSaveExecution(new Date());
+                setEditingExecution(null);
+                setShowStartDatePicker(false);
+                setShowStartTimePicker(false);
+                setShowEndDatePicker(false);
+                setShowEndTimePicker(false);
+              }}
+              style={styles.headerButton}
+            >
+              <IconSymbol size={20} name="chevron.right" color={colors.tint} />
+            </TouchableOpacity>
+            <ThemedText type="title" style={{ color: colors.text, flex: 1, textAlign: "center", marginRight: 36 }}>
+              Edit Execution
+            </ThemedText>
+          </View>
+
+          <View style={styles.executionEditContent}>
+            <View style={styles.field}>
+              <ThemedText type="subtitle">Start Time</ThemedText>
+              <View style={styles.dateTimeRow}>
+                <TouchableOpacity
+                  style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  onPress={() => setShowStartDatePicker(true)}
+                >
+                  <ThemedText type="default">
+                    {editStartTime ? editStartTime.toLocaleDateString() : "Set date"}
+                  </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  onPress={() => setShowStartTimePicker(true)}
+                >
+                  <ThemedText type="default">
+                    {editStartTime
+                      ? editStartTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                      : "Set time"}
+                  </ThemedText>
+                </TouchableOpacity>
+                <TextInput
+                  style={[
+                    styles.secondsInput,
+                    {
+                      color: colors.text,
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  placeholder="sec"
+                  placeholderTextColor={colors.textTertiary}
+                  value={startSeconds}
+                  onChangeText={(text) => setStartSeconds(text.replace(/[^0-9]/g, ""))}
+                  keyboardType="number-pad"
+                />
+              </View>
+            </View>
+
+            <View style={styles.field}>
+              <ThemedText type="subtitle">End Time</ThemedText>
+              <View style={styles.dateTimeRow}>
+                <TouchableOpacity
+                  style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  onPress={() => setShowEndDatePicker(true)}
+                >
+                  <ThemedText type="default">
+                    {editEndTime ? editEndTime.toLocaleDateString() : "Set date"}
+                  </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  onPress={() => setShowEndTimePicker(true)}
+                >
+                  <ThemedText type="default">
+                    {editEndTime
+                      ? editEndTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                      : "Set time"}
+                  </ThemedText>
+                </TouchableOpacity>
+                <TextInput
+                  style={[
+                    styles.secondsInput,
+                    {
+                      color: colors.text,
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  placeholder="sec"
+                  placeholderTextColor={colors.textTertiary}
+                  value={endSeconds}
+                  onChangeText={(text) => setEndSeconds(text.replace(/[^0-9]/g, ""))}
+                  keyboardType="number-pad"
+                />
+              </View>
+            </View>
+
+            <View style={styles.executionEditButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton, { borderColor: colors.border }]}
+                onPress={() => {
+                  setEditingExecution(null);
+                  setShowStartDatePicker(false);
+                  setShowStartTimePicker(false);
+                  setShowEndDatePicker(false);
+                  setShowEndTimePicker(false);
+                }}
+              >
+                <ThemedText type="defaultSemiBold" style={{ color: colors.text }}>
+                  Cancel
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  !editEndTime && styles.buttonDisabled,
+                  {
+                    backgroundColor: editEndTime ? colors.tint : colors.borderLight,
+                  },
+                ]}
+                onPress={handleSaveExecution}
+                disabled={!editEndTime}
+              >
+                <ThemedText
+                  type="defaultSemiBold"
+                  style={{ color: editEndTime ? "#fff" : colors.textTertiary }}
+                >
+                  Save
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {showStartDatePicker && editStartTime && (
+            <DateTimePicker
+              value={editStartTime}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(_, date) => {
+                if (date) {
+                  const newStart = new Date(date);
+                  newStart.setHours(editStartTime.getHours(), editStartTime.getMinutes());
+                  setEditStartTime(newStart);
+                }
+                setShowStartDatePicker(Platform.OS === "ios");
+                if (Platform.OS !== "ios") {
+                  setShowStartDatePicker(false);
                 }
               }}
-            >
-              <ThemedText type="defaultSemiBold" style={{ color: "#fff" }}>
-                Save
-              </ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.editExecutionCancel, { borderColor: colors.border }]}
-              onPress={() => setEditingExecution(null)}
-            >
-              <ThemedText type="defaultSemiBold" style={{ color: colors.textSecondary }}>
-                Cancel
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
-        </View>
+            />
+          )}
+
+          {showStartTimePicker && editStartTime && (
+            <DateTimePicker
+              value={editStartTime}
+              mode="time"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(_, date) => {
+                if (date) {
+                  const newStart = new Date(editStartTime);
+                  newStart.setHours(date.getHours(), date.getMinutes());
+                  setEditStartTime(newStart);
+                }
+                setShowStartTimePicker(Platform.OS === "ios");
+                if (Platform.OS !== "ios") {
+                  setShowStartTimePicker(false);
+                }
+              }}
+            />
+          )}
+
+          {showEndDatePicker && editEndTime && (
+            <DateTimePicker
+              value={editEndTime}
+              mode="date"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(_, date) => {
+                if (date) {
+                  const newEnd = new Date(date);
+                  newEnd.setHours(editEndTime.getHours(), editEndTime.getMinutes());
+                  setEditEndTime(newEnd);
+                }
+                setShowEndDatePicker(Platform.OS === "ios");
+                if (Platform.OS !== "ios") {
+                  setShowEndDatePicker(false);
+                }
+              }}
+            />
+          )}
+
+          {showEndTimePicker && editEndTime && (
+            <DateTimePicker
+              value={editEndTime}
+              mode="time"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(_, date) => {
+                if (date) {
+                  const newEnd = new Date(editEndTime);
+                  newEnd.setHours(date.getHours(), date.getMinutes());
+                  setEditEndTime(newEnd);
+                }
+                setShowEndTimePicker(Platform.OS === "ios");
+                if (Platform.OS !== "ios") {
+                  setShowEndTimePicker(false);
+                }
+              }}
+            />
+          )}
+        </ThemedView>
       </Modal>
 
       <GlobalStopwatchSheet
@@ -1006,5 +1214,57 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: Spacing.sm,
     borderWidth: 1,
+  },
+  executionEditHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    paddingTop: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.1)",
+  },
+  executionEditContent: {
+    padding: Spacing.lg,
+  },
+  field: {
+    marginBottom: Spacing.xl,
+  },
+  dateTimeRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  dateButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    alignItems: "center",
+  },
+  secondsInput: {
+    width: 60,
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    alignItems: "center",
+    fontSize: FontSize.md,
+  },
+  executionEditButtons: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
+  },
+  button: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
 });
