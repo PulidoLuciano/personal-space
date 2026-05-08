@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   StyleSheet,
   View,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   Modal,
   Alert,
+  TextInput,
+  useColorScheme,
 } from "react-native";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -22,6 +24,7 @@ import { TaskForm } from "@/components/TaskForm";
 import { GlobalStopwatchSheet } from "@/components/GlobalStopwatchSheet";
 import { showErrorAlert } from "@/lib/errors";
 import { Spacing, BorderRadius } from "@/constants/spacing";
+import { Colors } from "@/constants/theme";
 import type { Section, List, TaskWithProgress } from "personal-space-core";
 
 interface TaskWithSection extends TaskWithProgress {
@@ -57,6 +60,10 @@ function SectionsScreenContent() {
   const [stopwatchInitialTask, setStopwatchInitialTask] =
     useState<TaskWithSection | null>(null);
   const [sectionPositions, setSectionPositions] = useState<Record<string, { y: number; height: number }>>({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const colors = Colors[isDark ? "dark" : "light"];
 
   const loadData = useCallback(async () => {
     if (!listId || !core) return;
@@ -382,6 +389,22 @@ function SectionsScreenContent() {
     setShowStopwatchSheet(true);
   };
 
+  const filteredSectionsWithTasks = useMemo(() => {
+    if (!searchQuery.trim()) return sectionsWithTasks;
+
+    const query = searchQuery.toLowerCase();
+    return sectionsWithTasks
+      .map((swt) => ({
+        ...swt,
+        tasks: swt.tasks.filter(
+          (task) =>
+            task.name.toLowerCase().includes(query) ||
+            (task.body && task.body.toLowerCase().includes(query)),
+        ),
+      }))
+      .filter((swt) => swt.tasks.length > 0 || swt.section.name.toLowerCase().includes(query));
+  }, [sectionsWithTasks, searchQuery]);
+
   const handleRandomTask = (sectionId: string) => {
     const section = sectionsWithTasks.find((swt) => swt.section.id === sectionId);
     if (!section || section.tasks.length === 0) return;
@@ -459,11 +482,26 @@ function SectionsScreenContent() {
           </View>
         </View>
 
+        <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+          <View style={[styles.searchInputContainer, { backgroundColor: colors.borderLight }]}>
+            <IconSymbol size={18} name="magnifyingglass" color={colors.textSecondary} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              placeholder="Search tasks..."
+              placeholderTextColor={colors.textTertiary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCapitalize="none"
+              clearButtonMode="while-editing"
+            />
+          </View>
+        </View>
+
         <ScrollView
           style={styles.content}
           contentContainerStyle={styles.contentContainer}
         >
-          {sectionsWithTasks.map((swt) => (
+          {filteredSectionsWithTasks.map((swt) => (
             <View key={swt.section.id}>
               <SectionContainer
                 section={swt.section}
@@ -493,10 +531,10 @@ function SectionsScreenContent() {
               />
             </View>
           ))}
-          {sectionsWithTasks.length === 0 && !isLoading && (
+          {filteredSectionsWithTasks.length === 0 && !isLoading && (
             <EmptyState
-              title="No sections yet"
-              description="Create your first section to organize tasks"
+              title={searchQuery ? "No matching tasks" : "No sections yet"}
+              description={searchQuery ? "Try a different search term" : "Create your first section to organize tasks"}
             />
           )}
         </ScrollView>
@@ -628,6 +666,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     backgroundColor: "#2563eb",
     borderRadius: BorderRadius.md,
+  },
+  searchContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+  },
+  searchInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: Spacing.xs,
   },
   content: { flex: 1 },
   contentContainer: { padding: Spacing.lg, paddingTop: 0 },

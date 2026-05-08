@@ -430,6 +430,7 @@ export default class TasksService extends BaseService<
             results.push({
               id: task.id,
               name: task.name,
+              body: exception?.override_body ?? task.body ?? null,
               due_date: dueDate,
               type: exception?.override_type ?? task.type,
               objective: exception?.override_objective ?? task.objective,
@@ -444,6 +445,7 @@ export default class TasksService extends BaseService<
           results.push({
             id: task.id,
             name: task.name,
+            body: task.body ?? null,
             due_date: task.due_rule ? new Date(task.due_rule) : null,
             type: task.type,
             objective: task.objective,

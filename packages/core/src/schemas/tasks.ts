@@ -59,6 +59,7 @@ export type TaskException = z.infer<typeof taskExceptionsSchema>;
 export interface TaskWithProgress {
   id: string;
   name: string;
+  body: string | null;
   due_date: Date | null;
   type: "by time" | "by executions" | "note";
   objective: number;
