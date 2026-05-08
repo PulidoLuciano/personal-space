@@ -356,18 +356,16 @@ export default class TasksService extends BaseService<
   ): Promise<TaskExecution[]> {
     const task = await this.getById(task_id, []);
     if (!task) throw new Error("Task not found");
-    const filters: QueryCriteria<TaskExecution>[] = [
-      { column: "task_id", operator: "=", value: task_id },
-    ];
+    
     if (this.isRecurrent(task)) {
       if (!ocurrence_date) throw new Error("An occurrence date is necessary");
-      filters.push({
-        column: "ocurrence_date",
-        operator: "=",
-        value: ocurrence_date.toISOString(),
-      });
+      return await this.taskExecutionsRepository.findByTaskAndOccurrence(
+        task_id,
+        ocurrence_date,
+      );
     }
-    return await this.taskExecutionsRepository.find(filters);
+    
+    return await this.taskExecutionsRepository.findByTaskWithoutOccurrence(task_id);
   }
 
   public async updateExecution(

@@ -599,6 +599,27 @@ describe("TasksService", () => {
       const executions = await tasksService.getExecutionsByTaskAndDate(taskId);
       expect(executions.length).toBe(0);
     });
+
+    it("should find executions even when occurrence date has different time components", async () => {
+      const taskId = await tasksService.create({
+        name: "Recurrent Task",
+        type: "by executions",
+        objective: 2,
+        recurrency: "FREQ=DAILY;COUNT=5",
+        section_id: sectionId,
+      } as any);
+
+      const occurrenceDate = new Date("2026-12-31T00:00:00.000Z");
+      await tasksService.startExecution(taskId, occurrenceDate);
+
+      const queryDate = new Date("2026-12-31T15:30:45.123Z");
+      const executions = await tasksService.getExecutionsByTaskAndDate(
+        taskId,
+        queryDate,
+      );
+      
+      expect(executions.length).toBe(1);
+    });
   });
 
   describe("updateExecution", () => {
@@ -1005,7 +1026,7 @@ describe("TasksService", () => {
         "current",
       );
 
-      const results = await tasksService.getTasksBySection(sectionId);
+      const results = await tasksService.getTasksBySection(sectionId, true);
       expect(results.length).toBeGreaterThan(0);
     });
 

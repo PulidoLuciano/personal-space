@@ -73,6 +73,20 @@ export class TaskExecutionsRepository extends BaseRepository<TaskExecution> {
     return await this.db.query<TaskExecution>(query, [taskId]);
   }
 
+  public async findByTaskAndOccurrence(
+    taskId: string,
+    ocurrenceDate: Date,
+  ): Promise<TaskExecution[]> {
+    const query = `
+      SELECT * FROM task_executions 
+      WHERE task_id = ? AND DATE(ocurrence_date) = ? AND is_deleted = FALSE;
+    `;
+    return await this.db.query<TaskExecution>(query, [
+      taskId,
+      `${ocurrenceDate.getUTCFullYear()}-${String(ocurrenceDate.getUTCMonth() + 1).padStart(2, "0")}-${String(ocurrenceDate.getUTCDate()).padStart(2, "0")}`,
+    ]);
+  }
+
   public async findRunningWithTaskInfo(): Promise<(TaskExecution & { taskName: string; taskType: string; taskObjective: number })[]> {
     const query = `
       SELECT 
