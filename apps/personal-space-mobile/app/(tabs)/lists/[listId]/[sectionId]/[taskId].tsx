@@ -59,7 +59,10 @@ function DetailItem({ icon, label, value, colors }: DetailItemProps) {
         <IconSymbol size={16} name={icon} color={colors.tint} />
       </View>
       <View style={styles.detailContent}>
-        <ThemedText type="default" style={[styles.detailLabel, { color: colors.textSecondary }]}>
+        <ThemedText
+          type="default"
+          style={[styles.detailLabel, { color: colors.textSecondary }]}
+        >
           {label}
         </ThemedText>
         <ThemedText type="defaultSemiBold" style={{ color: colors.text }}>
@@ -77,18 +80,34 @@ interface ExecutionItemProps {
   onUpdate: (execution: TaskExecution) => void;
 }
 
-function ExecutionItem({ execution, colors, onDelete, onUpdate }: ExecutionItemProps) {
+function ExecutionItem({
+  execution,
+  colors,
+  onDelete,
+  onUpdate,
+}: ExecutionItemProps) {
   return (
-    <View style={[styles.executionCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.executionCard,
+        { backgroundColor: colors.surfaceElevated, borderColor: colors.border },
+      ]}
+    >
       <View style={styles.executionHeader}>
         <View style={styles.executionTime}>
           <ThemedText type="defaultSemiBold">
-            {execution.start_time ? formatDateTime(new Date(execution.start_time)) : "In progress"}
+            {execution.start_time
+              ? formatDateTime(new Date(execution.start_time))
+              : "In progress"}
           </ThemedText>
           {execution.end_time && (
             <>
-              <ThemedText type="default" style={{ color: colors.textSecondary }}>
-                {" "}-{" "}
+              <ThemedText
+                type="default"
+                style={{ color: colors.textSecondary }}
+              >
+                {" "}
+                -{" "}
               </ThemedText>
               <ThemedText type="defaultSemiBold">
                 {formatDateTime(new Date(execution.end_time))}
@@ -99,22 +118,37 @@ function ExecutionItem({ execution, colors, onDelete, onUpdate }: ExecutionItemP
         <View style={styles.executionActions}>
           <TouchableOpacity
             onPress={() => onUpdate(execution)}
-            style={[styles.executionActionBtn, { backgroundColor: colors.tintLight }]}
+            style={[
+              styles.executionActionBtn,
+              { backgroundColor: colors.tintLight },
+            ]}
           >
             <IconSymbol size={14} name="pencil" color={colors.tint} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => onDelete(execution.id)}
-            style={[styles.executionActionBtn, { backgroundColor: colors.errorLight }]}
+            style={[
+              styles.executionActionBtn,
+              { backgroundColor: colors.errorLight },
+            ]}
           >
             <IconSymbol size={14} name="trash" color={colors.error} />
           </TouchableOpacity>
         </View>
       </View>
       {execution.end_time && execution.start_time && (
-        <View style={[styles.executionDuration, { backgroundColor: colors.successLight }]}>
+        <View
+          style={[
+            styles.executionDuration,
+            { backgroundColor: colors.successLight },
+          ]}
+        >
           <ThemedText type="default" style={{ color: colors.success }}>
-            Duration: {formatDuration(new Date(execution.start_time), new Date(execution.end_time))}
+            Duration:{" "}
+            {formatDuration(
+              new Date(execution.start_time),
+              new Date(execution.end_time),
+            )}
           </ThemedText>
         </View>
       )}
@@ -144,7 +178,8 @@ function TaskDetailsScreenContent() {
   );
   const [showEditModal, setShowEditModal] = useState(false);
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
-  const [editingExecution, setEditingExecution] = useState<TaskExecution | null>(null);
+  const [editingExecution, setEditingExecution] =
+    useState<TaskExecution | null>(null);
   const [showStopwatchSheet, setShowStopwatchSheet] = useState(false);
   const [editStartTime, setEditStartTime] = useState<Date | null>(null);
   const [editEndTime, setEditEndTime] = useState<Date | null>(null);
@@ -159,7 +194,7 @@ function TaskDetailsScreenContent() {
     const encodedLocation = encodeURIComponent(location);
     const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
     Linking.openURL(googleMapsUrl).catch((err) =>
-      console.error("Failed to open Google Maps:", err)
+      console.error("Failed to open Google Maps:", err),
     );
   };
 
@@ -262,7 +297,9 @@ function TaskDetailsScreenContent() {
   const handleUpdateExecution = (execution: TaskExecution) => {
     setEditingExecution(execution);
     const startTime = new Date(execution.start_time);
-    const endTime = execution.end_time ? new Date(execution.end_time) : new Date();
+    const endTime = execution.end_time
+      ? new Date(execution.end_time)
+      : new Date();
     setEditStartTime(startTime);
     setEditEndTime(endTime);
     setStartSeconds(startTime.getSeconds().toString());
@@ -290,27 +327,84 @@ function TaskDetailsScreenContent() {
 
   const handleDeleteTask = () => {
     if (!fullTask) return;
-    Alert.alert(
-      "Delete Task",
-      `Are you sure you want to delete "${fullTask.name}"?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            if (!core) return;
-            try {
-              await core.tasksService.delete(fullTask.id);
-              router.back();
-            } catch (error) {
-              console.error("Error deleting task:", error);
-              showErrorAlert(error, "Failed to delete task");
-            }
+    const isRecurrent = !!fullTask.recurrency;
+    if (isRecurrent && occDate) {
+      Alert.alert(
+        "Delete Occurrences",
+        "Which occurrences should be deleted?",
+        [
+          {
+            text: "This Only",
+            style: "destructive",
+            onPress: async () => {
+              if (!core) return;
+              try {
+                await core.tasksService.delete(fullTask.id, occDate, "current");
+                router.back();
+              } catch (error) {
+                console.error("Error deleting task:", error);
+                showErrorAlert(error, "Failed to delete task");
+              }
+            },
           },
-        },
-      ],
-    );
+          {
+            text: "This & Following",
+            style: "destructive",
+            onPress: async () => {
+              if (!core) return;
+              try {
+                await core.tasksService.delete(
+                  fullTask.id,
+                  occDate,
+                  "following",
+                );
+                router.back();
+              } catch (error) {
+                console.error("Error deleting task:", error);
+                showErrorAlert(error, "Failed to delete task");
+              }
+            },
+          },
+          {
+            text: "All",
+            style: "destructive",
+            onPress: async () => {
+              if (!core) return;
+              try {
+                await core.tasksService.delete(fullTask.id);
+                router.back();
+              } catch (error) {
+                console.error("Error deleting task:", error);
+                showErrorAlert(error, "Failed to delete task");
+              }
+            },
+          },
+          { text: "Cancel", style: "cancel" },
+        ],
+      );
+    } else {
+      Alert.alert(
+        "Delete Task",
+        `Are you sure you want to delete "${fullTask.name}"?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              if (!core) return;
+              try {
+                await core.tasksService.delete(fullTask.id);
+                router.back();
+              } catch (error) {
+                console.error("Error deleting task:", error);
+                showErrorAlert(error, "Failed to delete task");
+              }
+            },
+          },
+        ],
+      );
+    }
   };
 
   const handleEditSubmit = async (data: {
@@ -325,14 +419,54 @@ function TaskDetailsScreenContent() {
     if (!core || !task || !fullTask) return;
     try {
       const isRecurrent = !!fullTask.recurrency;
-      await core.tasksService.update(
-        task.id,
-        data,
-        isRecurrent && occDate ? occDate : undefined,
-        isRecurrent && occDate ? "current" : undefined,
-      );
-      setShowEditModal(false);
-      loadData();
+      if (isRecurrent && occDate) {
+        Alert.alert(
+          "Apply Changes To",
+          "Which occurrences should this update apply to?",
+          [
+            {
+              text: "This Only",
+              onPress: async () => {
+                console.log(occDate);
+                await core.tasksService.update(
+                  task.id,
+                  data,
+                  occDate,
+                  "current",
+                );
+                setShowEditModal(false);
+                loadData();
+              },
+            },
+            {
+              text: "This & Following",
+              onPress: async () => {
+                await core.tasksService.update(
+                  task.id,
+                  data,
+                  occDate,
+                  "following",
+                );
+                setShowEditModal(false);
+                loadData();
+              },
+            },
+            {
+              text: "All",
+              onPress: async () => {
+                await core.tasksService.update(task.id, data);
+                setShowEditModal(false);
+                loadData();
+              },
+            },
+            { text: "Cancel", style: "cancel" },
+          ],
+        );
+      } else {
+        await core.tasksService.update(task.id, data);
+        setShowEditModal(false);
+        loadData();
+      }
     } catch (error) {
       console.error("Error updating task:", error);
       showErrorAlert(error, "Failed to update task");
@@ -372,8 +506,15 @@ function TaskDetailsScreenContent() {
   const isCompleted = task.progress >= task.objective;
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+    <ThemedView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.surface, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.headerButton}
@@ -381,7 +522,9 @@ function TaskDetailsScreenContent() {
           <IconSymbol size={20} name="chevron.right" color={colors.tint} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <ThemedText type="title" style={{ color: colors.text }}>{task.name}</ThemedText>
+          <ThemedText type="title" style={{ color: colors.text }}>
+            {task.name}
+          </ThemedText>
         </View>
         <TouchableOpacity
           onPress={() => setShowEditModal(true)}
@@ -398,10 +541,20 @@ function TaskDetailsScreenContent() {
       </View>
 
       <ScrollView style={styles.scrollContent}>
-        {task.location || fullTask?.due_rule || fullTask?.recurrency || task.occurrence_date ? (
-          <View style={[styles.detailsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        {task.location ||
+        fullTask?.due_rule ||
+        fullTask?.recurrency ||
+        task.occurrence_date ? (
+          <View
+            style={[
+              styles.detailsCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
             {task.location && (
-              <TouchableOpacity onPress={() => handleOpenLocation(task.location!)}>
+              <TouchableOpacity
+                onPress={() => handleOpenLocation(task.location!)}
+              >
                 <DetailItem
                   icon="mappin"
                   label="Location"
@@ -442,19 +595,32 @@ function TaskDetailsScreenContent() {
             {task.type === "by executions" && (
               <>
                 <View style={styles.progressHeader}>
-                  <ThemedText type="defaultSemiBold" style={{ color: colors.text }}>
+                  <ThemedText
+                    type="defaultSemiBold"
+                    style={{ color: colors.text }}
+                  >
                     Progress
                   </ThemedText>
-                  <ThemedText type="default" style={{ color: colors.textSecondary }}>
+                  <ThemedText
+                    type="default"
+                    style={{ color: colors.textSecondary }}
+                  >
                     {task.progress} / {task.objective}
                   </ThemedText>
                 </View>
-                <View style={[styles.progressBar, { backgroundColor: colors.borderLight }]}>
+                <View
+                  style={[
+                    styles.progressBar,
+                    { backgroundColor: colors.borderLight },
+                  ]}
+                >
                   <View
                     style={[
                       styles.progressFill,
                       {
-                        backgroundColor: isCompleted ? colors.success : colors.tint,
+                        backgroundColor: isCompleted
+                          ? colors.success
+                          : colors.tint,
                         width: `${Math.min((task.progress / task.objective) * 100, 100)}%`,
                       },
                     ]}
@@ -464,7 +630,9 @@ function TaskDetailsScreenContent() {
                   style={[
                     styles.actionButton,
                     {
-                      backgroundColor: isCompleted ? colors.successLight : colors.tint,
+                      backgroundColor: isCompleted
+                        ? colors.successLight
+                        : colors.tint,
                     },
                   ]}
                   onPress={handleToggleComplete}
@@ -482,35 +650,62 @@ function TaskDetailsScreenContent() {
             {task.type === "by time" && (
               <>
                 <View style={styles.progressHeader}>
-                  <ThemedText type="defaultSemiBold" style={{ color: colors.text }}>
+                  <ThemedText
+                    type="defaultSemiBold"
+                    style={{ color: colors.text }}
+                  >
                     Time
                   </ThemedText>
-                  <ThemedText type="default" style={{ color: colors.textSecondary }}>
-                    {formatSeconds(task.progress)} / {formatSeconds(task.objective)}
+                  <ThemedText
+                    type="default"
+                    style={{ color: colors.textSecondary }}
+                  >
+                    {formatSeconds(task.progress)} /{" "}
+                    {formatSeconds(task.objective)}
                   </ThemedText>
                 </View>
-                <View style={[styles.progressBar, { backgroundColor: colors.borderLight }]}>
+                <View
+                  style={[
+                    styles.progressBar,
+                    { backgroundColor: colors.borderLight },
+                  ]}
+                >
                   <View
                     style={[
                       styles.progressFill,
                       {
-                        backgroundColor: isCompleted ? colors.success : colors.tint,
+                        backgroundColor: isCompleted
+                          ? colors.success
+                          : colors.tint,
                         width: `${Math.min((task.progress / task.objective) * 100, 100)}%`,
                       },
                     ]}
                   />
                 </View>
                 <View style={styles.timeRemainingRow}>
-                  <ThemedText type="default" style={{ color: colors.textSecondary }}>
-                    Remaining: {formatSeconds(Math.max(task.objective - task.progress, 0))}
+                  <ThemedText
+                    type="default"
+                    style={{ color: colors.textSecondary }}
+                  >
+                    Remaining:{" "}
+                    {formatSeconds(Math.max(task.objective - task.progress, 0))}
                   </ThemedText>
                 </View>
                 <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: colors.tintLight, marginTop: Spacing.sm }]}
+                  style={[
+                    styles.actionButton,
+                    {
+                      backgroundColor: colors.tintLight,
+                      marginTop: Spacing.sm,
+                    },
+                  ]}
                   onPress={() => setShowStopwatchSheet(true)}
                 >
                   <IconSymbol size={16} name="timer" color={colors.tint} />
-                  <ThemedText type="defaultSemiBold" style={{ color: colors.tint, marginLeft: Spacing.xs }}>
+                  <ThemedText
+                    type="defaultSemiBold"
+                    style={{ color: colors.tint, marginLeft: Spacing.xs }}
+                  >
                     Start Stopwatch
                   </ThemedText>
                 </TouchableOpacity>
@@ -519,19 +714,32 @@ function TaskDetailsScreenContent() {
           </View>
         )}
 
-        <View style={[styles.tabContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <View style={[styles.tabBar, { backgroundColor: colors.borderLight }]}>
+        <View
+          style={[
+            styles.tabContainer,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          <View
+            style={[styles.tabBar, { backgroundColor: colors.borderLight }]}
+          >
             <TouchableOpacity
               style={[
                 styles.tab,
-                activeTab === "description" && [styles.tabActive, { backgroundColor: colors.surface }],
+                activeTab === "description" && [
+                  styles.tabActive,
+                  { backgroundColor: colors.surface },
+                ],
               ]}
               onPress={() => setActiveTab("description")}
             >
               <ThemedText
                 type="defaultSemiBold"
                 style={{
-                  color: activeTab === "description" ? colors.tint : colors.textSecondary,
+                  color:
+                    activeTab === "description"
+                      ? colors.tint
+                      : colors.textSecondary,
                 }}
               >
                 Description
@@ -540,14 +748,20 @@ function TaskDetailsScreenContent() {
             <TouchableOpacity
               style={[
                 styles.tab,
-                activeTab === "history" && [styles.tabActive, { backgroundColor: colors.surface }],
+                activeTab === "history" && [
+                  styles.tabActive,
+                  { backgroundColor: colors.surface },
+                ],
               ]}
               onPress={() => setActiveTab("history")}
             >
               <ThemedText
                 type="defaultSemiBold"
                 style={{
-                  color: activeTab === "history" ? colors.tint : colors.textSecondary,
+                  color:
+                    activeTab === "history"
+                      ? colors.tint
+                      : colors.textSecondary,
                 }}
               >
                 History
@@ -562,11 +776,21 @@ function TaskDetailsScreenContent() {
                   <>
                     <View style={styles.descriptionActions}>
                       <TouchableOpacity
-                        style={[styles.descriptionEditBtn, { backgroundColor: colors.tintLight }]}
+                        style={[
+                          styles.descriptionEditBtn,
+                          { backgroundColor: colors.tintLight },
+                        ]}
                         onPress={() => setShowMarkdownEditor(true)}
                       >
-                        <IconSymbol size={14} name="pencil" color={colors.tint} />
-                        <ThemedText type="defaultSemiBold" style={{ color: colors.tint, marginLeft: Spacing.xs }}>
+                        <IconSymbol
+                          size={14}
+                          name="pencil"
+                          color={colors.tint}
+                        />
+                        <ThemedText
+                          type="defaultSemiBold"
+                          style={{ color: colors.tint, marginLeft: Spacing.xs }}
+                        >
                           Edit
                         </ThemedText>
                       </TouchableOpacity>
@@ -688,16 +912,33 @@ function TaskDetailsScreenContent() {
                     </Markdown>
                   </>
                 ) : (
-                  <View style={[styles.emptyState, { backgroundColor: colors.borderLight }]}>
-                    <ThemedText type="default" style={{ color: colors.textSecondary, marginBottom: Spacing.md }}>
+                  <View
+                    style={[
+                      styles.emptyState,
+                      { backgroundColor: colors.borderLight },
+                    ]}
+                  >
+                    <ThemedText
+                      type="default"
+                      style={{
+                        color: colors.textSecondary,
+                        marginBottom: Spacing.md,
+                      }}
+                    >
                       No description
                     </ThemedText>
                     <TouchableOpacity
-                      style={[styles.descriptionEditBtn, { backgroundColor: colors.tintLight }]}
+                      style={[
+                        styles.descriptionEditBtn,
+                        { backgroundColor: colors.tintLight },
+                      ]}
                       onPress={() => setShowMarkdownEditor(true)}
                     >
                       <IconSymbol size={14} name="pencil" color={colors.tint} />
-                      <ThemedText type="defaultSemiBold" style={{ color: colors.tint, marginLeft: Spacing.xs }}>
+                      <ThemedText
+                        type="defaultSemiBold"
+                        style={{ color: colors.tint, marginLeft: Spacing.xs }}
+                      >
                         Add description
                       </ThemedText>
                     </TouchableOpacity>
@@ -709,21 +950,45 @@ function TaskDetailsScreenContent() {
             {activeTab === "history" && (
               <View style={styles.historySection}>
                 {executions.length === 0 ? (
-                  <View style={[styles.emptyState, { backgroundColor: colors.borderLight }]}>
-                    <ThemedText type="default" style={{ color: colors.textSecondary }}>
+                  <View
+                    style={[
+                      styles.emptyState,
+                      { backgroundColor: colors.borderLight },
+                    ]}
+                  >
+                    <ThemedText
+                      type="default"
+                      style={{ color: colors.textSecondary }}
+                    >
                       No executions yet
                     </ThemedText>
                   </View>
                 ) : (
                   <>
-                    <View style={[styles.totalTimeRow, { backgroundColor: colors.successLight }]}>
-                      <ThemedText type="defaultSemiBold" style={{ color: colors.success }}>
-                        Total: {formatSeconds(executions.reduce((acc, ex) => {
-                          if (ex.start_time && ex.end_time) {
-                            return acc + (new Date(ex.end_time).getTime() - new Date(ex.start_time).getTime()) / 1000;
-                          }
-                          return acc;
-                        }, 0))}
+                    <View
+                      style={[
+                        styles.totalTimeRow,
+                        { backgroundColor: colors.successLight },
+                      ]}
+                    >
+                      <ThemedText
+                        type="defaultSemiBold"
+                        style={{ color: colors.success }}
+                      >
+                        Total:{" "}
+                        {formatSeconds(
+                          executions.reduce((acc, ex) => {
+                            if (ex.start_time && ex.end_time) {
+                              return (
+                                acc +
+                                (new Date(ex.end_time).getTime() -
+                                  new Date(ex.start_time).getTime()) /
+                                  1000
+                              );
+                            }
+                            return acc;
+                          }, 0),
+                        )}
                       </ThemedText>
                     </View>
                     {executions.map((execution) => (
@@ -749,7 +1014,12 @@ function TaskDetailsScreenContent() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowEditModal(false)}
       >
-        <ThemedView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+        <ThemedView
+          style={[
+            styles.modalContainer,
+            { backgroundColor: colors.background },
+          ]}
+        >
           <TaskForm
             sectionId={sectionId ?? ""}
             initialData={{
@@ -778,7 +1048,12 @@ function TaskDetailsScreenContent() {
           setShowEndTimePicker(false);
         }}
       >
-        <ThemedView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+        <ThemedView
+          style={[
+            styles.modalContainer,
+            { backgroundColor: colors.background },
+          ]}
+        >
           <View style={styles.executionEditHeader}>
             <TouchableOpacity
               onPress={() => {
@@ -792,7 +1067,15 @@ function TaskDetailsScreenContent() {
             >
               <IconSymbol size={20} name="chevron.right" color={colors.tint} />
             </TouchableOpacity>
-            <ThemedText type="title" style={{ color: colors.text, flex: 1, textAlign: "center", marginRight: 36 }}>
+            <ThemedText
+              type="title"
+              style={{
+                color: colors.text,
+                flex: 1,
+                textAlign: "center",
+                marginRight: 36,
+              }}
+            >
               Edit Execution
             </ThemedText>
           </View>
@@ -802,20 +1085,37 @@ function TaskDetailsScreenContent() {
               <ThemedText type="subtitle">Start Time</ThemedText>
               <View style={styles.dateTimeRow}>
                 <TouchableOpacity
-                  style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  style={[
+                    styles.dateButton,
+                    {
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
                   onPress={() => setShowStartDatePicker(true)}
                 >
                   <ThemedText type="default">
-                    {editStartTime ? editStartTime.toLocaleDateString() : "Set date"}
+                    {editStartTime
+                      ? editStartTime.toLocaleDateString()
+                      : "Set date"}
                   </ThemedText>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  style={[
+                    styles.dateButton,
+                    {
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
                   onPress={() => setShowStartTimePicker(true)}
                 >
                   <ThemedText type="default">
                     {editStartTime
-                      ? editStartTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                      ? editStartTime.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                       : "Set time"}
                   </ThemedText>
                 </TouchableOpacity>
@@ -831,7 +1131,9 @@ function TaskDetailsScreenContent() {
                   placeholder="sec"
                   placeholderTextColor={colors.textTertiary}
                   value={startSeconds}
-                  onChangeText={(text) => setStartSeconds(text.replace(/[^0-9]/g, ""))}
+                  onChangeText={(text) =>
+                    setStartSeconds(text.replace(/[^0-9]/g, ""))
+                  }
                   keyboardType="number-pad"
                 />
               </View>
@@ -841,20 +1143,37 @@ function TaskDetailsScreenContent() {
               <ThemedText type="subtitle">End Time</ThemedText>
               <View style={styles.dateTimeRow}>
                 <TouchableOpacity
-                  style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  style={[
+                    styles.dateButton,
+                    {
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
                   onPress={() => setShowEndDatePicker(true)}
                 >
                   <ThemedText type="default">
-                    {editEndTime ? editEndTime.toLocaleDateString() : "Set date"}
+                    {editEndTime
+                      ? editEndTime.toLocaleDateString()
+                      : "Set date"}
                   </ThemedText>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  style={[
+                    styles.dateButton,
+                    {
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
                   onPress={() => setShowEndTimePicker(true)}
                 >
                   <ThemedText type="default">
                     {editEndTime
-                      ? editEndTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                      ? editEndTime.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                       : "Set time"}
                   </ThemedText>
                 </TouchableOpacity>
@@ -870,7 +1189,9 @@ function TaskDetailsScreenContent() {
                   placeholder="sec"
                   placeholderTextColor={colors.textTertiary}
                   value={endSeconds}
-                  onChangeText={(text) => setEndSeconds(text.replace(/[^0-9]/g, ""))}
+                  onChangeText={(text) =>
+                    setEndSeconds(text.replace(/[^0-9]/g, ""))
+                  }
                   keyboardType="number-pad"
                 />
               </View>
@@ -878,7 +1199,11 @@ function TaskDetailsScreenContent() {
 
             <View style={styles.executionEditButtons}>
               <TouchableOpacity
-                style={[styles.button, styles.cancelButton, { borderColor: colors.border }]}
+                style={[
+                  styles.button,
+                  styles.cancelButton,
+                  { borderColor: colors.border },
+                ]}
                 onPress={() => {
                   setEditingExecution(null);
                   setShowStartDatePicker(false);
@@ -887,7 +1212,10 @@ function TaskDetailsScreenContent() {
                   setShowEndTimePicker(false);
                 }}
               >
-                <ThemedText type="defaultSemiBold" style={{ color: colors.text }}>
+                <ThemedText
+                  type="defaultSemiBold"
+                  style={{ color: colors.text }}
+                >
                   Cancel
                 </ThemedText>
               </TouchableOpacity>
@@ -896,7 +1224,9 @@ function TaskDetailsScreenContent() {
                   styles.button,
                   !editEndTime && styles.buttonDisabled,
                   {
-                    backgroundColor: editEndTime ? colors.tint : colors.borderLight,
+                    backgroundColor: editEndTime
+                      ? colors.tint
+                      : colors.borderLight,
                   },
                 ]}
                 onPress={handleSaveExecution}
@@ -920,7 +1250,10 @@ function TaskDetailsScreenContent() {
               onChange={(_, date) => {
                 if (date) {
                   const newStart = new Date(date);
-                  newStart.setHours(editStartTime.getHours(), editStartTime.getMinutes());
+                  newStart.setHours(
+                    editStartTime.getHours(),
+                    editStartTime.getMinutes(),
+                  );
                   setEditStartTime(newStart);
                 }
                 setShowStartDatePicker(Platform.OS === "ios");
@@ -958,7 +1291,10 @@ function TaskDetailsScreenContent() {
               onChange={(_, date) => {
                 if (date) {
                   const newEnd = new Date(date);
-                  newEnd.setHours(editEndTime.getHours(), editEndTime.getMinutes());
+                  newEnd.setHours(
+                    editEndTime.getHours(),
+                    editEndTime.getMinutes(),
+                  );
                   setEditEndTime(newEnd);
                 }
                 setShowEndDatePicker(Platform.OS === "ios");

@@ -608,7 +608,11 @@ export default class TasksService extends BaseService<
   private getAllOccurrences(task: Task): Date[] {
     if (!task.recurrency) return [];
     const rule = RRule.fromString(task.recurrency);
-    return rule.between(new Date("2000-01-01"), new Date(), true);
+    return rule.between(new Date("2000-01-01"), new Date(), true).map((date) => {
+      const normalized = new Date(date);
+      normalized.setUTCHours(0, 0, 0, 0);
+      return normalized;
+    });
   }
 
   private getOccurrencesInRange(
@@ -618,7 +622,11 @@ export default class TasksService extends BaseService<
   ): Date[] {
     if (!task.recurrency) return [];
     const rule = RRule.fromString(task.recurrency);
-    return rule.between(startDate, endDate, true);
+    return rule.between(startDate, endDate, true).map((date) => {
+      const normalized = new Date(date);
+      normalized.setUTCHours(0, 0, 0, 0);
+      return normalized;
+    });
   }
 
   public async searchTasksWithListInfo(

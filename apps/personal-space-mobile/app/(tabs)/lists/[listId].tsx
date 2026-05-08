@@ -59,7 +59,9 @@ function SectionsScreenContent() {
   const [showStopwatchSheet, setShowStopwatchSheet] = useState(false);
   const [stopwatchInitialTask, setStopwatchInitialTask] =
     useState<TaskWithSection | null>(null);
-  const [sectionPositions, setSectionPositions] = useState<Record<string, { y: number; height: number }>>({});
+  const [sectionPositions, setSectionPositions] = useState<
+    Record<string, { y: number; height: number }>
+  >({});
   const [searchQuery, setSearchQuery] = useState("");
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -80,6 +82,7 @@ function SectionsScreenContent() {
             section.id,
             !listData.show_completed,
           );
+          console.log(tasks);
           const tasksWithSection: TaskWithSection[] = tasks.map((task) => ({
             ...task,
             section_id: section.id,
@@ -287,7 +290,11 @@ function SectionsScreenContent() {
     }
   };
 
-  const handleSectionLayout = (sectionId: string, y: number, height: number) => {
+  const handleSectionLayout = (
+    sectionId: string,
+    y: number,
+    height: number,
+  ) => {
     setSectionPositions((prev) => ({
       ...prev,
       [sectionId]: { y, height },
@@ -402,32 +409,36 @@ function SectionsScreenContent() {
             (task.body && task.body.toLowerCase().includes(query)),
         ),
       }))
-      .filter((swt) => swt.tasks.length > 0 || swt.section.name.toLowerCase().includes(query));
+      .filter(
+        (swt) =>
+          swt.tasks.length > 0 ||
+          swt.section.name.toLowerCase().includes(query),
+      );
   }, [sectionsWithTasks, searchQuery]);
 
   const handleRandomTask = (sectionId: string) => {
-    const section = sectionsWithTasks.find((swt) => swt.section.id === sectionId);
+    const section = sectionsWithTasks.find(
+      (swt) => swt.section.id === sectionId,
+    );
     if (!section || section.tasks.length === 0) return;
 
     const randomIndex = Math.floor(Math.random() * section.tasks.length);
     const randomTask = section.tasks[randomIndex];
 
-    Alert.alert(
-      "Random Task",
-      randomTask.name,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Go to task",
-          onPress: () => {
-            const params = randomTask.occurrence_date 
-              ? `?occurrenceDate=${randomTask.occurrence_date.toISOString()}`
-              : "";
-            router.push(`/lists/${listId}/${sectionId}/${randomTask.id}${params}`);
-          },
+    Alert.alert("Random Task", randomTask.name, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Go to task",
+        onPress: () => {
+          const params = randomTask.occurrence_date
+            ? `?occurrenceDate=${randomTask.occurrence_date.toISOString()}`
+            : "";
+          router.push(
+            `/lists/${listId}/${sectionId}/${randomTask.id}${params}`,
+          );
         },
-      ],
-    );
+      },
+    ]);
   };
 
   if (!list) {
@@ -482,9 +493,26 @@ function SectionsScreenContent() {
           </View>
         </View>
 
-        <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-          <View style={[styles.searchInputContainer, { backgroundColor: colors.borderLight }]}>
-            <IconSymbol size={18} name="magnifyingglass" color={colors.textSecondary} />
+        <View
+          style={[
+            styles.searchContainer,
+            {
+              backgroundColor: colors.surface,
+              borderBottomColor: colors.border,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.searchInputContainer,
+              { backgroundColor: colors.borderLight },
+            ]}
+          >
+            <IconSymbol
+              size={18}
+              name="magnifyingglass"
+              color={colors.textSecondary}
+            />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
               placeholder="Search tasks..."
@@ -515,10 +543,12 @@ function SectionsScreenContent() {
                   handleDeleteSection(swt.section.id, swt.section.name)
                 }
                 onTaskPress={(task) => {
-                  const params = task.occurrence_date 
+                  const params = task.occurrence_date
                     ? `?occurrenceDate=${task.occurrence_date.toISOString()}`
                     : "";
-                  router.push(`/lists/${listId}/${swt.section.id}/${task.id}${params}`);
+                  router.push(
+                    `/lists/${listId}/${swt.section.id}/${task.id}${params}`,
+                  );
                 }}
                 onToggleTaskComplete={handleToggleTaskComplete}
                 onTaskLongPress={handleTaskLongPress}
@@ -534,7 +564,11 @@ function SectionsScreenContent() {
           {filteredSectionsWithTasks.length === 0 && !isLoading && (
             <EmptyState
               title={searchQuery ? "No matching tasks" : "No sections yet"}
-              description={searchQuery ? "Try a different search term" : "Create your first section to organize tasks"}
+              description={
+                searchQuery
+                  ? "Try a different search term"
+                  : "Create your first section to organize tasks"
+              }
             />
           )}
         </ScrollView>
@@ -709,4 +743,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
