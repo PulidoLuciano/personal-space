@@ -8,6 +8,8 @@ import {
   TextInput,
   FlatList,
   Dimensions,
+  AppState,
+  AppStateStatus,
 } from "react-native";
 import { Colors } from "@/constants/theme";
 import { Spacing, BorderRadius } from "@/constants/spacing";
@@ -76,11 +78,45 @@ export function GlobalStopwatchSheet({
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const loadRunningExecutions = useCallback(async () => {
+    if (!core) return;
+    try {
+      const executions = await core.tasksService.getRunningExecutions();
+      setRunningExecutions(
+        executions.map((e) => ({
+          executionId: e.id,
+          taskId: e.task_id,
+          taskName: e.taskName,
+          taskType: e.taskType as "by time" | "by executions" | "note",
+          taskObjective: e.taskObjective,
+          startTime: new Date(e.start_time),
+          occurrenceDate: e.ocurrence_date ? new Date(e.ocurrence_date) : null,
+        }))
+      );
+      if (executions.length > 0) {
+        const startTime = new Date(executions[0].start_time).getTime();
+        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+        setIsRunning(true);
+      }
+    } catch (error) {
+      console.error("Error loading running executions:", error);
+    }
+  }, [core]);
+
   useEffect(() => {
     if (visible && core) {
       loadRunningExecutions();
     }
-  }, [visible, core]);
+  }, [visible, core, loadRunningExecutions]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state: AppStateStatus) => {
+      if (state === "active" && core && isRunning) {
+        loadRunningExecutions();
+      }
+    });
+    return () => subscription.remove();
+  }, [core, isRunning, loadRunningExecutions]);
 
   useEffect(() => {
     const loadInitialTask = async () => {
@@ -131,31 +167,6 @@ export function GlobalStopwatchSheet({
       }
     };
   }, [isRunning]);
-
-  const loadRunningExecutions = async () => {
-    if (!core) return;
-    try {
-      const executions = await core.tasksService.getRunningExecutions();
-      setRunningExecutions(
-        executions.map((e) => ({
-          executionId: e.id,
-          taskId: e.task_id,
-          taskName: e.taskName,
-          taskType: e.taskType as "by time" | "by executions" | "note",
-          taskObjective: e.taskObjective,
-          startTime: new Date(e.start_time),
-          occurrenceDate: e.ocurrence_date ? new Date(e.ocurrence_date) : null,
-        }))
-      );
-      if (executions.length > 0) {
-        const startTime = new Date(executions[0].start_time).getTime();
-        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
-        setIsRunning(true);
-      }
-    } catch (error) {
-      console.error("Error loading running executions:", error);
-    }
-  };
 
   const handleSearch = useCallback(
     async (query: string) => {
