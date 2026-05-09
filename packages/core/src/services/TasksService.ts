@@ -117,7 +117,7 @@ export default class TasksService extends BaseService<
   public async update(
     id: string,
     data: Partial<InsertTask>,
-    occurrenceDate?: Date,
+    occurrenceDate?: string,
     scope?: RecurrentScope,
   ): Promise<void> {
     const existingTask = await this.repository.getById(id, []);
@@ -171,7 +171,7 @@ export default class TasksService extends BaseService<
 
   private async createTaskException(
     taskId: string,
-    occurrenceDate: Date | undefined,
+    occurrenceDate: string | undefined,
     overrides: Partial<InsertTask>,
   ): Promise<void> {
     if (!occurrenceDate) {
@@ -196,7 +196,7 @@ export default class TasksService extends BaseService<
   private async updateFollowingOccurrences(
     id: string,
     updates: Partial<InsertTask>,
-    occurrenceDate: Date | undefined,
+    occurrenceDate: string | undefined,
   ): Promise<void> {
     const existingTask = await this.repository.getById(id, []);
     if (!existingTask) {
@@ -205,10 +205,11 @@ export default class TasksService extends BaseService<
     if (!occurrenceDate || !existingTask.recurrency) {
       throw new Error("Ocurrence date is necessary");
     }
+    const occurrenceDateObj = new Date(occurrenceDate + "T00:00:00");
     const rrule = RRule.fromString(existingTask.recurrency);
     const newRrule = new RRule({
       ...rrule.options,
-      dtstart: occurrenceDate,
+      dtstart: occurrenceDateObj,
     });
     const newTaskData: InsertTask = {
       name: updates.name ?? existingTask.name,
@@ -222,7 +223,7 @@ export default class TasksService extends BaseService<
     };
     await super.create(newTaskData);
     if (occurrenceDate) {
-      const dayBeforeOccurrence = new Date(occurrenceDate);
+      const dayBeforeOccurrence = new Date(occurrenceDateObj);
       dayBeforeOccurrence.setDate(dayBeforeOccurrence.getDate() - 1);
       dayBeforeOccurrence.setHours(23, 59, 59, 999);
       const updatedRRule = this.addUntilToRRule(
@@ -249,7 +250,7 @@ export default class TasksService extends BaseService<
 
   public async delete(
     id: string,
-    occurrenceDate?: Date,
+    occurrenceDate?: string,
     scope?: RecurrentScope,
   ): Promise<void> {
     const existingTask = await this.repository.getById(id, []);
@@ -274,7 +275,7 @@ export default class TasksService extends BaseService<
 
   private async createTaskExceptionForDelete(
     taskId: string,
-    occurrenceDate: Date | undefined,
+    occurrenceDate: string | undefined,
   ): Promise<void> {
     if (!occurrenceDate) {
       throw new Error("occurrenceDate is required for current scope delete");
@@ -300,13 +301,14 @@ export default class TasksService extends BaseService<
 
   private async deleteFollowingOccurrences(
     id: string,
-    occurrenceDate: Date | undefined,
+    occurrenceDate: string | undefined,
   ): Promise<void> {
     if (!occurrenceDate) {
       throw new Error("occurrenceDate is required for following scope delete");
     }
 
-    const dayBeforeOccurrence = new Date(occurrenceDate);
+    const occurrenceDateObj = new Date(occurrenceDate + "T00:00:00");
+    const dayBeforeOccurrence = new Date(occurrenceDateObj);
     dayBeforeOccurrence.setDate(dayBeforeOccurrence.getDate() - 1);
     dayBeforeOccurrence.setHours(23, 59, 59, 999);
 
@@ -324,7 +326,7 @@ export default class TasksService extends BaseService<
 
   public async startExecution(
     id_task: string,
-    ocurrence_date: Date | null = null,
+    ocurrence_date: string | null = null,
     instant: boolean = true,
   ): Promise<string> {
     const task = await this.repository.getById(id_task, []);
@@ -354,7 +356,7 @@ export default class TasksService extends BaseService<
 
   public async getExecutionsByTaskAndDate(
     task_id: string,
-    ocurrence_date: Date | null = null,
+    ocurrence_date: string | null = null,
   ): Promise<TaskExecution[]> {
     const task = await this.getById(task_id, []);
     if (!task) throw new Error("Task not found");
@@ -425,8 +427,9 @@ export default class TasksService extends BaseService<
             )
           ) {
             const dueDate =
-              exception?.rescheduled_due ??
-              this.calculateDueDateForOccurrence(task.due_rule, occurrenceDate);
+              exception?.rescheduled_due
+                ? new Date(exception.rescheduled_due + "T00:00:00")
+                : this.calculateDueDateForOccurrence(task.due_rule, occurrenceDate);
             results.push({
               id: task.id,
               name: exception?.override_name ?? task.name,
@@ -507,7 +510,7 @@ export default class TasksService extends BaseService<
 
   public async getTaskOccurrence(
     taskId: string,
-    occurrenceDate?: Date | null,
+    occurrenceDate?: string | null,
   ): Promise<TaskOccurrenceDetail> {
     const task = await this.repository.getById(taskId, []);
     if (!task) {
@@ -542,7 +545,9 @@ export default class TasksService extends BaseService<
       name: exception?.override_name ?? task.name,
       location: exception?.override_location ?? task.location,
       body: exception?.override_body ?? task.body,
-      due_date: exception?.rescheduled_due ?? dueDate,
+      due_date: exception?.rescheduled_due
+        ? new Date(exception.rescheduled_due + "T00:00:00")
+        : dueDate,
       type: exception?.override_type ?? task.type,
       objective: exception?.override_objective ?? task.objective,
       progress,
@@ -553,15 +558,16 @@ export default class TasksService extends BaseService<
 
   private calculateDueDateForOccurrence(
     dueRule: string | null,
-    occurrenceDate: Date,
+    occurrenceDate: string,
   ): Date | null {
     if (!dueRule) return null;
-    return calculateDueDate(dueRule, occurrenceDate);
+    const occurrenceDateObj = new Date(occurrenceDate + "T00:00:00");
+    return calculateDueDate(dueRule, occurrenceDateObj);
   }
 
   private async calculateProgress(
     task: Task,
-    occurrenceDate: Date | null,
+    occurrenceDate: string | null,
   ): Promise<number> {
     const executions = occurrenceDate
       ? await this.getExecutionsByTaskAndDate(task.id, occurrenceDate)
@@ -597,7 +603,7 @@ export default class TasksService extends BaseService<
 
   private async getExceptionForOccurrence(
     taskId: string,
-    occurrenceDate: Date,
+    occurrenceDate: string,
   ): Promise<TaskException | null> {
     return await this.taskExceptionsRepository.findByTaskAndOccurrence(
       taskId,
@@ -605,13 +611,13 @@ export default class TasksService extends BaseService<
     );
   }
 
-  private getAllOccurrences(task: Task): Date[] {
+  private getAllOccurrences(task: Task): string[] {
     if (!task.recurrency) return [];
     const rule = RRule.fromString(task.recurrency);
     return rule.between(new Date("2000-01-01"), new Date(), true).map((date) => {
       const normalized = new Date(date);
       normalized.setUTCHours(0, 0, 0, 0);
-      return normalized;
+      return normalized.toISOString().split("T")[0] ?? "";
     });
   }
 
@@ -619,13 +625,13 @@ export default class TasksService extends BaseService<
     task: Task,
     startDate: Date,
     endDate: Date,
-  ): Date[] {
+  ): string[] {
     if (!task.recurrency) return [];
     const rule = RRule.fromString(task.recurrency);
     return rule.between(startDate, endDate, true).map((date) => {
       const normalized = new Date(date);
       normalized.setUTCHours(0, 0, 0, 0);
-      return normalized;
+      return normalized.toISOString().split("T")[0] ?? "";
     });
   }
 
@@ -636,9 +642,9 @@ export default class TasksService extends BaseService<
   }
 
   public async startMultipleExecutions(
-    tasks: { taskId: string; occurrenceDate: Date | null }[],
-  ): Promise<{ taskId: string; executionId: string; occurrenceDate: Date | null }[]> {
-    const results: { taskId: string; executionId: string; occurrenceDate: Date | null }[] = [];
+    tasks: { taskId: string; occurrenceDate: string | null }[],
+  ): Promise<{ taskId: string; executionId: string; occurrenceDate: string | null }[]> {
+    const results: { taskId: string; executionId: string; occurrenceDate: string | null }[] = [];
     const startTime = new Date();
 
     for (const { taskId, occurrenceDate } of tasks) {

@@ -21,7 +21,7 @@ export const taskSchema = z.object({
 });
 
 export const insertTaskExecutionsSchema = z.object({
-  ocurrence_date: z.date().nullable().default(null),
+  ocurrence_date: z.string().nullable().default(null),
   start_time: z.date().default(new Date()),
   end_time: z.date().nullable().default(null),
   task_id: z.uuid(),
@@ -33,8 +33,8 @@ export const taskExecutionsSchema = z.object({
 });
 
 export const insertTaskExceptionsSchema = z.object({
-  ocurrence_date: z.date().nullable().default(null),
-  rescheduled_due: z.date().nullable().default(null),
+  ocurrence_date: z.string().nullable().default(null),
+  rescheduled_due: z.string().nullable().default(null),
   override_name: z.string().nullable().default(null),
   override_body: z.string().nullable().default(null),
   override_location: z.string().nullable().default(null),
@@ -65,19 +65,19 @@ export interface TaskWithProgress {
   type: "by time" | "by executions" | "note";
   objective: number;
   progress: number;
-  occurrence_date: Date | null;
+  occurrence_date: string | null;
 }
 
 export interface TaskInRange {
   id: string;
   name: string;
   is_complete: boolean;
-  occurrence_date: Date | null;
+  occurrence_date: string | null;
 }
 
 export interface TaskOccurrenceDetail {
   id: string;
-  occurrence_date: Date | null;
+  occurrence_date: string | null;
   name: string;
   location: string | null;
   body: string | null;
@@ -98,5 +98,5 @@ export interface TaskWithListInfo {
   list_name: string;
   list_color: string;
   recurrency: string | null;
-  occurrence_date: Date | null;
+  occurrence_date: string | null;
 }

@@ -141,7 +141,7 @@ describe("TasksService", () => {
     });
 
     it("should create a task with relative due rule and calculate the date", async () => {
-      const today = new Date();
+      const today = new Date("2026-12-31");
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -240,7 +240,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.delete(id, occurrenceDate, "current");
 
       const task = await tasksService.getById(id);
@@ -261,7 +261,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.delete(id, occurrenceDate, "following");
 
       const task = await tasksService.getById(id, ["recurrency"]);
@@ -314,7 +314,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.update(
         id,
         { body: "Updated body" } as any,
@@ -339,7 +339,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.update(
         id,
         { name: "Updated Following" } as any,
@@ -363,7 +363,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.update(
         id,
         { body: "Test body", location: "First Location" } as any,
@@ -427,7 +427,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       const executionId = await tasksService.startExecution(
         taskId,
         occurrenceDate,
@@ -451,7 +451,7 @@ describe("TasksService", () => {
 
       const occurrence = await tasksService.getTaskOccurrence(
         taskId,
-        new Date("2026-12-31"),
+        "2026-12-31",
       );
 
       const executionId = await tasksService.startExecution(
@@ -562,7 +562,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.startExecution(taskId, occurrenceDate);
 
       const executions = await tasksService.getExecutionsByTaskAndDate(
@@ -609,10 +609,10 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31T00:00:00.000Z");
+      const occurrenceDate = "2026-12-31";
       await tasksService.startExecution(taskId, occurrenceDate);
 
-      const queryDate = new Date("2026-12-31T15:30:45.123Z");
+      const queryDate = "2026-12-31";
       const executions = await tasksService.getExecutionsByTaskAndDate(
         taskId,
         queryDate,
@@ -666,7 +666,7 @@ describe("TasksService", () => {
     it("should throw error for non-existent execution", async () => {
       await expect(
         tasksService.updateExecution("non-existent-id", {
-          end_time: new Date(),
+          end_time: "2026-12-31",
         } as any),
       ).rejects.toThrow("Execution not found");
     });
@@ -773,7 +773,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       const result = await tasksService.getTaskOccurrence(taskId, occurrenceDate);
 
       expect(result.name).toBe("Recurrent Task");
@@ -788,7 +788,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.update(
         taskId,
         { body: "Changed body" } as any,
@@ -807,7 +807,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.update(
         taskId,
         { name: "Changed Name" } as any,
@@ -827,7 +827,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.update(
         taskId,
         { location: "New location" } as any,
@@ -847,7 +847,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.update(
         taskId,
         { type: "note" as any } as any,
@@ -867,7 +867,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.update(
         taskId,
         { objective: 1 } as any,
@@ -887,11 +887,11 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       const rescheduledDue = new Date("2026-12-25");
 
       await taskExceptionsRepo.upsert(taskId, occurrenceDate, {
-        rescheduled_due: rescheduledDue,
+        rescheduled_due: "2026-12-25",
         override_body: null,
         override_location: null,
         override_type: null,
@@ -909,7 +909,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.delete(taskId, occurrenceDate, "current");
 
       await expect(
@@ -1001,7 +1001,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      await tasksService.startExecution(taskId, new Date("2025-01-01"));
+      await tasksService.startExecution(taskId, "2025-01-01");
 
       const results = await tasksService.getTasksBySection(sectionId);
       expect(results.length).toBeGreaterThan(0);
@@ -1017,12 +1017,12 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date("2026-12-31");
+      const occurrenceDate = "2026-12-31";
       await tasksService.delete(taskId, occurrenceDate, "current");
 
       const results = await tasksService.getTasksBySection(sectionId);
       const hasDeletedOccurrence = results.some(
-        (r) => r.occurrence_date && r.occurrence_date.getTime() === occurrenceDate.getTime(),
+        (r) => r.occurrence_date === occurrenceDate,
       );
       expect(hasDeletedOccurrence).toBe(false);
     });
@@ -1036,7 +1036,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date();
+      const occurrenceDate = "2026-12-31";
       await tasksService.startExecution(taskId, occurrenceDate);
       await tasksService.update(
         taskId,
@@ -1057,7 +1057,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = new Date();
+      const occurrenceDate = "2026-12-31";
       await tasksService.update(
         taskId,
         { type: "note" as any } as any,
@@ -1114,7 +1114,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const today = new Date();
+      const today = new Date("2026-12-31");
       const nextWeek = new Date(today);
       nextWeek.setDate(nextWeek.getDate() + 7);
 
@@ -1149,7 +1149,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      await tasksService.delete(taskId, new Date("2025-01-15"), "current");
+      await tasksService.delete(taskId, "2025-01-15", "current");
 
       const results = await tasksService.getTasksByDateRange(
         new Date("2025-01-01"),
@@ -1157,7 +1157,7 @@ describe("TasksService", () => {
       );
 
       const hasDeletedDate = results.some(
-        (r) => r.occurrence_date && r.occurrence_date.getDate() === 15,
+        (r) => r.occurrence_date === "2025-01-15",
       );
       expect(hasDeletedDate).toBe(false);
     });
@@ -1171,12 +1171,12 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const today = new Date();
-      await tasksService.startExecution(taskId, today);
+      const today = new Date("2026-12-31");
+      await tasksService.startExecution(taskId, "2026-12-31");
       await tasksService.update(
         taskId,
         { objective: 1 } as any,
-        today,
+        "2026-12-31",
         "current",
       );
 

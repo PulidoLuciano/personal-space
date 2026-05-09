@@ -431,7 +431,7 @@ function SectionsScreenContent() {
         text: "Go to task",
         onPress: () => {
           const params = randomTask.occurrence_date
-            ? `?occurrenceDate=${randomTask.occurrence_date.toISOString()}`
+            ? `?occurrenceDate=${randomTask.occurrence_date}`
             : "";
           router.push(
             `/lists/${listId}/${sectionId}/${randomTask.id}${params}`,
@@ -544,7 +544,7 @@ function SectionsScreenContent() {
                 }
                 onTaskPress={(task) => {
                   const params = task.occurrence_date
-                    ? `?occurrenceDate=${task.occurrence_date.toISOString()}`
+                    ? `?occurrenceDate=${task.occurrence_date}`
                     : "";
                   router.push(
                     `/lists/${listId}/${swt.section.id}/${task.id}${params}`,

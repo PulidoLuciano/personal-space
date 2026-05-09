@@ -28,7 +28,7 @@ interface RunningExecution {
   taskType: "by time" | "by executions" | "note";
   taskObjective: number;
   startTime: Date;
-  occurrenceDate: Date | null;
+  occurrenceDate: string | null;
 }
 
 interface GlobalStopwatchSheetProps {
@@ -90,7 +90,7 @@ export function GlobalStopwatchSheet({
           taskType: e.taskType as "by time" | "by executions" | "note",
           taskObjective: e.taskObjective,
           startTime: new Date(e.start_time),
-          occurrenceDate: e.ocurrence_date ? new Date(e.ocurrence_date) : null,
+          occurrenceDate: e.ocurrence_date ?? null,
         }))
       );
       if (executions.length > 0) {
@@ -216,10 +216,11 @@ export function GlobalStopwatchSheet({
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split("T")[0];
 
     const tasksWithOccurrences = selectedTasks.map((t) => ({
       taskId: t.id,
-      occurrenceDate: t.recurrency ? today : null,
+      occurrenceDate: t.recurrency ? todayStr : null,
     }));
 
     try {

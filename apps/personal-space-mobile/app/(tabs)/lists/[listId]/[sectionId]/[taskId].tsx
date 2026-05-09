@@ -198,7 +198,7 @@ function TaskDetailsScreenContent() {
     );
   };
 
-  const occDate = occurrenceDate ? new Date(occurrenceDate) : null;
+  const occDate = occurrenceDate ? occurrenceDate : null;
 
   const loadData = useCallback(async () => {
     if (!taskId || !core || !sectionId) return;
@@ -583,7 +583,7 @@ function TaskDetailsScreenContent() {
               <DetailItem
                 icon="clock"
                 label="Created at"
-                value={formatDate(task.occurrence_date)}
+                value={formatDate(new Date(task.occurrence_date + "T00:00:00"))}
                 colors={colors}
               />
             )}

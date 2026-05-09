@@ -75,15 +75,15 @@ export class TaskExecutionsRepository extends BaseRepository<TaskExecution> {
 
   public async findByTaskAndOccurrence(
     taskId: string,
-    ocurrenceDate: Date,
+    ocurrenceDate: string,
   ): Promise<TaskExecution[]> {
     const query = `
       SELECT * FROM task_executions 
-      WHERE task_id = ? AND DATE(ocurrence_date) = ? AND is_deleted = FALSE;
+      WHERE task_id = ? AND ocurrence_date = ? AND is_deleted = FALSE;
     `;
     return await this.db.query<TaskExecution>(query, [
       taskId,
-      `${ocurrenceDate.getUTCFullYear()}-${String(ocurrenceDate.getUTCMonth() + 1).padStart(2, "0")}-${String(ocurrenceDate.getUTCDate()).padStart(2, "0")}`,
+      ocurrenceDate,
     ]);
   }
 
@@ -107,22 +107,22 @@ export class TaskExceptionsRepository extends BaseRepository<TaskException> {
 
   public async findByTaskAndOccurrence(
     taskId: string,
-    ocurrenceDate: Date,
+    ocurrenceDate: string,
   ): Promise<TaskException | null> {
     const query = `
       SELECT * FROM task_exceptions 
-      WHERE task_id = ? AND DATE(ocurrence_date) = ?;
+      WHERE task_id = ? AND ocurrence_date = ?;
     `;
     const result = await this.db.queryOne<TaskException>(query, [
       taskId,
-      `${ocurrenceDate.getUTCFullYear()}-${String(ocurrenceDate.getUTCMonth() + 1).padStart(2, "0")}-${String(ocurrenceDate.getUTCDate()).padStart(2, "0")}`,
+      ocurrenceDate,
     ]);
     return result ?? null;
   }
 
   public async upsert(
     taskId: string,
-    ocurrenceDate: Date,
+    ocurrenceDate: string,
     data: Partial<InsertTaskException>,
   ): Promise<string> {
     const existing = await this.findByTaskAndOccurrence(taskId, ocurrenceDate);
@@ -132,7 +132,7 @@ export class TaskExceptionsRepository extends BaseRepository<TaskException> {
     }
     const createData = {
       task_id: taskId,
-      ocurrence_date: ocurrenceDate.toISOString(),
+      ocurrence_date: ocurrenceDate,
       ...data,
     } as Partial<TaskException>;
     return await this.create(createData);
