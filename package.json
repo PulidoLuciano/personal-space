@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "description": "This is the monorepo for personal-space a local-first personal organization app.",
   "scripts": {
+    "postinstall": "npm run build --workspace=personal-space-core",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

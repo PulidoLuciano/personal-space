@@ -18,7 +18,8 @@
         "monochromeImage": "./assets/images/dark-icon.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.lucianopulido.personalspacemobile"
     },
     "web": {
       "output": "static",
@@ -45,6 +46,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e861b5bd-4f08-4e0c-a3a3-983ec1d2e0d1"
+      }
     }
   }
 }
