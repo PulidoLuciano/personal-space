@@ -1,15 +1,15 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   View,
   TouchableOpacity,
   useColorScheme,
-  LayoutChangeEvent,
 } from "react-native";
 import Animated, {
   useAnimatedStyle,
   withTiming,
   runOnJS,
+  type SharedValue,
 } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { ThemedText } from "./themed-text";
@@ -36,8 +36,11 @@ interface SectionContainerProps {
   onSectionPress: () => void;
   onAddToStopwatch?: (task: TaskWithSection) => void;
   onDragStart?: (taskId: string) => void;
+  onDragMove?: (taskId: string, absoluteX: number, absoluteY: number) => void;
   onDragEnd?: (taskId: string, absoluteY: number) => void;
-  onLayout?: (sectionId: string, y: number, height: number) => void;
+  dragTranslateX?: SharedValue<number>;
+  dragTranslateY?: SharedValue<number>;
+  isDraggingSV?: SharedValue<boolean>;
   onRandomTask?: () => void;
   sectionY?: number;
   sectionHeight?: number;
@@ -56,8 +59,11 @@ export const SectionContainer = React.memo(function SectionContainer({
   onSectionPress,
   onAddToStopwatch,
   onDragStart,
+  onDragMove,
   onDragEnd,
-  onLayout,
+  dragTranslateX,
+  dragTranslateY,
+  isDraggingSV,
   onRandomTask,
   sectionY = 0,
   sectionHeight = 0,
@@ -66,13 +72,6 @@ export const SectionContainer = React.memo(function SectionContainer({
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const colors = Colors[isDark ? "dark" : "light"];
-  const viewRef = useRef<View>(null);
-
-  const handleLayout = (event: LayoutChangeEvent) => {
-    event.target.measureInWindow((x, y, width, height) => {
-      onLayout?.(section.id, y, height);
-    });
-  };
 
   const completedCount = tasks.filter((t) => t.progress >= t.objective).length;
   const totalCount = tasks.length;
@@ -93,8 +92,6 @@ export const SectionContainer = React.memo(function SectionContainer({
 
   return (
     <Animated.View
-      ref={viewRef}
-      onLayout={handleLayout}
       style={[
         styles.container,
         containerStyle,
@@ -236,7 +233,16 @@ export const SectionContainer = React.memo(function SectionContainer({
                     : undefined
                 }
                 onDragStart={() => onDragStart?.(task.id)}
+                onDragMove={
+                  onDragMove
+                    ? (absoluteX: number, absoluteY: number) =>
+                        onDragMove(task.id, absoluteX, absoluteY)
+                    : undefined
+                }
                 onDragEnd={(absoluteY) => onDragEnd?.(task.id, absoluteY)}
+                dragTranslateX={dragTranslateX}
+                dragTranslateY={dragTranslateY}
+                isDraggingSV={isDraggingSV}
               />
             ))
           )}

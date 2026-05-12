@@ -5,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   runOnJS,
+  type SharedValue,
 } from "react-native-reanimated";
 import React from "react";
 import { ThemedText } from "./themed-text";
@@ -25,7 +26,11 @@ interface TaskItemProps {
   onToggleComplete: () => void;
   onAddToStopwatch?: () => void;
   onDragStart?: () => void;
+  onDragMove?: (absoluteX: number, absoluteY: number) => void;
   onDragEnd?: (translationY: number) => void;
+  dragTranslateX?: SharedValue<number>;
+  dragTranslateY?: SharedValue<number>;
+  isDraggingSV?: SharedValue<boolean>;
 }
 
 export const TaskItem = React.memo(function TaskItem({
@@ -41,7 +46,11 @@ export const TaskItem = React.memo(function TaskItem({
   onToggleComplete,
   onAddToStopwatch,
   onDragStart,
+  onDragMove,
   onDragEnd,
+  dragTranslateX,
+  dragTranslateY,
+  isDraggingSV,
 }: TaskItemProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -57,6 +66,10 @@ export const TaskItem = React.memo(function TaskItem({
     onDragStart?.();
   };
 
+  const triggerDragMove = (absoluteX: number, absoluteY: number) => {
+    onDragMove?.(absoluteX, absoluteY);
+  };
+
   const triggerDragEnd = (translationY: number) => {
     onDragEnd?.(translationY);
   };
@@ -67,6 +80,7 @@ export const TaskItem = React.memo(function TaskItem({
       isDragging.value = true;
       scale.value = withSpring(1.05);
       zIndex.value = 100;
+      if (isDraggingSV) isDraggingSV.value = true;
       runOnJS(triggerDragStart)();
     });
 
@@ -83,6 +97,11 @@ export const TaskItem = React.memo(function TaskItem({
       if (isDragging.value) {
         translateX.value = event.translationX;
         translateY.value = event.translationY;
+        if (dragTranslateX) dragTranslateX.value = event.absoluteX;
+        if (dragTranslateY) dragTranslateY.value = event.absoluteY;
+        if (onDragMove) {
+          runOnJS(triggerDragMove)(event.absoluteX, event.absoluteY);
+        }
       }
     })
     .onEnd((event) => {
@@ -95,6 +114,7 @@ export const TaskItem = React.memo(function TaskItem({
       scale.value = withSpring(1);
       zIndex.value = 0;
       isDragging.value = false;
+      if (isDraggingSV) isDraggingSV.value = false;
     });
 
   const composedGesture = Gesture.Simultaneous(longPressGesture, panGesture);
@@ -107,6 +127,7 @@ export const TaskItem = React.memo(function TaskItem({
     ],
     zIndex: zIndex.value,
     shadowOpacity: isDragging.value ? 0.3 : 0.05,
+    opacity: isDragging.value ? 0 : 1,
   }));
 
   const formatDueDate = (dueDate: Date | null) => {

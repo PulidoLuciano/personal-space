@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -11,6 +11,10 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { CoreGate } from "@/components/CoreGate";
@@ -63,6 +67,20 @@ function SectionsScreenContent() {
     Record<string, { y: number; height: number }>
   >({});
   const [searchQuery, setSearchQuery] = useState("");
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewLayoutRef = useRef({ y: 0, height: 0 });
+  const scrollOffsetRef = useRef(0);
+  const autoScrollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const dragTranslateX = useSharedValue(0);
+  const dragTranslateY = useSharedValue(0);
+  const isDraggingSV = useSharedValue(false);
+  const floatingTaskStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: dragTranslateX.value - 20 },
+      { translateY: dragTranslateY.value - 30 },
+    ],
+    opacity: isDraggingSV.value ? 1 : 0,
+  }));
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const colors = Colors[isDark ? "dark" : "light"];
@@ -237,11 +255,50 @@ function SectionsScreenContent() {
     setMovingTaskId(task.id);
   };
 
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollTimerRef.current) {
+      clearInterval(autoScrollTimerRef.current);
+      autoScrollTimerRef.current = null;
+    }
+  }, []);
+
+  const startAutoScroll = useCallback((speed: number) => {
+    if (autoScrollTimerRef.current) return;
+    autoScrollTimerRef.current = setInterval(() => {
+      const newOffset = scrollOffsetRef.current + speed;
+      scrollViewRef.current?.scrollTo({ y: newOffset, animated: false });
+    }, 16);
+  }, []);
+
+  const handleDragMove = useCallback(
+    (_taskId: string, _absoluteX: number, absoluteY: number) => {
+      const { y, height } = scrollViewLayoutRef.current;
+      if (height === 0) return;
+
+      const topThreshold = 100;
+      const bottomThreshold = 100;
+      const topEdge = y + topThreshold;
+      const bottomEdge = y + height - bottomThreshold;
+
+      if (absoluteY < topEdge) {
+        const speed = Math.max(3, (topEdge - absoluteY) * 0.8);
+        startAutoScroll(-speed);
+      } else if (absoluteY > bottomEdge) {
+        const speed = Math.max(3, (absoluteY - bottomEdge) * 0.8);
+        startAutoScroll(speed);
+      } else {
+        stopAutoScroll();
+      }
+    },
+    [startAutoScroll, stopAutoScroll],
+  );
+
   const handleDragStart = (taskId: string) => {
     setMovingTaskId(taskId);
   };
 
   const handleDragEnd = async (taskId: string, absoluteY: number) => {
+    stopAutoScroll();
     if (!core) return;
 
     const taskToMove = sectionsWithTasks
@@ -252,9 +309,12 @@ function SectionsScreenContent() {
       return;
     }
 
+    const contentY =
+      absoluteY - scrollViewLayoutRef.current.y + scrollOffsetRef.current;
+
     let targetSectionId: string | null = null;
     for (const [sectionId, pos] of Object.entries(sectionPositions)) {
-      if (absoluteY >= pos.y && absoluteY <= pos.y + pos.height) {
+      if (contentY >= pos.y && contentY <= pos.y + pos.height) {
         targetSectionId = sectionId;
         break;
       }
@@ -416,6 +476,13 @@ function SectionsScreenContent() {
       );
   }, [sectionsWithTasks, searchQuery]);
 
+  const draggedTask = useMemo(() => {
+    if (!movingTaskId) return null;
+    return sectionsWithTasks
+      .flatMap((swt) => swt.tasks)
+      .find((t) => t.id === movingTaskId) ?? null;
+  }, [sectionsWithTasks, movingTaskId]);
+
   const handleRandomTask = (sectionId: string) => {
     const section = sectionsWithTasks.find(
       (swt) => swt.section.id === sectionId,
@@ -526,11 +593,30 @@ function SectionsScreenContent() {
         </View>
 
         <ScrollView
+          ref={scrollViewRef}
+          onLayout={(e) => {
+            e.target.measureInWindow((_x, y, _w, h) => {
+              scrollViewLayoutRef.current = { y, height: h };
+            });
+          }}
+          onScroll={(e) => {
+            scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
           style={styles.content}
           contentContainerStyle={styles.contentContainer}
         >
           {filteredSectionsWithTasks.map((swt) => (
-            <View key={swt.section.id}>
+            <View
+              key={swt.section.id}
+              onLayout={(e) => {
+                handleSectionLayout(
+                  swt.section.id,
+                  e.nativeEvent.layout.y,
+                  e.nativeEvent.layout.height,
+                );
+              }}
+            >
               <SectionContainer
                 section={swt.section}
                 tasks={swt.tasks}
@@ -552,11 +638,14 @@ function SectionsScreenContent() {
                 }}
                 onToggleTaskComplete={handleToggleTaskComplete}
                 onTaskLongPress={handleTaskLongPress}
-                onSectionPress={() => {}}
+                onSectionPress={() => handleSectionDrop(swt.section.id)}
                 onAddToStopwatch={handleAddToStopwatch}
                 onDragStart={handleDragStart}
+                onDragMove={handleDragMove}
                 onDragEnd={handleDragEnd}
-                onLayout={handleSectionLayout}
+                dragTranslateX={dragTranslateX}
+                dragTranslateY={dragTranslateY}
+                isDraggingSV={isDraggingSV}
                 onRandomTask={() => handleRandomTask(swt.section.id)}
               />
             </View>
@@ -572,6 +661,63 @@ function SectionsScreenContent() {
             />
           )}
         </ScrollView>
+
+        {draggedTask !== null && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.floatingTask,
+              { backgroundColor: colors.surface },
+              floatingTaskStyle,
+            ]}
+          >
+            <View style={styles.floatingTaskContent}>
+              {draggedTask.type === "by time" ? (
+                <View
+                  style={[
+                    styles.floatingIcon,
+                    { backgroundColor: colors.tintLight },
+                  ]}
+                >
+                  <IconSymbol size={14} name="timer" color={colors.tint} />
+                </View>
+              ) : draggedTask.type === "note" ? (
+                <View
+                  style={[
+                    styles.floatingIcon,
+                    { backgroundColor: colors.borderLight },
+                  ]}
+                >
+                  <IconSymbol
+                    size={14}
+                    name="note.text"
+                    color={colors.textSecondary}
+                  />
+                </View>
+              ) : (
+                <View
+                  style={[
+                    styles.floatingIcon,
+                    {
+                      borderColor: colors.border,
+                      borderWidth: 2,
+                      backgroundColor: "transparent",
+                    },
+                  ]}
+                />
+              )}
+              <View style={styles.floatingTaskText}>
+                <ThemedText
+                  type="default"
+                  numberOfLines={1}
+                  style={styles.floatingTaskName}
+                >
+                  {draggedTask.name}
+                </ThemedText>
+              </View>
+            </View>
+          </Animated.View>
+        )}
 
         <Modal
           visible={showCreateSectionModal}
@@ -741,5 +887,36 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     marginBottom: Spacing.xl,
     fontSize: 16,
+  },
+  floatingTask: {
+    position: "absolute",
+    zIndex: 9999,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+    minWidth: 200,
+    maxWidth: 300,
+  },
+  floatingTaskContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  floatingIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: BorderRadius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.md,
+  },
+  floatingTaskText: {
+    flex: 1,
+  },
+  floatingTaskName: {
+    fontSize: 15,
   },
 });
