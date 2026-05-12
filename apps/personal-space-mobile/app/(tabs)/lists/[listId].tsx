@@ -98,7 +98,7 @@ function SectionsScreenContent() {
         sectionsData.map(async (section) => {
           const tasks = await core.tasksService.getTasksBySection(
             section.id,
-            !listData.show_completed,
+            listData.show_completed ? undefined : false,
           );
           console.log(tasks);
           const tasksWithSection: TaskWithSection[] = tasks.map((task) => ({

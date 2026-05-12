@@ -402,12 +402,14 @@ export default class TasksService extends BaseService<
 
   public async getTasksBySection(
     sectionId: string,
-    onlyCompleted: boolean = false,
+    onlyCompleted?: boolean,
   ): Promise<TaskWithProgress[]> {
     const tasks = await this.repository.findBySection(sectionId);
     const results: TaskWithProgress[] = [];
-    const filterClause = (progress: number, objective: number) =>
-      onlyCompleted ? progress >= objective : progress < objective;
+    const filterClause = (progress: number, objective: number) => {
+      if (onlyCompleted === undefined) return true;
+      return onlyCompleted ? progress >= objective : progress < objective;
+    };
 
     for (const task of tasks) {
       if (this.isRecurrent(task)) {
