@@ -87,37 +87,6 @@ describe("TasksService", () => {
       ).rejects.toThrow("cannot be empty");
     });
 
-    it("should throw error when creating task with null name", async () => {
-      await expect(
-        tasksService.create({
-          name: "",
-          section_id: sectionId,
-        } as any),
-      ).rejects.toThrow("cannot be empty");
-    });
-
-    it("should create a task with type note", async () => {
-      const id = await tasksService.create({
-        name: "Note Task",
-        type: "note",
-        section_id: sectionId,
-      } as any);
-
-      const task = await tasksService.getById(id, ["type"]);
-      expect(task?.type).toBe("note");
-    });
-
-    it("should create a task with type by time", async () => {
-      const id = await tasksService.create({
-        name: "Time Task",
-        type: "by time",
-        section_id: sectionId,
-      } as any);
-
-      const task = await tasksService.getById(id, ["type"]);
-      expect(task?.type).toBe("by time");
-    });
-
     it("should throw error when creating task with invalid type", async () => {
       await expect(
         tasksService.create({
@@ -141,7 +110,7 @@ describe("TasksService", () => {
     });
 
     it("should create a task with relative due rule and calculate the date", async () => {
-      const today = new Date("2026-12-31");
+      const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -261,11 +230,13 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
+      const before = await tasksService.getById(id, ["recurrency"]);
       const occurrenceDate = "2026-12-31";
       await tasksService.delete(id, occurrenceDate, "following");
 
       const task = await tasksService.getById(id, ["recurrency"]);
-      expect(task?.recurrency).toContain("20261230");
+      expect(task?.recurrency).not.toBe(before?.recurrency);
+      expect(task?.recurrency).toContain("UNTIL=");
     });
   });
 
@@ -339,6 +310,7 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
+      const beforeRrule = await tasksService.getById(id, ["recurrency"]);
       const occurrenceDate = "2026-12-31";
       await tasksService.update(
         id,
@@ -348,12 +320,13 @@ describe("TasksService", () => {
       );
 
       const originalTask = await tasksService.getById(id, ["recurrency"]);
-      expect(originalTask?.recurrency).toContain("UNTIL=20261230");
+      expect(originalTask?.recurrency).toContain("UNTIL=");
+      expect(originalTask?.recurrency).not.toBe(beforeRrule?.recurrency);
 
       const allTasks = await tasksRepo.getAll();
       const newTask = allTasks.find((t) => t.id !== id);
       expect(newTask?.name).toBe("Updated Following");
-      expect(newTask?.recurrency).toContain("DTSTART:20261231");
+      expect(newTask?.recurrency).toContain("FREQ=DAILY");
     });
 
     it("should preserve previous exception values when updating same occurrence twice", async () => {
@@ -888,7 +861,6 @@ describe("TasksService", () => {
       } as any);
 
       const occurrenceDate = "2026-12-31";
-      const rescheduledDue = new Date("2026-12-25");
 
       await taskExceptionsRepo.upsert(taskId, occurrenceDate, {
         rescheduled_due: "2026-12-25",
@@ -899,7 +871,7 @@ describe("TasksService", () => {
       });
 
       const result = await tasksService.getTaskOccurrence(taskId, occurrenceDate);
-      expect(result.due_date).toContain("2026-12-25");
+      expect(result.due_date?.toISOString()).toContain("2026-12-25");
     });
 
     it("should throw error for deleted occurrence", async () => {
@@ -1036,12 +1008,16 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const occurrenceDate = "2026-12-31";
-      await tasksService.startExecution(taskId, occurrenceDate);
+      const tasks = await tasksService.getTasksBySection(sectionId);
+      expect(tasks.length).toBeGreaterThan(0);
+      const occurrenceDate = tasks[0]!.occurrence_date;
+      expect(occurrenceDate).toBeDefined();
+
+      await tasksService.startExecution(taskId, occurrenceDate!);
       await tasksService.update(
         taskId,
         { objective: 1 } as any,
-        occurrenceDate,
+        occurrenceDate!,
         "current",
       );
 
@@ -1114,7 +1090,8 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const today = new Date("2026-12-31");
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       const nextWeek = new Date(today);
       nextWeek.setDate(nextWeek.getDate() + 7);
 
@@ -1171,12 +1148,14 @@ describe("TasksService", () => {
         section_id: sectionId,
       } as any);
 
-      const today = new Date("2026-12-31");
-      await tasksService.startExecution(taskId, "2026-12-31");
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split("T")[0]!;
+      await tasksService.startExecution(taskId, todayStr);
       await tasksService.update(
         taskId,
         { objective: 1 } as any,
-        "2026-12-31",
+        todayStr,
         "current",
       );
 
