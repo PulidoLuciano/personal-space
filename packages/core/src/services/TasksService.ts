@@ -79,6 +79,21 @@ export default class TasksService extends BaseService<
     }
   }
 
+  private ensureDtstart(rruleString: string): string {
+    if (rruleString.includes("DTSTART=") || rruleString.includes("DTSTART:")) {
+      return rruleString;
+    }
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const month = String(now.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(now.getUTCDate()).padStart(2, "0");
+    const hours = String(now.getUTCHours()).padStart(2, "0");
+    const minutes = String(now.getUTCMinutes()).padStart(2, "0");
+    const seconds = String(now.getUTCSeconds()).padStart(2, "0");
+    const dtstart = `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+    return `DTSTART:${dtstart}\nRRULE:${rruleString}`;
+  }
+
   private prepareTaskData(data: InsertTask): InsertTask {
     const isRecurrent = this.isRecurrent(data);
     if (isRecurrent && data.due_rule)
@@ -90,8 +105,14 @@ export default class TasksService extends BaseService<
           : this.processDueRuleForUnique(data.due_rule)
         : null;
 
+    let recurrency = data.recurrency ?? null;
+    if (recurrency) {
+      recurrency = this.ensureDtstart(recurrency);
+    }
+
     return {
       ...data,
+      recurrency,
       due_rule: processedDueRule,
     };
   }
@@ -164,6 +185,10 @@ export default class TasksService extends BaseService<
       processedData.due_rule = willBeRecurrent
         ? data.due_rule
         : this.processDueRuleForUnique(data.due_rule);
+    }
+
+    if (processedData.recurrency) {
+      processedData.recurrency = this.ensureDtstart(processedData.recurrency);
     }
 
     return await this.repository.update(id, processedData);

@@ -1044,6 +1044,78 @@ describe("TasksService", () => {
       const results = await tasksService.getTasksBySection(sectionId);
       expect(results.length).toBeGreaterThan(0);
     });
+
+    it("should include uncompleted past occurrences for recurrent tasks", async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split("T")[0]!;
+
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayDateStr = yesterday.toISOString().split("T")[0]!;
+
+      const dtstartYesterday = `${yesterdayDateStr.replace(/-/g, "")}T000000Z`;
+      const rruleWithDtstart = `DTSTART:${dtstartYesterday}\nFREQ=DAILY;COUNT=5`;
+
+      const taskId = await tasksService.create({
+        name: "Daily Past Task",
+        type: "by executions",
+        objective: 1,
+        recurrency: rruleWithDtstart,
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.startExecution(taskId, todayStr);
+
+      const results = await tasksService.getTasksBySection(sectionId, false);
+
+      const todayResult = results.filter(
+        (r) => r.occurrence_date === todayStr,
+      );
+      expect(todayResult.length).toBe(0);
+
+      const yesterdayResult = results.filter(
+        (r) => r.occurrence_date === yesterdayDateStr,
+      );
+      expect(yesterdayResult.length).toBe(1);
+      expect(yesterdayResult[0]?.name).toBe("Daily Past Task");
+      expect(yesterdayResult[0]?.progress).toBe(0);
+    });
+
+    it("should show both current and past uncompleted occurrences", async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split("T")[0]!;
+
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayDateStr = yesterday.toISOString().split("T")[0]!;
+
+      const dtstartYesterday = `${yesterdayDateStr.replace(/-/g, "")}T000000Z`;
+      const rruleWithDtstart = `DTSTART:${dtstartYesterday}\nFREQ=DAILY;COUNT=5`;
+
+      const taskId = await tasksService.create({
+        name: "Daily Task",
+        type: "by executions",
+        objective: 1,
+        recurrency: rruleWithDtstart,
+        section_id: sectionId,
+      } as any);
+
+      const results = await tasksService.getTasksBySection(sectionId, false);
+
+      const occurrences = results.map((r) => r.occurrence_date);
+
+      expect(occurrences).toContain(todayStr);
+      expect(occurrences).toContain(yesterdayDateStr);
+
+      expect(results.length).toBeGreaterThanOrEqual(2);
+
+      for (const r of results) {
+        expect(r.name).toBe("Daily Task");
+        expect(r.progress).toBe(0);
+      }
+    });
   });
 
   describe("getTasksByDateRange", () => {
