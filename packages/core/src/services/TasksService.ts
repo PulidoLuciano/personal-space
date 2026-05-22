@@ -713,4 +713,32 @@ export default class TasksService extends BaseService<
   public async getRunningExecutions(): Promise<(TaskExecution & { taskName: string; taskType: string; taskObjective: number })[]> {
     return await this.taskExecutionsRepository.findRunningWithTaskInfo();
   }
+
+  public async getIncompleteOccurrenceDates(taskId: string): Promise<string[]> {
+    const task = await this.repository.getById(taskId, []);
+    if (!task || !this.isRecurrent(task)) return [];
+
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    const today = new Date();
+
+    const occurrenceDates = this.getOccurrencesInRange(
+      task,
+      ninetyDaysAgo,
+      today,
+    );
+
+    const incompleteDates: string[] = [];
+    for (const date of occurrenceDates) {
+      const exception = await this.getExceptionForOccurrence(taskId, date);
+      if (exception?.is_deleted) continue;
+
+      const progress = await this.calculateProgress(task, date);
+      if (progress < task.objective) {
+        incompleteDates.push(date);
+      }
+    }
+
+    return incompleteDates;
+  }
 }

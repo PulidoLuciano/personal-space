@@ -75,6 +75,10 @@ export function GlobalStopwatchSheet({
   const [runningExecutions, setRunningExecutions] = useState<RunningExecution[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [occurrenceDates, setOccurrenceDates] = useState<Record<string, string>>({});
+  const [datePickerTask, setDatePickerTask] = useState<TaskWithListInfo | null>(null);
+  const [availableOccurrenceDates, setAvailableOccurrenceDates] = useState<string[]>([]);
+  const [loadingDates, setLoadingDates] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -190,14 +194,25 @@ export function GlobalStopwatchSheet({
       return;
     }
     if (!selectedTasks.some((t) => t.id === task.id)) {
-      setSelectedTasks([...selectedTasks, task]);
+      setSelectedTasks(prev => [...prev, task]);
+      if (task.recurrency) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayStr = today.toISOString().split("T")[0];
+        setOccurrenceDates(prev => ({ ...prev, [task.id]: todayStr }));
+      }
     }
     setSearchQuery("");
     setSearchResults([]);
   };
 
   const handleRemoveSelected = (taskId: string) => {
-    setSelectedTasks(selectedTasks.filter((t) => t.id !== taskId));
+    setSelectedTasks(prev => prev.filter((t) => t.id !== taskId));
+    setOccurrenceDates(prev => {
+      const next = { ...prev };
+      delete next[taskId];
+      return next;
+    });
   };
 
   const handleStartStopwatch = async () => {
@@ -220,7 +235,7 @@ export function GlobalStopwatchSheet({
 
     const tasksWithOccurrences = selectedTasks.map((t) => ({
       taskId: t.id,
-      occurrenceDate: t.recurrency ? todayStr : null,
+      occurrenceDate: t.recurrency ? (occurrenceDates[t.id] ?? todayStr) : null,
     }));
 
     try {
@@ -284,6 +299,54 @@ export function GlobalStopwatchSheet({
 
   const formatExecutionTime = (startTime: Date): number => {
     return Math.floor((Date.now() - startTime.getTime()) / 1000);
+  };
+
+  const formatDisplayDate = (dateStr: string): string => {
+    const date = new Date(dateStr + "T00:00:00");
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.getTime() === today.getTime()) return `Today (${months[date.getMonth()]} ${date.getDate()})`;
+    if (date.getTime() === yesterday.getTime()) return `Yesterday (${months[date.getMonth()]} ${date.getDate()})`;
+    return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  };
+
+  const formatOccurrenceDateShort = (dateStr: string): string => {
+    const date = new Date(dateStr + "T00:00:00");
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.getTime() === today.getTime()) return "Today";
+    if (date.getTime() === yesterday.getTime()) return "Yesterday";
+    return `${months[date.getMonth()]} ${date.getDate()}`;
+  };
+
+  const handleOpenDatePicker = async (task: TaskWithListInfo) => {
+    if (!core) return;
+    setDatePickerTask(task);
+    setLoadingDates(true);
+    try {
+      const dates = await core.tasksService.getIncompleteOccurrenceDates(task.id);
+      setAvailableOccurrenceDates(dates);
+    } catch (error) {
+      console.error("Error fetching occurrence dates:", error);
+      setAvailableOccurrenceDates([]);
+    } finally {
+      setLoadingDates(false);
+    }
+  };
+
+  const handleSelectOccurrenceDate = (taskId: string, date: string) => {
+    setOccurrenceDates(prev => ({ ...prev, [taskId]: date }));
+    setDatePickerTask(null);
+    setAvailableOccurrenceDates([]);
   };
 
   if (!visible) return null;
@@ -512,6 +575,20 @@ export function GlobalStopwatchSheet({
                             {task.section_name}
                           </ThemedText>
                         </View>
+                        {!!task.recurrency && (
+                          <TouchableOpacity
+                            style={styles.occurrenceDateRow}
+                            onPress={() => handleOpenDatePicker(task)}
+                          >
+                            <IconSymbol size={12} name="calendar" color={colors.tint} />
+                            <ThemedText type="subtitle" style={{ color: colors.tint, fontSize: 12 }}>
+                              {occurrenceDates[task.id]
+                                ? formatOccurrenceDateShort(occurrenceDates[task.id])
+                                : "Select date"}
+                            </ThemedText>
+                            <IconSymbol size={10} name="chevron.right" color={colors.tint} />
+                          </TouchableOpacity>
+                        )}
                       </View>
                     </View>
                     <TouchableOpacity
@@ -523,6 +600,71 @@ export function GlobalStopwatchSheet({
                   </View>
                 ))}
               </View>
+            </View>
+          )}
+
+          {datePickerTask && (
+            <View style={[styles.datePickerOverlay, { backgroundColor: colors.surface }]}>
+              <View style={styles.datePickerHeader}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setDatePickerTask(null);
+                    setAvailableOccurrenceDates([]);
+                  }}
+                >
+                  <IconSymbol size={20} name="chevron.left" color={colors.tint} />
+                </TouchableOpacity>
+                <ThemedText type="defaultSemiBold" numberOfLines={1} style={styles.datePickerTitle}>
+                  Select occurrence
+                </ThemedText>
+                <View style={{ width: 20 }} />
+              </View>
+              {loadingDates ? (
+                <View style={styles.datePickerLoading}>
+                  <ThemedText type="subtitle" style={{ color: colors.textSecondary }}>
+                    Loading occurrences...
+                  </ThemedText>
+                </View>
+              ) : availableOccurrenceDates.length === 0 ? (
+                <View style={styles.datePickerEmpty}>
+                  <ThemedText type="subtitle" style={{ color: colors.textSecondary }}>
+                    No incomplete occurrences found
+                  </ThemedText>
+                </View>
+              ) : (
+                <FlatList
+                  data={availableOccurrenceDates}
+                  keyExtractor={(item) => item}
+                  renderItem={({ item }) => {
+                    const isSelected = occurrenceDates[datePickerTask.id] === item;
+                    return (
+                      <TouchableOpacity
+                        style={[
+                          styles.dateOption,
+                          {
+                            backgroundColor: isSelected ? colors.tintLight : "transparent",
+                            borderColor: colors.border,
+                          },
+                        ]}
+                        onPress={() => handleSelectOccurrenceDate(datePickerTask.id, item)}
+                      >
+                        <Text
+                          style={[
+                            styles.dateOptionText,
+                            { color: isSelected ? colors.tint : colors.text },
+                          ]}
+                        >
+                          {formatDisplayDate(item)}
+                        </Text>
+                        {isSelected && (
+                          <IconSymbol size={16} name="checkmark" color={colors.tint} />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  }}
+                  style={styles.datePickerList}
+                />
+              )}
             </View>
           )}
         </View>
@@ -756,5 +898,59 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+  },
+  occurrenceDateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+    gap: 4,
+  },
+  datePickerOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    paddingTop: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    zIndex: 10,
+  },
+  datePickerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.lg,
+  },
+  datePickerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 17,
+  },
+  datePickerLoading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  datePickerEmpty: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  datePickerList: {
+    flex: 1,
+  },
+  dateOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    marginBottom: Spacing.sm,
+  },
+  dateOptionText: {
+    fontSize: 15,
   },
 });

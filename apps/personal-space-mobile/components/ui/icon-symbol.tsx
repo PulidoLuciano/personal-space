@@ -6,7 +6,7 @@ import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
 type IconMapping = Partial<Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>> & Record<string, ComponentProps<typeof MaterialIcons>['name']>;
-export type IconSymbolName = SymbolViewProps['name'] | 'checklist' | 'list.bullet' | 'checkmark' | 'pencil' | 'trash' | 'archive' | 'eye' | 'eye.slash' | 'note.text' | 'timer' | 'play.fill' | 'stop.fill' | 'magnifyingglass' | 'xmark' | 'xmark.circle.fill' | 'waveform' | 'plus.circle' | 'exclamationmark.triangle' | 'arrow.2.circlepath' | 'checkmark.circle' | 'mappin' | 'calendar' | 'clock' | 'repeat';
+export type IconSymbolName = SymbolViewProps['name'] | 'checklist' | 'list.bullet' | 'checkmark' | 'pencil' | 'trash' | 'archive' | 'eye' | 'eye.slash' | 'note.text' | 'timer' | 'play.fill' | 'stop.fill' | 'magnifyingglass' | 'xmark' | 'xmark.circle.fill' | 'waveform' | 'plus.circle' | 'exclamationmark.triangle' | 'arrow.2.circlepath' | 'checkmark.circle' | 'mappin' | 'calendar' | 'clock' | 'repeat' | 'chevron.left';
 
 /**
  * Add your SF Symbols to Material Icons mappings here.
@@ -17,6 +17,7 @@ const MAPPING = {
   'house.fill': 'home',
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
+  'chevron.left': 'chevron-left',
   'chevron.right': 'chevron-right',
   'chevron.down': 'keyboard-arrow-down',
   'checklist': 'checklist',

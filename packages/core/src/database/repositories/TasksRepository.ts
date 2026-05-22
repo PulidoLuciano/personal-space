@@ -50,6 +50,8 @@ export class TasksRepository extends BaseRepository<Task> {
       JOIN lists l ON s.list_id = l.id
       WHERE t.is_deleted = FALSE 
         AND t.name LIKE ?
+        AND s.is_deleted = FALSE
+        AND l.is_deleted = FALSE
         AND l.is_archived = FALSE
       ORDER BY t.name ASC
       LIMIT 50;
