@@ -35,6 +35,7 @@ interface GlobalStopwatchSheetProps {
   visible: boolean;
   onClose: () => void;
   initialTaskId?: string | null;
+  initialOccurrenceDate?: string | null;
 }
 
 const getTaskTypeIcon = (type: "by time" | "by executions" | "note") => {
@@ -63,6 +64,7 @@ export function GlobalStopwatchSheet({
   visible,
   onClose,
   initialTaskId,
+  initialOccurrenceDate,
 }: GlobalStopwatchSheetProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -146,6 +148,16 @@ export function GlobalStopwatchSheet({
             occurrence_date: null,
           };
           setSelectedTasks([...selectedTasks, taskWithListInfo]);
+
+          if (task.recurrency) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayStr = today.toISOString().split("T")[0];
+            setOccurrenceDates(prev => ({
+              ...prev,
+              [task.id]: initialOccurrenceDate ?? todayStr,
+            }));
+          }
         }
       } catch (error) {
         console.error("Error loading initial task:", error);
@@ -153,7 +165,7 @@ export function GlobalStopwatchSheet({
     };
 
     loadInitialTask();
-  }, [visible, initialTaskId, core]);
+  }, [visible, initialTaskId, initialOccurrenceDate, core]);
 
   useEffect(() => {
     if (isRunning) {

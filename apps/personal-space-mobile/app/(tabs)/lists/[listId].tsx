@@ -794,6 +794,7 @@ function SectionsScreenContent() {
             setStopwatchInitialTask(null);
           }}
           initialTaskId={stopwatchInitialTask?.id ?? null}
+          initialOccurrenceDate={stopwatchInitialTask?.occurrence_date ?? null}
         />
       </ThemedView>
     </GestureHandlerRootView>

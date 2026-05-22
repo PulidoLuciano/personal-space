@@ -16,6 +16,7 @@ import { IconSymbol } from "./ui/icon-symbol";
 interface TaskItemProps {
   name: string;
   dueDate?: Date | null;
+  occurrenceDate?: string | null;
   isCompleted: boolean;
   isMoving?: boolean;
   taskType?: "by time" | "by executions" | "note";
@@ -36,6 +37,7 @@ interface TaskItemProps {
 export const TaskItem = React.memo(function TaskItem({
   name,
   dueDate,
+  occurrenceDate,
   isCompleted,
   isMoving = false,
   taskType = "note",
@@ -143,6 +145,19 @@ export const TaskItem = React.memo(function TaskItem({
     return dueDate.toLocaleDateString();
   };
 
+  const formatOccurrenceLabel = (dateStr: string): string => {
+    const date = new Date(dateStr + "T00:00:00");
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.getTime() === today.getTime()) return "Today";
+    if (date.getTime() === yesterday.getTime()) return "Yesterday";
+    return `${months[date.getMonth()]} ${date.getDate()}`;
+  };
+
   const dueDateText = dueDate ? formatDueDate(dueDate) : null;
   const isOverdue = dueDateText === "Overdue";
 
@@ -240,6 +255,13 @@ export const TaskItem = React.memo(function TaskItem({
           >
             {name}
           </ThemedText>
+          {!!occurrenceDate && (
+            <View style={[styles.occurrenceBadge, { backgroundColor: colors.tintLight }]}>
+              <ThemedText type="subtitle" style={[styles.occurrenceText, { color: colors.tint }]}>
+                {formatOccurrenceLabel(occurrenceDate)}
+              </ThemedText>
+            </View>
+          )}
           {dueDateText && (
             <View style={[
               styles.dueDateBadge, 
@@ -363,6 +385,14 @@ const styles = StyleSheet.create({
   completedText: {
     textDecorationLine: "line-through",
     opacity: 0.5,
+  },
+  occurrenceBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.xs,
+  },
+  occurrenceText: {
+    fontSize: 12,
   },
   dueDateBadge: {
     paddingHorizontal: Spacing.sm,

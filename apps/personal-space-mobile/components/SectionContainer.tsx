@@ -219,6 +219,7 @@ export const SectionContainer = React.memo(function SectionContainer({
                 key={task.id}
                 name={task.name}
                 dueDate={task.due_date}
+                occurrenceDate={task.occurrence_date}
                 isCompleted={task.progress >= task.objective}
                 isMoving={task.id === movingTaskId}
                 taskType={task.type}
