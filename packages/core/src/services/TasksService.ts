@@ -428,13 +428,18 @@ export default class TasksService extends BaseService<
   public async getTasksBySection(
     sectionId: string,
     onlyCompleted?: boolean,
+    searchTerm?: string,
+    includeBody?: boolean,
   ): Promise<TaskWithProgress[]> {
-    const tasks = await this.repository.findBySection(sectionId);
+    const tasks = searchTerm
+      ? await this.repository.searchBySection(sectionId, searchTerm)
+      : await this.repository.findBySection(sectionId);
     const results: TaskWithProgress[] = [];
     const filterClause = (progress: number, objective: number) => {
       if (onlyCompleted === undefined) return true;
       return onlyCompleted ? progress >= objective : progress < objective;
     };
+    const shouldIncludeBody = includeBody !== false;
 
     for (const task of tasks) {
       if (this.isRecurrent(task)) {
@@ -460,7 +465,9 @@ export default class TasksService extends BaseService<
             results.push({
               id: task.id,
               name: exception?.override_name ?? task.name,
-              body: exception?.override_body ?? task.body ?? null,
+              body: shouldIncludeBody
+                ? (exception?.override_body ?? task.body ?? null)
+                : null,
               due_date: dueDate,
               type: exception?.override_type ?? task.type,
               objective: exception?.override_objective ?? task.objective,
@@ -475,7 +482,7 @@ export default class TasksService extends BaseService<
           results.push({
             id: task.id,
             name: task.name,
-            body: task.body ?? null,
+            body: shouldIncludeBody ? (task.body ?? null) : null,
             due_date: task.due_rule ? new Date(task.due_rule) : null,
             type: task.type,
             objective: task.objective,

@@ -37,6 +37,21 @@ export class TasksRepository extends BaseRepository<Task> {
     return await this.db.query<Task>(query, [sectionId]);
   }
 
+  public async searchBySection(
+    sectionId: string,
+    searchTerm: string,
+  ): Promise<Task[]> {
+    const query = `
+      SELECT * FROM tasks 
+      WHERE section_id = ? AND is_deleted = FALSE AND (name LIKE ? OR body LIKE ?);
+    `;
+    return await this.db.query<Task>(query, [
+      sectionId,
+      `%${searchTerm}%`,
+      `%${searchTerm}%`,
+    ]);
+  }
+
   public async searchWithListInfo(searchTerm: string): Promise<TaskWithListInfo[]> {
     const query = `
       SELECT 

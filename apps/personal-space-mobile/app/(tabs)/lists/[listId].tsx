@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -85,7 +85,7 @@ function SectionsScreenContent() {
   const isDark = colorScheme === "dark";
   const colors = Colors[isDark ? "dark" : "light"];
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (searchTerm?: string) => {
     if (!listId || !core) return;
     try {
       const [listData, sectionsData] = await Promise.all([
@@ -99,6 +99,8 @@ function SectionsScreenContent() {
           const tasks = await core.tasksService.getTasksBySection(
             section.id,
             listData.show_completed ? undefined : false,
+            searchTerm || undefined,
+            false,
           );
           console.log(tasks);
           const tasksWithSection: TaskWithSection[] = tasks.map((task) => ({
@@ -118,16 +120,23 @@ function SectionsScreenContent() {
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
-    }, [loadData]),
+      loadData(searchQuery.trim() || undefined);
+    }, [loadData, searchQuery]),
   );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadData(searchQuery.trim() || undefined);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, loadData]);
 
   const handleToggleShowCompleted = async () => {
     if (!listId || !list || !core) return;
     try {
       await core.listsService.toggleShowCompleted(listId);
       setList({ ...list, show_completed: !list.show_completed });
-      loadData();
+      loadData(searchQuery.trim() || undefined);
     } catch (error) {
       console.error("Error toggling show completed:", error);
       showErrorAlert(error, "Failed to update settings");
@@ -146,7 +155,7 @@ function SectionsScreenContent() {
       });
       setShowCreateSectionModal(false);
       setNewSectionName("");
-      loadData();
+      loadData(searchQuery.trim() || undefined);
     } catch (error) {
       console.error("Error creating section:", error);
       showErrorAlert(error, "Failed to create section");
@@ -170,7 +179,7 @@ function SectionsScreenContent() {
       await core.tasksService.create({ ...taskData, body: null });
       setShowCreateTaskModal(false);
       setSelectedSectionId(null);
-      loadData();
+      loadData(searchQuery.trim() || undefined);
     } catch (error) {
       console.error("Error creating task:", error);
       showErrorAlert(error, "Failed to create task");
@@ -209,10 +218,10 @@ function SectionsScreenContent() {
             true,
           );
         }
-        loadData();
+        loadData(searchQuery.trim() || undefined);
       } catch (error) {
         console.error("Error toggling task:", error);
-        loadData();
+        loadData(searchQuery.trim() || undefined);
       }
       return;
     }
@@ -244,10 +253,10 @@ function SectionsScreenContent() {
           await core.tasksService.stopExecution(incompleteExecution.id);
         }
       }
-      loadData();
+      loadData(searchQuery.trim() || undefined);
     } catch (error) {
       console.error("Error toggling task:", error);
-      loadData();
+      loadData(searchQuery.trim() || undefined);
     }
   };
 
@@ -346,7 +355,7 @@ function SectionsScreenContent() {
       });
     } catch (error) {
       console.error("Error moving task:", error);
-      loadData();
+      loadData(searchQuery.trim() || undefined);
     }
   };
 
@@ -393,7 +402,7 @@ function SectionsScreenContent() {
       });
     } catch (error) {
       console.error("Error moving task:", error);
-      loadData();
+      loadData(searchQuery.trim() || undefined);
     }
   };
 
@@ -420,7 +429,7 @@ function SectionsScreenContent() {
       setShowEditSectionModal(false);
       setEditSectionName("");
       setEditingSectionId(null);
-      loadData();
+      loadData(searchQuery.trim() || undefined);
     } catch (error) {
       console.error("Error editing section:", error);
       showErrorAlert(error, "Failed to edit section");
@@ -440,7 +449,7 @@ function SectionsScreenContent() {
             if (!core) return;
             try {
               await core.sectionsService.delete(sectionId);
-              loadData();
+              loadData(searchQuery.trim() || undefined);
             } catch (error) {
               console.error("Error deleting section:", error);
               showErrorAlert(error, "Failed to delete section");
@@ -460,20 +469,11 @@ function SectionsScreenContent() {
     if (!searchQuery.trim()) return sectionsWithTasks;
 
     const query = searchQuery.toLowerCase();
-    return sectionsWithTasks
-      .map((swt) => ({
-        ...swt,
-        tasks: swt.tasks.filter(
-          (task) =>
-            task.name.toLowerCase().includes(query) ||
-            (task.body && task.body.toLowerCase().includes(query)),
-        ),
-      }))
-      .filter(
-        (swt) =>
-          swt.tasks.length > 0 ||
-          swt.section.name.toLowerCase().includes(query),
-      );
+    return sectionsWithTasks.filter(
+      (swt) =>
+        swt.tasks.length > 0 ||
+        swt.section.name.toLowerCase().includes(query),
+    );
   }, [sectionsWithTasks, searchQuery]);
 
   const draggedTask = useMemo(() => {

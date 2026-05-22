@@ -1116,6 +1116,113 @@ describe("TasksService", () => {
         expect(r.progress).toBe(0);
       }
     });
+
+    it("should filter tasks by searchTerm matching name", async () => {
+      await tasksService.create({
+        name: "Buy groceries",
+        type: "by executions",
+        objective: 1,
+        section_id: sectionId,
+      } as any);
+      await tasksService.create({
+        name: "Read book",
+        type: "by executions",
+        objective: 1,
+        section_id: sectionId,
+      } as any);
+
+      const results = await tasksService.getTasksBySection(
+        sectionId,
+        undefined,
+        "groceries",
+      );
+      expect(results.length).toBe(1);
+      expect(results[0]?.name).toBe("Buy groceries");
+    });
+
+    it("should filter tasks by searchTerm matching body", async () => {
+      await tasksService.create({
+        name: "Task A",
+        body: "description with keyword XYZ",
+        type: "by executions",
+        objective: 1,
+        section_id: sectionId,
+      } as any);
+      await tasksService.create({
+        name: "Task B",
+        body: "something else",
+        type: "by executions",
+        objective: 1,
+        section_id: sectionId,
+      } as any);
+
+      const results = await tasksService.getTasksBySection(
+        sectionId,
+        undefined,
+        "XYZ",
+      );
+      expect(results.length).toBe(1);
+      expect(results[0]?.name).toBe("Task A");
+    });
+
+    it("should return body as null when includeBody is false", async () => {
+      await tasksService.create({
+        name: "Task with body",
+        body: "some description",
+        type: "by executions",
+        objective: 1,
+        section_id: sectionId,
+      } as any);
+
+      const results = await tasksService.getTasksBySection(
+        sectionId,
+        undefined,
+        undefined,
+        false,
+      );
+      expect(results.length).toBe(1);
+      expect(results[0]?.name).toBe("Task with body");
+      expect(results[0]?.body).toBeNull();
+    });
+
+    it("should return body when includeBody is true (default)", async () => {
+      await tasksService.create({
+        name: "Task with body",
+        body: "some description",
+        type: "by executions",
+        objective: 1,
+        section_id: sectionId,
+      } as any);
+
+      const results = await tasksService.getTasksBySection(sectionId);
+      expect(results.length).toBe(1);
+      expect(results[0]?.body).toBe("some description");
+    });
+
+    it("should combine searchTerm with onlyCompleted filter", async () => {
+      const taskId = await tasksService.create({
+        name: "Complete task",
+        type: "by executions",
+        objective: 1,
+        section_id: sectionId,
+      } as any);
+      await tasksService.create({
+        name: "Incomplete task",
+        type: "by executions",
+        objective: 2,
+        section_id: sectionId,
+      } as any);
+
+      await tasksService.startExecution(taskId);
+
+      const results = await tasksService.getTasksBySection(
+        sectionId,
+        true,
+        "task",
+      );
+      expect(results.length).toBe(1);
+      expect(results[0]?.name).toBe("Complete task");
+    });
   });
 
   describe("getTasksByDateRange", () => {
