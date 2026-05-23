@@ -115,6 +115,22 @@ export class TaskExecutionsRepository extends BaseRepository<TaskExecution> {
     `;
     return await this.db.query<TaskExecution & { taskName: string; taskType: string; taskObjective: number }>(query, []);
   }
+
+  public async findByTaskAndOccurrences(
+    taskId: string,
+    occurrenceDates: string[],
+  ): Promise<TaskExecution[]> {
+    if (occurrenceDates.length === 0) return [];
+    const placeholders = occurrenceDates.map(() => "?").join(", ");
+    const query = `
+      SELECT * FROM task_executions 
+      WHERE task_id = ? AND ocurrence_date IN (${placeholders}) AND is_deleted = FALSE;
+    `;
+    return await this.db.query<TaskExecution>(query, [
+      taskId,
+      ...occurrenceDates,
+    ]);
+  }
 }
 
 export class TaskExceptionsRepository extends BaseRepository<TaskException> {
@@ -135,6 +151,14 @@ export class TaskExceptionsRepository extends BaseRepository<TaskException> {
       ocurrenceDate,
     ]);
     return result ?? null;
+  }
+
+  public async findByTask(taskId: string): Promise<TaskException[]> {
+    const query = `
+      SELECT * FROM task_exceptions 
+      WHERE task_id = ?;
+    `;
+    return await this.db.query<TaskException>(query, [taskId]);
   }
 
   public async upsert(

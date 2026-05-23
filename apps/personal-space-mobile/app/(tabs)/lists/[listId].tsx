@@ -63,10 +63,12 @@ function SectionsScreenContent() {
   const [showStopwatchSheet, setShowStopwatchSheet] = useState(false);
   const [stopwatchInitialTask, setStopwatchInitialTask] =
     useState<TaskWithSection | null>(null);
-  const [sectionPositions, setSectionPositions] = useState<
+  const sectionPositionsRef = useRef<
     Record<string, { y: number; height: number }>
   >({});
   const [searchQuery, setSearchQuery] = useState("");
+  const searchRef = useRef(searchQuery);
+  searchRef.current = searchQuery;
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollViewLayoutRef = useRef({ y: 0, height: 0 });
   const scrollOffsetRef = useRef(0);
@@ -102,7 +104,6 @@ function SectionsScreenContent() {
             searchTerm || undefined,
             false,
           );
-          console.log(tasks);
           const tasksWithSection: TaskWithSection[] = tasks.map((task) => ({
             ...task,
             section_id: section.id,
@@ -120,8 +121,8 @@ function SectionsScreenContent() {
 
   useFocusEffect(
     useCallback(() => {
-      loadData(searchQuery.trim() || undefined);
-    }, [loadData, searchQuery]),
+      loadData(searchRef.current.trim() || undefined);
+    }, [loadData]),
   );
 
   useEffect(() => {
@@ -218,7 +219,6 @@ function SectionsScreenContent() {
             true,
           );
         }
-        loadData(searchQuery.trim() || undefined);
       } catch (error) {
         console.error("Error toggling task:", error);
         loadData(searchQuery.trim() || undefined);
@@ -253,7 +253,6 @@ function SectionsScreenContent() {
           await core.tasksService.stopExecution(incompleteExecution.id);
         }
       }
-      loadData(searchQuery.trim() || undefined);
     } catch (error) {
       console.error("Error toggling task:", error);
       loadData(searchQuery.trim() || undefined);
@@ -321,12 +320,25 @@ function SectionsScreenContent() {
     const contentY =
       absoluteY - scrollViewLayoutRef.current.y + scrollOffsetRef.current;
 
+    // Find target section using measured positions + estimation for unmeasured ones
+    const measured = sectionPositionsRef.current;
+    const avgHeight =
+      Object.values(measured).length > 0
+        ? Object.values(measured).reduce((s, p) => s + p.height, 0) /
+          Object.values(measured).length
+        : 200;
+    let accumulatedY = 0;
     let targetSectionId: string | null = null;
-    for (const [sectionId, pos] of Object.entries(sectionPositions)) {
-      if (contentY >= pos.y && contentY <= pos.y + pos.height) {
-        targetSectionId = sectionId;
+
+    for (const swt of sectionsWithTasks) {
+      const pos = measured[swt.section.id];
+      const sectionY = pos ? pos.y : accumulatedY;
+      const sectionHeight = pos ? pos.height : avgHeight;
+      if (contentY >= sectionY && contentY <= sectionY + sectionHeight) {
+        targetSectionId = swt.section.id;
         break;
       }
+      accumulatedY = sectionY + sectionHeight;
     }
 
     if (!targetSectionId) {
@@ -355,6 +367,7 @@ function SectionsScreenContent() {
       });
     } catch (error) {
       console.error("Error moving task:", error);
+      console.error("Error moving task:", error);
       loadData(searchQuery.trim() || undefined);
     }
   };
@@ -364,10 +377,10 @@ function SectionsScreenContent() {
     y: number,
     height: number,
   ) => {
-    setSectionPositions((prev) => ({
-      ...prev,
+    sectionPositionsRef.current = {
+      ...sectionPositionsRef.current,
       [sectionId]: { y, height },
-    }));
+    };
   };
 
   const handleSectionDrop = async (targetSectionId: string) => {
@@ -460,10 +473,20 @@ function SectionsScreenContent() {
     );
   };
 
-  const handleAddToStopwatch = (task: TaskWithSection) => {
+  const handleAddToStopwatch = useCallback((task: TaskWithSection) => {
     setStopwatchInitialTask(task);
     setShowStopwatchSheet(true);
-  };
+  }, []);
+
+  const handleTaskPress = useCallback(
+    (task: TaskWithSection) => {
+      const params = task.occurrence_date
+        ? `?occurrenceDate=${task.occurrence_date}`
+        : "";
+      router.push(`/lists/${listId}/${task.section_id}/${task.id}${params}`);
+    },
+    [listId, router],
+  );
 
   const filteredSectionsWithTasks = useMemo(() => {
     if (!searchQuery.trim()) return sectionsWithTasks;
@@ -628,14 +651,7 @@ function SectionsScreenContent() {
                 onDeleteSection={() =>
                   handleDeleteSection(swt.section.id, swt.section.name)
                 }
-                onTaskPress={(task) => {
-                  const params = task.occurrence_date
-                    ? `?occurrenceDate=${task.occurrence_date}`
-                    : "";
-                  router.push(
-                    `/lists/${listId}/${swt.section.id}/${task.id}${params}`,
-                  );
-                }}
+                onTaskPress={handleTaskPress}
                 onToggleTaskComplete={handleToggleTaskComplete}
                 onTaskLongPress={handleTaskLongPress}
                 onSectionPress={() => handleSectionDrop(swt.section.id)}
@@ -868,7 +884,6 @@ const styles = StyleSheet.create({
   },
   content: { flex: 1 },
   contentContainer: { padding: Spacing.lg, paddingTop: 0 },
-  emptyContainer: { alignItems: "center", paddingTop: Spacing.xl * 2 },
   modalContainer: { flex: 1 },
   modalHeader: {
     flexDirection: "row",

@@ -138,6 +138,12 @@ async function createTasksTable(db: DBClient) {
       FOREIGN KEY (section_id) REFERENCES sections(id)
     )
   `);
+  await db.execute(
+    "CREATE INDEX IF NOT EXISTS idx_tasks_name ON tasks(name)",
+  );
+  await db.execute(
+    "CREATE INDEX IF NOT EXISTS idx_tasks_body ON tasks(body)",
+  );
 }
 
 async function createTaskExecutionsTable(db: DBClient) {

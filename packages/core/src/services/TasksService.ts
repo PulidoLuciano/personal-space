@@ -444,14 +444,34 @@ export default class TasksService extends BaseService<
     for (const task of tasks) {
       if (this.isRecurrent(task)) {
         const occurrences = this.getAllOccurrences(task);
-        for (const occurrenceDate of occurrences) {
-          const exception = await this.getExceptionForOccurrence(
+        const [allExceptions, allExecutions] = await Promise.all([
+          this.taskExceptionsRepository.findByTask(task.id),
+          this.taskExecutionsRepository.findByTaskAndOccurrences(
             task.id,
-            occurrenceDate,
-          );
+            occurrences,
+          ),
+        ]);
+        const exceptionsByDate = new Map(
+          allExceptions.map((e) => [e.ocurrence_date, e]),
+        );
+        const executionsByDate = new Map<string, TaskExecution[]>();
+        for (const date of occurrences) {
+          executionsByDate.set(date, []);
+        }
+        for (const exec of allExecutions) {
+          const date = exec.ocurrence_date ?? "";
+          executionsByDate.get(date)?.push(exec);
+        }
+
+        for (const occurrenceDate of occurrences) {
+          const exception = exceptionsByDate.get(occurrenceDate) ?? null;
           if (exception?.is_deleted) continue;
 
-          const progress = await this.calculateProgress(task, occurrenceDate);
+          const executions = executionsByDate.get(occurrenceDate) ?? [];
+          const progress = this.calculateProgressFromExecutions(
+            task.type,
+            executions,
+          );
           if (
             filterClause(
               progress,
@@ -607,7 +627,14 @@ export default class TasksService extends BaseService<
       ? await this.getExecutionsByTaskAndDate(task.id, occurrenceDate)
       : await this.getExecutionsForTaskWithoutOccurrence(task.id);
 
-    if (task.type === "by time") {
+    return this.calculateProgressFromExecutions(task.type, executions);
+  }
+
+  private calculateProgressFromExecutions(
+    taskType: string,
+    executions: TaskExecution[],
+  ): number {
+    if (taskType === "by time") {
       let totalTimeMs = 0;
       for (const exec of executions) {
         if (exec.end_time) {
@@ -619,7 +646,7 @@ export default class TasksService extends BaseService<
       return totalTimeMs / 1000;
     }
 
-    if (task.type === "by executions") {
+    if (taskType === "by executions") {
       const completedExecutions = executions.filter((e) => e.end_time !== null);
       return completedExecutions.length;
     }
