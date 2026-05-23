@@ -19,6 +19,41 @@ interface MarkdownEditorProps {
   onCancel: () => void;
 }
 
+const DARK_STYLES = `
+    body { background: #1c1c1e !important; }
+    .vditor { background: #1c1c1e !important; }
+    .vditor-toolbar { background: #2c2c2e !important; border-color: #3a3a3c !important; }
+    .vditor-content { background: #1c1c1e !important; }
+    .vditor-toolbar__item svg { fill: #ccc !important; }
+    .vditor-toolbar__item:hover { background: #3a3a3c !important; }
+    .vditor-reset * { color: #e5e5e7 !important; }
+    .vditor-wysiwyg { background: #1c1c1e !important; color: #e5e5e7 !important; }
+    .vditor-wysiwyg__block { color: #e5e5e7 !important; }
+    .vditor-wysiwyg p,
+    .vditor-wysiwyg h1,
+    .vditor-wysiwyg h2,
+    .vditor-wysiwyg h3,
+    .vditor-wysiwyg h4,
+    .vditor-wysiwyg h5,
+    .vditor-wysiwyg h6,
+    .vditor-wysiwyg li,
+    .vditor-wysiwyg td,
+    .vditor-wysiwyg th,
+    .vditor-wysiwyg blockquote,
+    .vditor-wysiwyg pre,
+    .vditor-wysiwyg code,
+    .vditor-wysiwyg span { color: #e5e5e7 !important; }
+    .vditor-ir__marker { color: #8e8e93 !important; }
+    .vditor-input { color: #e5e5e7 !important; background: #1c1c1e !important; }
+    .vditor-placeholder { color: #6b7280 !important; }
+    .vditor-toolbar__divider { border-left-color: #3a3a3c !important; }
+    .vditor-panel { background: #2c2c2e !important; border-color: #3a3a3c !important; }
+    .vditor-panel--arrow::before { background: #2c2c2e !important; border-color: #3a3a3c !important; }
+    .vditor-toolbar__item.vditor-toolbar__item--current { background: #3a3a3c !important; }
+    .vditor-preview { background: #1c1c1e !important; }
+    .vditor-preview__block { color: #e5e5e7 !important; }
+`;
+
 const HTML_TEMPLATE = `<!DOCTYPE html>
 <html>
 <head>
@@ -31,19 +66,11 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
   .vditor { height: 100vh !important; border: none !important; }
   .vditor-toolbar { background: #f8f9fa; border-bottom: 1px solid #e9ecef; }
   .vditor-content { background: #fff; }
-  @media (prefers-color-scheme: dark) {
-    body { background: #1c1c1e; }
-    .vditor-toolbar { background: #2c2c2e; border-color: #3a3a3c; }
-    .vditor-content { background: #1c1c1e; }
-    .vditor-toolbar__item svg { fill: #ccc; }
-    .vditor-toolbar__item:hover { background: #3a3a3c; }
-    .vditor-reset { color: #e5e5e7; }
-    .vditor-ir__marker { color: #8e8e93; }
-  }
+  __DARK_STYLES__
 </style>
 </head>
 <body>
-<div id="vditor"></div>
+<div id="vditor" __VDITOR_CLASS__></div>
 <script src="https://cdn.jsdelivr.net/npm/vditor@3.10.3/dist/index.min.js"></script>
 <script>
   var vditor = null;
@@ -70,6 +97,7 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
       cache: { enable: false },
       height: window.innerHeight,
       lang: 'en_US',
+      theme: '__VDITOR_THEME__',
       after: function() {
         isReady = true;
         if (pendingContent) {
@@ -127,12 +155,16 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-function getHtml(initialContent: string): string {
+function getHtml(initialContent: string, isDark: boolean): string {
   const escaped = initialContent
     .replace(/\\/g, "\\\\")
     .replace(/`/g, "\\`")
     .replace(/\$/g, "\\$");
-  return HTML_TEMPLATE.replace("__INITIAL_CONTENT__", `\`${escaped}\``);
+  return HTML_TEMPLATE
+    .replace("__DARK_STYLES__", isDark ? DARK_STYLES : "")
+    .replace("__VDITOR_CLASS__", isDark ? 'class="vditor--dark"' : "")
+    .replace("__VDITOR_THEME__", isDark ? "dark" : "classic")
+    .replace("__INITIAL_CONTENT__", `\`${escaped}\``);
 }
 
 export function MarkdownEditor({
@@ -194,7 +226,8 @@ export function MarkdownEditor({
         <View style={styles.editorContainer}>
           <WebView
             ref={webViewRef}
-            source={{ html: getHtml(initialValue) }}
+            source={{ html: getHtml(initialValue, isDark) }}
+            key={isDark ? "dark" : "light"}
             onMessage={handleMessage}
             style={styles.webview}
             javaScriptEnabled
