@@ -170,6 +170,7 @@ function SectionsScreenContent() {
     type: "by time" | "by executions" | "note";
     objective: number;
     recurrency: string | null;
+    start_time: string | null;
     section_id: string;
   }) => {
     if (!selectedSectionId || !core) {
@@ -195,7 +196,7 @@ function SectionsScreenContent() {
       const newSectionsWithTasks = sectionsWithTasks.map((swt) => ({
         ...swt,
         tasks: swt.tasks.map((t) =>
-          t.id === task.id
+          t.id === task.id && t.occurrence_date === task.occurrence_date
             ? { ...t, progress: isCompleted ? t.progress - 1 : t.progress + 1 }
             : t,
         ),
@@ -229,7 +230,7 @@ function SectionsScreenContent() {
     const newSectionsWithTasks = sectionsWithTasks.map((swt) => ({
       ...swt,
       tasks: swt.tasks.map((t) =>
-        t.id === task.id
+        t.id === task.id && t.occurrence_date === task.occurrence_date
           ? { ...t, progress: isCompleted ? 0 : t.objective }
           : t,
       ),

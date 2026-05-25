@@ -25,6 +25,7 @@ interface TaskFormData {
   objectiveUnit: "hours" | "minutes" | "seconds";
   recurrency: string;
   isRecurrent: boolean;
+  startTime: string;
 }
 
 interface TaskFormProps {
@@ -35,6 +36,7 @@ interface TaskFormProps {
     type: TaskType;
     objective: number;
     recurrency: string | null;
+    start_time: string | null;
     section_id: string;
   }) => void;
   sectionId: string;
@@ -46,6 +48,7 @@ interface TaskFormProps {
     type: TaskType;
     objective: number;
     recurrency: string | null;
+    start_time?: string | null;
   };
 }
 
@@ -53,6 +56,16 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const colors = isDark ? Colors.dark : Colors.light;
+
+  const getTodayDefault = () => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const dateStr = now.toISOString().split("T")[0];
+    const hours = "00";
+    const minutes = "00";
+    const seconds = "00";
+    return `${dateStr} ${hours}:${minutes}:${seconds}`;
+  };
 
   const [formData, setFormData] = useState<TaskFormData>(() => {
     if (initialData) {
@@ -71,6 +84,7 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
           objectiveValue = String(seconds);
         }
       }
+      const isRecurrent = !!initialData.recurrency;
       return {
         name: initialData.name,
         location: initialData.location ?? "",
@@ -79,7 +93,8 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
         objective: objectiveValue,
         objectiveUnit,
         recurrency: initialData.recurrency ?? "",
-        isRecurrent: !!initialData.recurrency,
+        isRecurrent,
+        startTime: initialData.start_time ?? (isRecurrent ? getTodayDefault() : ""),
       };
     }
     return {
@@ -91,6 +106,7 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
       objectiveUnit: "minutes",
       recurrency: "",
       isRecurrent: false,
+      startTime: "",
     };
   });
 
@@ -98,6 +114,8 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
   const [showDueRuleBuilder, setShowDueRuleBuilder] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
 
   const updateField = useCallback(
     <K extends keyof TaskFormData>(field: K, value: TaskFormData[K]) => {
@@ -142,6 +160,7 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
       type: formData.type,
       objective: objectiveValue,
       recurrency: formData.isRecurrent ? formData.recurrency || null : null,
+      start_time: formData.isRecurrent ? formData.startTime || null : null,
       section_id: sectionId,
     });
   }, [formData, onSubmit, sectionId]);
@@ -159,6 +178,19 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
   const clearDueRule = useCallback(() => {
     updateField("dueRule", "");
   }, [updateField]);
+
+  const clearStartTime = useCallback(() => {
+    updateField("startTime", "");
+  }, [updateField]);
+
+  const formatStartTime = useCallback((startTime: string): string => {
+    if (!startTime) return "";
+    const parts = startTime.split(" ");
+    if (parts.length < 2) return "";
+    const date = new Date(parts[0]);
+    const time = new Date(`2000-01-01 ${parts[1]}`);
+    return `${date.toLocaleDateString()} ${time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  }, []);
 
   const parseDueRule = (dueRule: string): { days: string; time: string } => {
     if (!dueRule) return { days: "", time: "23:59:59" };
@@ -381,6 +413,57 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
         </View>
       )}
 
+      {showRecurringAndDue && formData.isRecurrent && (
+        <View style={styles.field}>
+          {!formData.startTime ? (
+            <View style={styles.dueDateRow}>
+              <ThemedText type="subtitle">Start time</ThemedText>
+              <TouchableOpacity
+                style={[styles.toggle, { backgroundColor: colors.borderLight }]}
+                onPress={() => setShowStartDatePicker(true)}
+              >
+                <ThemedText type="default" style={{ color: colors.textSecondary }}>
+                  Set
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.dueDateRow}>
+              <ThemedText type="subtitle">Start time</ThemedText>
+              <View style={styles.dateTimeRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.dateButton,
+                    { borderColor: colors.border, backgroundColor: colors.surface },
+                  ]}
+                  onPress={() => setShowStartDatePicker(true)}
+                >
+                  <ThemedText type="default">
+                    {formatDate(new Date(formData.startTime.split(" ")[0]))}
+                  </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.dateButton,
+                    { borderColor: colors.border, backgroundColor: colors.surface },
+                  ]}
+                  onPress={() => setShowStartTimePicker(true)}
+                >
+                  <ThemedText type="default">
+                    {formatTime(new Date(`2000-01-01 ${formData.startTime.split(" ")[1] || "00:00:00"}`))}
+                  </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.clearButton} onPress={clearStartTime}>
+                  <ThemedText type="default" style={{ color: colors.error }}>
+                    Clear
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+      )}
+
       {showRecurringAndDue && !formData.dueRule && (
         <View style={styles.field}>
           <View style={styles.dueDateRow}>
@@ -529,6 +612,47 @@ export function TaskForm({ onSubmit, sectionId, onCancel, initialData }: TaskFor
             setShowTimePicker(Platform.OS === "ios");
             if (Platform.OS !== "ios") {
               setShowTimePicker(false);
+            }
+          }}
+        />
+      )}
+
+      {showStartDatePicker && (
+        <DateTimePicker
+          value={formData.startTime ? new Date(formData.startTime.split(" ")[0]) : new Date()}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={(_, date) => {
+            if (date) {
+              const timePart = formData.startTime?.split(" ")[1] || "00:00:00";
+              const dateStr = date.toISOString().split("T")[0];
+              updateField("startTime", `${dateStr} ${timePart}`);
+            }
+            setShowStartDatePicker(Platform.OS === "ios");
+            if (Platform.OS !== "ios") {
+              setShowStartDatePicker(false);
+            }
+          }}
+        />
+      )}
+
+      {showStartTimePicker && (
+        <DateTimePicker
+          value={formData.startTime?.split(" ")[1]
+            ? new Date(`2000-01-01 ${formData.startTime.split(" ")[1]}`)
+            : new Date(`2000-01-01 00:00:00`)}
+          mode="time"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={(_, date) => {
+            if (date) {
+              const dateStr = formData.startTime?.split(" ")[0] || new Date().toISOString().split("T")[0];
+              const hours = date.getHours().toString().padStart(2, "0");
+              const minutes = date.getMinutes().toString().padStart(2, "0");
+              updateField("startTime", `${dateStr} ${hours}:${minutes}:00`);
+            }
+            setShowStartTimePicker(Platform.OS === "ios");
+            if (Platform.OS !== "ios") {
+              setShowStartTimePicker(false);
             }
           }}
         />

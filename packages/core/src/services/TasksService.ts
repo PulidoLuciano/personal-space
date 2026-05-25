@@ -79,7 +79,17 @@ export default class TasksService extends BaseService<
     }
   }
 
-  private ensureDtstart(rruleString: string): string {
+  private ensureDtstart(rruleString: string, startTime?: string | null): string {
+    if (startTime) {
+      const [datePart, timePart] = startTime.split(" ");
+      const dtstartDate = (datePart || "").replace(/-/g, "");
+      const dtstartTime = (timePart || "000000").replace(/:/g, "");
+      const dtstart = `${dtstartDate}T${dtstartTime}Z`;
+      const rrulePart = rruleString
+        .replace(/^DTSTART[:=][^\n]*\nRRULE[:=]/, "")
+        .replace(/^DTSTART[:=][^\n]*\n/, "");
+      return `DTSTART:${dtstart}\nRRULE:${rrulePart}`;
+    }
     if (rruleString.includes("DTSTART=") || rruleString.includes("DTSTART:")) {
       return rruleString;
     }
@@ -87,14 +97,11 @@ export default class TasksService extends BaseService<
     const year = now.getUTCFullYear();
     const month = String(now.getUTCMonth() + 1).padStart(2, "0");
     const day = String(now.getUTCDate()).padStart(2, "0");
-    const hours = String(now.getUTCHours()).padStart(2, "0");
-    const minutes = String(now.getUTCMinutes()).padStart(2, "0");
-    const seconds = String(now.getUTCSeconds()).padStart(2, "0");
-    const dtstart = `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+    const dtstart = `${year}${month}${day}T000000Z`;
     return `DTSTART:${dtstart}\nRRULE:${rruleString}`;
   }
 
-  private prepareTaskData(data: InsertTask): InsertTask {
+  private prepareTaskData(data: InsertTask): Omit<InsertTask, "start_time"> {
     const isRecurrent = this.isRecurrent(data);
     if (isRecurrent && data.due_rule)
       this.validateRecurrentDueRule(data.due_rule);
@@ -107,11 +114,12 @@ export default class TasksService extends BaseService<
 
     let recurrency = data.recurrency ?? null;
     if (recurrency) {
-      recurrency = this.ensureDtstart(recurrency);
+      recurrency = this.ensureDtstart(recurrency, data.start_time);
     }
 
+    const { start_time, ...rest } = data;
     return {
-      ...data,
+      ...rest,
       recurrency,
       due_rule: processedDueRule,
     };
@@ -124,7 +132,7 @@ export default class TasksService extends BaseService<
       throw new Error("Section not found");
     }
     const preparedData = this.prepareTaskData(validatedData);
-    return await super.create(preparedData);
+    return await this.repository.create(preparedData);
   }
 
   public async getById(id: string, columns: (keyof Task)[] = []) {
@@ -179,7 +187,7 @@ export default class TasksService extends BaseService<
       this.validateRecurrentDueRule(newDueRule);
     }
 
-    const processedData = { ...data };
+    const processedData: Partial<Task> = { ...data };
 
     if (data.due_rule !== undefined) {
       processedData.due_rule = willBeRecurrent
@@ -187,9 +195,13 @@ export default class TasksService extends BaseService<
         : this.processDueRuleForUnique(data.due_rule);
     }
 
-    if (processedData.recurrency) {
-      processedData.recurrency = this.ensureDtstart(processedData.recurrency);
+    if (data.recurrency) {
+      processedData.recurrency = this.ensureDtstart(data.recurrency, data.start_time);
+    } else if (data.start_time !== undefined && existingTask.recurrency) {
+      processedData.recurrency = this.ensureDtstart(existingTask.recurrency, data.start_time);
     }
+
+    delete (processedData as Record<string, unknown>).start_time;
 
     return await this.repository.update(id, processedData);
   }
@@ -244,9 +256,11 @@ export default class TasksService extends BaseService<
       type: updates.type ?? existingTask.type,
       objective: updates.objective ?? existingTask.objective,
       recurrency: newRrule.toString(),
+      start_time: null,
       section_id: existingTask.section_id,
     };
-    await super.create(newTaskData);
+    const { start_time, ...taskDataForDb } = newTaskData;
+    await this.repository.create(taskDataForDb);
     if (occurrenceDate) {
       const dayBeforeOccurrence = new Date(occurrenceDateObj);
       dayBeforeOccurrence.setDate(dayBeforeOccurrence.getDate() - 1);

@@ -216,7 +216,7 @@ export const SectionContainer = React.memo(function SectionContainer({
           ) : (
             tasks.map((task) => (
               <TaskItem
-                key={task.id}
+                key={`${task.id}-${task.occurrence_date ?? 'single'}`}
                 name={task.name}
                 dueDate={task.due_date}
                 occurrenceDate={task.occurrence_date}

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { baseSchema } from "./baseSchema.js";
 
-export const insertTaskSchema = z.object({
+const baseTaskFields = {
   name: z.string().min(1, "cannot be empty"),
   body: z.string().optional().nullable().default(null),
   location: z.string().optional().nullable().default(null),
@@ -13,11 +13,16 @@ export const insertTaskSchema = z.object({
   objective: z.number().int().min(1).optional().default(1),
   recurrency: z.string().optional().nullable().default(null),
   section_id: z.uuid(),
+};
+
+export const insertTaskSchema = z.object({
+  ...baseTaskFields,
+  start_time: z.string().optional().nullable().default(null),
 });
 
 export const taskSchema = z.object({
   ...baseSchema.shape,
-  ...insertTaskSchema.shape,
+  ...baseTaskFields,
 });
 
 export const insertTaskExecutionsSchema = z.object({

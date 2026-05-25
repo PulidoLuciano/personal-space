@@ -35,6 +35,13 @@ import {
 } from "@/lib/formatters";
 import type { Task, TaskOccurrenceDetail } from "personal-space-core";
 
+function parseDtstart(recurrency: string): string | null {
+  const match = recurrency.match(/DTSTART[:=](\d{8}T\d{6}Z)/);
+  if (!match || !match[1]) return null;
+  const raw = match[1];
+  return `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)} ${raw.slice(9, 11)}:${raw.slice(11, 13)}:${raw.slice(13, 15)}`;
+}
+
 interface TaskExecution {
   id: string;
   updated_at: Date;
@@ -414,6 +421,7 @@ function TaskDetailsScreenContent() {
     type: "by time" | "by executions" | "note";
     objective: number;
     recurrency: string | null;
+    start_time: string | null;
     section_id: string;
   }) => {
     if (!core || !task || !fullTask) return;
@@ -1029,6 +1037,9 @@ function TaskDetailsScreenContent() {
               type: task.type,
               objective: task.objective,
               recurrency: fullTask?.recurrency ?? null,
+              start_time: fullTask?.recurrency
+                ? parseDtstart(fullTask.recurrency)
+                : null,
             }}
             onSubmit={handleEditSubmit}
             onCancel={() => setShowEditModal(false)}
